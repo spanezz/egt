@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import os.path
+import subprocess
 
 class Project(object):
     def __init__(self, path):
@@ -24,3 +25,15 @@ class Project(object):
         secname = "dir %s" % self.path
         cp.add_section(secname)
         cp.set(secname, "name", self.name)
+
+    def spawn_terminal(self, with_editor=False):
+        with open("/dev/null", "rw+") as devnull:
+            cmdline = [
+                "x-terminal-emulator",
+                "--working-directory=" + self.path
+            ]
+            if with_editor:
+                cmdline.append("-e")
+                cmdline.append("vim ore")
+            p = subprocess.Popen(cmdline, stdin=devnull, stdout=devnull, stderr=devnull, cwd=self.path, close_fds=True)
+

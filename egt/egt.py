@@ -80,3 +80,12 @@ class Egt(object):
             if len(newdirs) != len(dirs):
                 dirs[0:len(dirs)] = newdirs
 
+
+    def project_by_name(self, name):
+        """
+        Return a Project by its name
+        """
+        for k, v in self.state.projects.iteritems():
+            if v.name == name:
+                return v
+        return None
