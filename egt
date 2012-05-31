@@ -1,0 +1,62 @@
+#!/usr/bin/python
+import cliapp
+import egtlib
+
+VERSION="0.1"
+
+class EgtApp(cliapp.Application):
+    def __init__(self):
+        super(EgtApp, self).__init__(
+            progname="egt",
+            version=VERSION,
+            description="Enrico's Getting Things Done",
+        )
+
+    def cmd_scan(self, args):
+        """
+        Update the list of known project files, by scanning everything below
+        the home directory.
+        """
+        e = egtlib.Egt()
+        e.scan()
+
+    def cmd_list(self, args):
+        """
+        List known projects.
+        """
+        e = egtlib.Egt()
+        for k, v in e.state.projects.iteritems():
+            print "%s\t%s" % (v.name, v.path)
+
+    def cmd_summary(self, args):
+        e = egtlib.Egt()
+        if args:
+            projs = (e.state.project(a) for a in args)
+        else:
+            projs = e.state.projects.itervalues()
+
+        for p in sorted(projs, key=lambda p:p.name):
+            p.load()
+            p.summary()
+
+    def cmd_term(self, args):
+        """
+        Open a terminal in a project directory.
+        """
+        e = egtlib.Egt()
+        for name in args:
+            proj = e.project_by_name(name)
+            proj.spawn_terminal()
+
+    def cmd_work(self, args):
+        """
+        Open a terminal in a project directory, and edit the project file.
+        """
+        e = egtlib.Egt()
+        for name in args:
+            proj = e.project_by_name(name)
+            proj.spawn_terminal(with_editor=True)
+
+if __name__ == '__main__':
+    EgtApp().run()
+
