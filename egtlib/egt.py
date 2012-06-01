@@ -2,9 +2,11 @@ from __future__ import absolute_import
 import os
 import os.path
 import logging
+import datetime
 import itertools
 from .state import State
 from .project import Project
+from .utils import intervals_intersect
 
 log = logging.getLogger(__name__)
 
@@ -14,8 +16,16 @@ class Egt(object):
         self.state.load()
         self.update_project_info()
 
+    @property
+    def projects(self):
+        return self.state.projects
+
     def update_project_info(self):
         projs = self.state.projects
+
+        # Load activity files
+        for p in self.state.projects.itervalues():
+            p.load()
 
         # Generate names
         todo = set(os.path.normpath(p) for p in self.state.projects.iterkeys())
@@ -89,3 +99,29 @@ class Egt(object):
             if v.name == name:
                 return v
         return None
+
+    def weekrpt(self, end=None, days=7):
+        if end is None:
+            d_until = datetime.date.today()
+        else:
+            d_until = end
+        d_begin = d_until - datetime.timedelta(days=days)
+        print "Activity from %s to %s:" % (d_begin, d_until)
+        log = []
+        count = 0
+        mins = 0
+        for p in self.projects.itervalues():
+            for l in p.log:
+                if intervals_intersect(l.begin.date(), l.until.date() if l.until else datetime.date.today(), d_begin, d_until):
+                    log.append((l, p))
+                    count += 1
+                    mins += l.duration
+        print "%d entries, %d hours in total, %d hours per day, %d hours per working day" % (
+            count, mins/60, mins/60/7, mins/60/5)
+
+        log.sort(key=lambda x:x[0].begin)
+
+        for l, p in log:
+            l.output(p.name)
+
+

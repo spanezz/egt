@@ -36,7 +36,6 @@ class EgtApp(cliapp.Application):
             projs = e.state.projects.itervalues()
 
         for p in sorted(projs, key=lambda p:p.name):
-            p.load()
             p.summary()
 
     def cmd_term(self, args):
@@ -56,6 +55,12 @@ class EgtApp(cliapp.Application):
         for name in args:
             proj = e.project_by_name(name)
             proj.spawn_terminal(with_editor=True)
+
+    def cmd_weekrpt(self, args):
+        e = egtlib.Egt()
+        e.weekrpt()
+
+
 
 if __name__ == '__main__':
     EgtApp().run()

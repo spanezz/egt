@@ -24,10 +24,46 @@ def parsetime(s):
     h, m = s.split(":")
     return datetime.time(int(h), int(m), 0)
 
+def format_duration(mins):
+    h = mins / 60
+    m = mins % 60
+    if m:
+        return "%dh %dm" % (h, m)
+    else:
+        return "%dh" % h
+
+class Log(object):
+    def __init__(self, begin, until, body):
+        self.begin = begin
+        self.until = until
+        self.body = body
+
+    @property
+    def duration(self):
+        """
+        Return the duration in minutes
+        """
+        if not self.until:
+            until = datetime.datetime.now()
+        else:
+            until = self.until
+
+        td = (until - self.begin)
+        return (td.days * 86400 + td.seconds) / 60
+
+    def output(self, project=None):
+        head = [ self.begin.strftime("%d %B: %H:%M-") ]
+        if self.until:
+            head.append(self.until.strftime("%H:%M "))
+            head.append(format_duration(self.duration))
+        if project is not None:
+            head.append(" [%s]" % project)
+        print "".join(head)
+        print self.body
 
 class LogParser(object):
     re_yearline = re.compile("(?:^|\n)\s*(?P<year>[12][0-9]{3})\s*(?:$|\n)")
-    re_loghead = re.compile(r"^(?P<day>[0-9 ][0-9]) (?P<month>\w+)(?:\s+(?P<year>\d+))?:\s+(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)")
+    re_loghead = re.compile(r"^(?P<day>[0-9 ][0-9]) (?P<month>\w+)(?:\s+(?P<year>\d+))?:\s+(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?")
 
     def __init__(self):
         self.year = datetime.date.today().year
@@ -36,11 +72,7 @@ class LogParser(object):
         self.logbody = []
 
     def flush(self):
-        res = dict(
-            begin=self.begin,
-            until=self.until,
-            logbody="\n".join(self.logbody),
-        )
+        res = Log(self.begin, self.until, "\n".join(self.logbody))
         self.begin = None
         self.end = None
         self.logbody = []
@@ -60,7 +92,13 @@ class LogParser(object):
                 if mo.group("year"): self.year = int(mo.group("year"))
                 date = datetime.date(self.year, MONTHS[mo.group("month")], int(mo.group("day")))
                 self.begin = datetime.datetime.combine(date, parsetime(mo.group("start")))
-                self.until = datetime.datetime.combine(date, parsetime(mo.group("end")))
+                if mo.group("end"):
+                    self.until = datetime.datetime.combine(date, parsetime(mo.group("end")))
+                    if self.until < self.begin:
+                        # Deal with intervals across midnight
+                        self.until += datetime.timedelta(days=1)
+                else:
+                    self.until = None
                 continue
 
             self.logbody.append(line)
@@ -139,4 +177,9 @@ class Project(object):
 
     def summary(self, out=sys.stdout):
         print >>out, "%s: %s" % (self.name, self.path)
-        print >>out, "  %d log entries" % (len(self.log))
+        mins = 0
+        for l in self.log:
+            mins += l.duration
+        twt = format_duration(mins)
+        print >>out, "  %d log entries, %s total work time" % (len(self.log), twt)
+
