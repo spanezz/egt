@@ -32,6 +32,12 @@ def format_duration(mins):
     else:
         return "%dh" % h
 
+def format_td(td):
+    if td.days > 0:
+        return "%d days" % td.days
+    else:
+        return format_duration(td.seconds/60)
+
 class Log(object):
     def __init__(self, begin, until, body):
         self.begin = begin
@@ -145,6 +151,17 @@ class Project(object):
         # Parse/store body
         self.body = body
 
+    @property
+    def last_updated(self):
+        """
+        Datetime when this project was last updated
+        """
+        if not self.log: return None
+        last = self.log[-1]
+        if last.until: return last.until
+        return datetime.datetime.now()
+
+
     def from_cp(self, cp):
         """
         Load information about this Project from a ConfigParser
@@ -175,11 +192,24 @@ class Project(object):
                 cmdline.append("vim ore")
             p = subprocess.Popen(cmdline, stdin=devnull, stdout=devnull, stderr=devnull, cwd=self.path, close_fds=True)
 
+    def run_editor(self):
+        p = subprocess.Popen(["vim", "ore"], cwd=self.path, close_fds=True)
+        p.wait()
+
     def summary(self, out=sys.stdout):
-        print >>out, "%s: %s" % (self.name, self.path)
         mins = 0
         for l in self.log:
             mins += l.duration
-        twt = format_duration(mins)
-        print >>out, "  %d log entries, %s total work time" % (len(self.log), twt)
+        lu = self.last_updated
+        if lu is None:
+            stats = ["never updated"]
+        else:
+            stats = [
+                "%d log entries" % len(self.log),
+                "%s" % format_duration(mins),
+                "last %s (%s ago)" % (
+                    self.last_updated.strftime("%Y-%m-%d %H:%M"),
+                    format_td(datetime.datetime.now() - self.last_updated)),
+            ]
+        print "%s\t%s" % (self.name, ", ".join(stats))
 

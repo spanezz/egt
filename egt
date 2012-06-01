@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import cliapp
 import egtlib
+import datetime
 
 VERSION="0.1"
 
@@ -35,8 +36,19 @@ class EgtApp(cliapp.Application):
         else:
             projs = e.state.projects.itervalues()
 
-        for p in sorted(projs, key=lambda p:p.name):
-            p.summary()
+        blanks = []
+        worked = []
+        for p in projs:
+            if p.last_updated is None:
+                blanks.append(p)
+            else:
+                worked.append(p)
+
+        blanks.sort(key=lambda p:p.name)
+        worked.sort(key=lambda p:p.last_updated)
+
+        for p in blanks: p.summary()
+        for p in worked: p.summary()
 
     def cmd_term(self, args):
         """
@@ -56,9 +68,22 @@ class EgtApp(cliapp.Application):
             proj = e.project_by_name(name)
             proj.spawn_terminal(with_editor=True)
 
+    def cmd_edit(self, args):
+        """
+        Open a terminal in a project directory, and edit the project file.
+        """
+        e = egtlib.Egt()
+        for name in args:
+            proj = e.project_by_name(name)
+            proj.run_editor()
+
     def cmd_weekrpt(self, args):
         e = egtlib.Egt()
-        e.weekrpt()
+        if args:
+            end = datetime.datetime.strptime(args[0], "%Y-%m-%d").date()
+        else:
+            end = None
+        e.weekrpt(end=end)
 
 
 
