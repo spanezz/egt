@@ -1,0 +1,24 @@
+Source: egt
+Section: misc
+Priority: optional
+Maintainer: Enrico Zini <enrico@debian.org>
+Build-Depends: debhelper (>= 7.0.50~)
+Build-Depends-Indep: help2man, python, python-support
+Standards-Version: 3.9.1.0
+#Vcs-Git: git://git.debian.org/git/collab-maint/apt-xapian-index.git
+#Vcs-Browser: http://git.debian.org/?p=collab-maint/apt-xapian-index.git
+#Homepage: http://www.enricozini.org/sw/apt-xapian-index/
+
+Package: python-egtlib
+Section: python
+Architecture: all
+Depends: python, python-xdg, ${python:Depends}, ${misc:Depends}
+Description: Enrico's Getting Things Done backend code
+ .
+
+Package: egt
+Architecture: all
+Depends: python, python-egtlib, python-cliapp, ${python:Depends}, ${misc:Depends}
+Suggests: app-install-data, python-xdg
+Description: Enrico's Getting Things Done command line tool
+ .

@@ -1,0 +1,23 @@
+#!/usr/bin/make -f
+
+VERSION=$(shell debian/vercheck)
+RELEASE_PACKAGE=egt
+
+%:
+	dh --with=python2 $@
+
+override_dh_auto_build:
+	dh_auto_build
+	./egt --generate-manpage=egt.1.in > egt.1
+
+override_dh_auto_clean:
+	dh_auto_clean
+	find . -name "*.pyc" -delete
+	rm -f egt.1
+
+vercheck:
+	debian/vercheck > /dev/null
+
+debsrc: vercheck
+	git-buildpackage -S -us -uc
+	rm -f ../$(RELEASE_PACKAGE)_$(VERSION)_source.changes
