@@ -13,28 +13,37 @@ class EgtApp(cliapp.Application):
             description="Enrico's Getting Things Done",
         )
 
+    def add_settings(self):
+        self.settings.string(['tag', 't'], "limit processing to projects with the given (comma separated) tag(s)", metavar="tag")
+
+    def make_egt(self):
+        if self.settings["tag"]:
+            return egtlib.Egt(tags=self.settings["tag"].split(","))
+        else:
+            return egtlib.Egt()
+
     def cmd_scan(self, args):
         """
         Update the list of known project files, by scanning everything below
         the home directory.
         """
-        e = egtlib.Egt()
+        e = self.make_egt()
         e.scan()
 
     def cmd_list(self, args):
         """
         List known projects.
         """
-        e = egtlib.Egt()
+        e = self.make_egt()
         for k, v in e.state.projects.iteritems():
             print "%s\t%s" % (v.name, v.path)
 
     def cmd_summary(self, args):
-        e = egtlib.Egt()
+        e = self.make_egt()
         if args:
-            projs = (e.state.project(a) for a in args)
+            projs = (e.project(a) for a in args)
         else:
-            projs = e.state.projects.itervalues()
+            projs = e.projects.itervalues()
 
         blanks = []
         worked = []
@@ -54,7 +63,7 @@ class EgtApp(cliapp.Application):
         """
         Open a terminal in a project directory.
         """
-        e = egtlib.Egt()
+        e = self.make_egt()
         for name in args:
             proj = e.project_by_name(name)
             proj.spawn_terminal()
@@ -63,7 +72,7 @@ class EgtApp(cliapp.Application):
         """
         Open a terminal in a project directory, and edit the project file.
         """
-        e = egtlib.Egt()
+        e = self.make_egt()
         for name in args:
             proj = e.project_by_name(name)
             proj.spawn_terminal(with_editor=True)
@@ -72,13 +81,13 @@ class EgtApp(cliapp.Application):
         """
         Open a terminal in a project directory, and edit the project file.
         """
-        e = egtlib.Egt()
+        e = self.make_egt()
         for name in args:
             proj = e.project_by_name(name)
             proj.run_editor()
 
     def cmd_weekrpt(self, args):
-        e = egtlib.Egt()
+        e = self.make_egt()
         if args:
             end = datetime.datetime.strptime(args[0], "%Y-%m-%d").date()
         else:

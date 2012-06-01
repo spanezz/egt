@@ -116,6 +116,11 @@ class Project(object):
         self.path = path
         self.name = os.path.basename(path)
         self.fname = os.path.join(self.path, basename)
+        self.tags = set()
+        # TODO: make configurable, use as default of no Tags: header is found
+        # in metadata
+        if "dev/deb" in self.path: self.tags.add("debian")
+        if "lavori/truelite" in self.path: self.tags.add("truelite")
 
     def load(self):
         self.meta = {}
@@ -201,15 +206,18 @@ class Project(object):
         for l in self.log:
             mins += l.duration
         lu = self.last_updated
+        stats = []
+        if self.tags:
+            stats.append("tags: %s" % ",".join(sorted(self.tags)))
         if lu is None:
-            stats = ["never updated"]
+            stats.append("never updated")
         else:
-            stats = [
+            stats.extend([
                 "%d log entries" % len(self.log),
                 "%s" % format_duration(mins),
                 "last %s (%s ago)" % (
                     self.last_updated.strftime("%Y-%m-%d %H:%M"),
                     format_td(datetime.datetime.now() - self.last_updated)),
-            ]
+            ])
         print "%s\t%s" % (self.name, ", ".join(stats))
 

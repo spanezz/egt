@@ -12,16 +12,8 @@ class State(object):
     def __init__(self):
         self.clear()
 
-
     def clear(self):
         self.projects = {}
-
-    def project(self, name):
-        # FIXME: inefficient, but for now it will do
-        for p in self.projects.itervalues():
-            if p.name == name:
-                return p
-        return None
 
     def load(self):
         self.clear()

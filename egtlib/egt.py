@@ -11,14 +11,25 @@ from .utils import intervals_intersect
 log = logging.getLogger(__name__)
 
 class Egt(object):
-    def __init__(self):
+    def __init__(self, tags=[]):
         self.state = State()
         self.state.load()
         self.update_project_info()
+        self.tags = frozenset(tags)
 
     @property
     def projects(self):
-        return self.state.projects
+        if not self.tags:
+            return self.state.projects
+        else:
+            return dict(x for x in self.state.projects.iteritems() if not x[1].tags.isdisjoint(self.tags))
+
+    def project(self, name):
+        # FIXME: inefficient, but for now it will do
+        for p in self.projects.itervalues():
+            if p.name == name:
+                return p
+        return None
 
     def update_project_info(self):
         projs = self.state.projects
