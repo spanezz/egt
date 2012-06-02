@@ -87,14 +87,30 @@ class EgtApp(cliapp.Application):
             proj.run_editor()
 
     def cmd_weekrpt(self, args):
+        """
+        Compute weekly reports
+        """
         e = self.make_egt()
         if args:
             end = datetime.datetime.strptime(args[0], "%Y-%m-%d").date()
         else:
             end = None
-        e.weekrpt(end=end)
+        rep = e.weekrpt(end=end)
+        print "Activity from %s to %s:" % (rep["begin"], rep["until"])
+        print "%d entries, %d hours in total, %d hours per day, %d hours per working day" % (
+            rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"])
+        for l, p in rep["log"]:
+            l.output(p.name)
 
-
+    def cmd_serve(self, args):
+        """
+        Start a web server for reports
+        """
+        from egtlib import web
+        print "Server starting at localhost:5000"
+        web.app.make_egt = self.make_egt
+        web.app.debug = True
+        web.app.run()
 
 if __name__ == '__main__':
     EgtApp().run()

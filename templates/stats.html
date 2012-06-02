@@ -1,0 +1,23 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <h1>Project statistics</h1>
+        <table>
+        <tr>
+            <th>Name</th>
+            <th>Last updated</th>
+            <th>Worked</th>
+            <th>Categories</th>
+        </tr>
+        {% for p in projs %}
+        <tr>
+            <td>{{p.name}}</td>
+            <td>{{p.last_updated}}</td>
+            <td>{{p.formatted_elapsed}}</td>
+            <td>{{p.formatted_tags}}</td>
+        </tr>
+        {% endfor %}
+        </table>
+    </body>
+</html>

@@ -57,6 +57,10 @@ class Log(object):
         td = (until - self.begin)
         return (td.days * 86400 + td.seconds) / 60
 
+    @property
+    def formatted_duration(self):
+        return format_duration(self.duration)
+
     def output(self, project=None):
         head = [ self.begin.strftime("%d %B: %H:%M-") ]
         if self.until:
@@ -166,6 +170,20 @@ class Project(object):
         if last.until: return last.until
         return datetime.datetime.now()
 
+    @property
+    def elapsed(self):
+        mins = 0
+        for l in self.log:
+            mins += l.duration
+        return mins
+
+    @property
+    def formatted_elapsed(self):
+        return format_duration(self.elapsed)
+
+    @property
+    def formatted_tags(self):
+        return ", ".join(sorted(self.tags))
 
     def from_cp(self, cp):
         """
@@ -202,9 +220,7 @@ class Project(object):
         p.wait()
 
     def summary(self, out=sys.stdout):
-        mins = 0
-        for l in self.log:
-            mins += l.duration
+        mins = self.elapsed
         lu = self.last_updated
         stats = []
         if self.tags:
