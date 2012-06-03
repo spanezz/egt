@@ -121,6 +121,7 @@ class Project(object):
         self.name = os.path.basename(path)
         self.fname = os.path.join(self.path, basename)
         self.tags = set()
+        self.editor = os.environ.get("EDITOR","vim")
         # TODO: make configurable, use as default of no Tags: header is found
         # in metadata
         if "dev/deb" in self.path: self.tags.add("debian")
@@ -212,11 +213,11 @@ class Project(object):
             ]
             if with_editor:
                 cmdline.append("-e")
-                cmdline.append("vim ore")
+                cmdline.append(self.editor+" ore")
             p = subprocess.Popen(cmdline, stdin=devnull, stdout=devnull, stderr=devnull, cwd=self.path, close_fds=True)
 
     def run_editor(self):
-        p = subprocess.Popen(["vim", "ore"], cwd=self.path, close_fds=True)
+        p = subprocess.Popen([self.editor, "ore"], cwd=self.path, close_fds=True)
         p.wait()
 
     def summary(self, out=sys.stdout):
