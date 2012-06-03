@@ -208,10 +208,11 @@ class Project(object):
         with open("/dev/null", "rw+") as devnull:
             cmdline = [
                 "x-terminal-emulator",
-                "--working-directory=" + self.path
             ]
             if with_editor:
                 cmdline.append("-e")
+                cmdline.append("bash")
+                cmdline.append("-c")
                 cmdline.append("vim ore")
             p = subprocess.Popen(cmdline, stdin=devnull, stdout=devnull, stderr=devnull, cwd=self.path, close_fds=True)
 
