@@ -212,7 +212,7 @@ class Project(object):
             ]
             if with_editor:
                 cmdline.append("-e")
-                cmdline.append("bash")
+                cmdline.append("sh")
                 cmdline.append("-c")
                 cmdline.append(self.editor+" ore")
             p = subprocess.Popen(cmdline, stdin=devnull, stdout=devnull, stderr=devnull, cwd=self.path, close_fds=True)
