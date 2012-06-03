@@ -19,6 +19,6 @@ Description: Enrico's Getting Things Done backend code
 Package: egt
 Architecture: all
 Depends: python, python-egtlib, python-cliapp, ${python:Depends}, ${misc:Depends}
-Suggests: app-install-data, python-xdg
+Suggests: app-install-data, python-xdg, python-flask
 Description: Enrico's Getting Things Done command line tool
  .
