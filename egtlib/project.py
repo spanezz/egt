@@ -146,7 +146,7 @@ class Project(object):
         if not LogParser.re_yearline.match(head) and not LogParser.re_loghead.match(head):
             # There seems to be metadata: parse it as RFC822 fields
             import email
-            self.meta = dict(email.message_from_string(head))
+            self.meta = dict(((k.lower(), v) for k, v in email.message_from_string(head).items()))
 
             # Extract the log from the rest
             t = re_secsep.split(body, 1)
@@ -154,6 +154,9 @@ class Project(object):
                 head, body = "", t[0]
             else:
                 head, body = t
+
+        # Amend path using meta's path if found
+        self.path = self.meta.get("path", self.path)
 
         # Parse head as log entries
         self.log = list(LogParser().parse(head.split("\n")))
