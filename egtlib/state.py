@@ -28,6 +28,9 @@ class State(object):
         for secname in cp.sections():
             if secname.startswith("dir "):
                 p = secname.split(None, 1)[1]
+                if not Project.has_project(p):
+                    log.warning("project in %s has disappeared: please rerun scan", p)
+                    continue
                 proj = Project(p)
                 proj.from_cp(cp)
                 self.projects[p] = proj

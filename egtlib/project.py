@@ -244,3 +244,7 @@ class Project(object):
 
     def backup(self, tarout):
         tarout.add(self.fname)
+    @classmethod
+    def has_project(cls, path, basename="ore"):
+        fname = os.path.join(path, basename)
+        return os.path.exists(fname)
