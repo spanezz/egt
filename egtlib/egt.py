@@ -4,6 +4,7 @@ import os.path
 import logging
 import datetime
 import itertools
+import sys
 from .state import State
 from .project import Project
 from .utils import intervals_intersect
@@ -169,3 +170,11 @@ class Egt(object):
                     rep.add(p)
 
         return rep.report(end, days)
+
+    def backup(self, out=sys.stdout):
+        import tarfile
+        tarout = tarfile.open(None, "w|", fileobj=out)
+        for p in self.projects.itervalues():
+            p.backup(tarout)
+        tarout.close()
+

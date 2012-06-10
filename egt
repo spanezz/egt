@@ -2,6 +2,7 @@
 import cliapp
 import egtlib
 import datetime
+import sys
 
 VERSION="0.1"
 
@@ -101,6 +102,10 @@ class EgtApp(cliapp.Application):
             rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"])
         for l, p in rep["log"]:
             l.output(p.name)
+
+    def cmd_backup(self, args):
+        e = self.make_egt()
+        e.backup(sys.stdout)
 
     def cmd_serve(self, args):
         """

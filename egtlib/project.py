@@ -242,3 +242,5 @@ class Project(object):
             ])
         print "%s\t%s" % (self.name, ", ".join(stats))
 
+    def backup(self, tarout):
+        tarout.add(self.fname)
