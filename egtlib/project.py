@@ -242,8 +242,47 @@ class Project(object):
             ])
         print "%s\t%s" % (self.name, ", ".join(stats))
 
+    def gitdirs(self, depth=2, root=None):
+        """
+        Find all .git directories below the project path
+        """
+        # Default to self.path
+        if root is None:
+            root = self.path
+
+        # Check the current dir
+        cand = os.path.join(root, ".git")
+        if os.path.exists(cand):
+            yield cand
+
+        # Recurse into subdirs if we still have some way to go
+        if depth > 1:
+            for fn in os.listdir(root):
+                if fn.startswith("."): continue
+                d = os.path.join(root, fn)
+                if os.path.isdir(d):
+                    for gd in self.gitdirs(depth-1, d):
+                        yield gd
+
+
     def backup(self, tarout):
+        # Backup the main todo/log file
         tarout.add(self.fname)
+        if 'abstract' not in self.meta:
+            for gd in self.gitdirs():
+                tarout.add(os.path.join(gd, "config"))
+                hookdir = os.path.join(gd, "hooks")
+                for fn in os.listdir(hookdir):
+                    if fn.startswith("."): continue
+                    if fn.endswith(".sample"): continue
+                    tarout.add(os.path.join(hookdir, fn))
+        # TODO: a shellscript with command to clone the .git again
+        # TODO: a diff with uncommitted changes
+        # TODO: the content of directories optionally listed in metadata
+        #       (documentation, archives)
+        # (if you don't push, you don't back up, and it's fair enough)
+
+
     @classmethod
     def has_project(cls, path, basename="ore"):
         fname = os.path.join(path, basename)
