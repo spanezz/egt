@@ -1,0 +1,8 @@
+Meta:
+
+  Path: absolute path  (TODO: use os.path.expanduer)
+   The path of the project work directory, if it's not the same as the log/todo file
+  Abstract: true
+   If set to anything, it means there is no work directory, so no attempt is
+   made, for example, to interact with git. Useful for things like shopping
+   lists
