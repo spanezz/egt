@@ -16,6 +16,7 @@ class EgtApp(cliapp.Application):
 
     def add_settings(self):
         self.settings.string(['tag', 't'], "limit processing to projects with the given (comma separated) tag(s)", metavar="tag")
+        self.settings.string(['backup-output'], "backup tarball to generate (by default it is sent to stdout) (the filename is passed to strftime, so you can use something like %Y-%m-%d in the configuration)", metavar="filename")
 
     def make_egt(self):
         if self.settings["tag"]:
@@ -104,8 +105,14 @@ class EgtApp(cliapp.Application):
             l.output(p.name)
 
     def cmd_backup(self, args):
+        out = self.settings["backup-output"]
         e = self.make_egt()
-        e.backup(sys.stdout)
+        if out:
+            out = datetime.datetime.now().strftime(out)
+            with open(out, "w") as fd:
+                e.backup(fd)
+        else:
+            e.backup(sys.stdout)
 
     def cmd_serve(self, args):
         """
