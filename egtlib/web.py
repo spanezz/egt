@@ -2,7 +2,8 @@ import flask
 import egtlib
 import os.path
 
-app = flask.Flask(__name__, template_folder=os.path.abspath("./templates"))
+#app = flask.Flask(__name__, template_folder=os.path.abspath("./templates"))
+app = flask.Flask(__name__)
 
 @app.route('/')
 def index():
