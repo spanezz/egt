@@ -1,8 +1,30 @@
-Meta:
+Possible file names:
+
+  $projname/ore: legacy
+  $projname/.egt: standard
+  $projname/egt: if you don't want it hidden
+     .egt has priority. Also, if the file starts with "#!" it is ignored, so
+     that a checkout of egt's repo won't look like a project by default :)
+  $projname.egt: if you want to have multiple project files per dir
+
+
+Metadata fields at start of file:
 
   Path: absolute path  (TODO: use os.path.expanduer)
    The path of the project work directory, if it's not the same as the log/todo file
+
   Abstract: true
    If set to anything, it means there is no work directory, so no attempt is
    made, for example, to interact with git. Useful for things like shopping
    lists
+
+  Name: name
+   The project name. The file or directory names are used as defaults, and are
+   usually good.
+
+  Tags: name, name
+   Comma or space separated list of tags for this project.
+
+  Editor: name
+   Editor to use for this project. Defaults to $EDITOR from the environment, if
+   defined, or else 'vim'.

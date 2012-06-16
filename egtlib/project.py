@@ -120,17 +120,42 @@ class LogParser(object):
         if self.begin is not None: yield self.flush()
 
 
+def default_name(fname):
+    """
+    Guess a project name from the project file pathname
+    """
+    dirname, basename = os.path.split(fname)
+    if basename in ("ore", ".egt", "egt"):
+        # Use dir name
+        return os.path.basename(dirname)
+    else:
+        # Use file name
+        return basename[:-4]
+
+
+def default_tags(fname):
+    """
+    Guess tags from the project file pathname
+    """
+    tags = set()
+    debhome = os.environ.get("DEBHOME", None)
+    if debhome is not None and fname.startswith(debhome):
+        tags.add("debian")
+    # FIXME: this is currently only valid for Enrico
+    if "/lavori/truelite/" in fname: tags.add("truelite")
+    return tags
+
+
 class Project(object):
-    def __init__(self, path, basename="ore"):
-        self.path = path
-        self.name = os.path.basename(path)
-        self.fname = os.path.join(self.path, basename)
-        self.tags = set()
+    def __init__(self, fname):
+        self.fname = fname
+        # Default values, can be overridden by file metadata
+        self.path = os.path.dirname(fname)
+        self.name = default_name(fname)
+        self.tags = default_tags(fname)
         self.editor = os.environ.get("EDITOR", "vim")
-        # TODO: make configurable, use as default of no Tags: header is found
-        # in metadata
-        if "dev/deb" in self.path: self.tags.add("debian")
-        if "lavori/truelite" in self.path: self.tags.add("truelite")
+        # Load the actual data
+        self.load()
 
     def load(self):
         self.meta = {}
@@ -162,6 +187,10 @@ class Project(object):
 
         # Amend path using meta's path if found
         self.path = self.meta.get("path", self.path)
+        self.name = self.meta.get("name", self.name)
+        self.editor = self.meta.get("editor", self.editor)
+        if 'tags' in self.meta:
+            self.tags = set(re.split("[ ,\t]+", self.meta["tags"]))
 
         # Parse head as log entries
         self.log = list(LogParser().parse(head.split("\n")))
@@ -193,25 +222,6 @@ class Project(object):
     @property
     def formatted_tags(self):
         return ", ".join(sorted(self.tags))
-
-    def from_cp(self, cp):
-        """
-        Load information about this Project from a ConfigParser
-        """
-        secname = "dir %s" % self.path
-        if not cp.has_section(secname):
-            return
-
-        if cp.has_option(secname, "name"):
-            self.name = cp.get(secname, "name")
-
-    def to_cp(self, cp):
-        """
-        Store information about this Project in a ConfigParser
-        """
-        secname = "dir %s" % self.path
-        cp.add_section(secname)
-        cp.set(secname, "name", self.name)
 
     def spawn_terminal(self, with_editor=False):
         with open("/dev/null", "rw+") as devnull:
@@ -288,6 +298,5 @@ class Project(object):
         # (if you don't push, you don't back up, and it's fair enough)
 
     @classmethod
-    def has_project(cls, path, basename="ore"):
-        fname = os.path.join(path, basename)
+    def has_project(cls, fname):
         return os.path.exists(fname)

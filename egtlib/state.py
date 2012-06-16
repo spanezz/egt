@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from .utils import atomic_writer
 from .project import Project
+from .scan import scan
 from ConfigParser import RawConfigParser as ConfigParser
 from xdg import BaseDirectory
 import os.path
@@ -12,6 +13,7 @@ log = logging.getLogger(__name__)
 class State(object):
     def __init__(self):
         self.clear()
+        self.load()
 
     def clear(self):
         self.projects = {}
@@ -27,21 +29,52 @@ class State(object):
         cp = ConfigParser()
         cp.read(paths)
         for secname in cp.sections():
-            if secname.startswith("dir "):
-                p = secname.split(None, 1)[1]
-                if not Project.has_project(p):
-                    log.warning("project in %s has disappeared: please rerun scan", p)
+            if secname.startswith("proj "):
+                name = secname.split(None, 1)[1]
+                fname = cp.get(secname, "fname")
+                if not Project.has_project(fname):
+                    log.warning("project %s has disappeared from %s: please rerun scan", name, fname)
                     continue
-                proj = Project(p)
-                proj.from_cp(cp)
-                self.projects[p] = proj
+                proj = Project(fname)
+                self.projects[proj.name] = proj
 
     def save(self):
         cp = ConfigParser()
-        for k, v in self.projects.iteritems():
-            v.to_cp(cp)
+        for name, p in self.projects.iteritems():
+            secname = "proj %s" % name
+            cp.add_section(secname)
+            cp.set(secname, "fname", p.fname)
+
         outdir = BaseDirectory.save_data_path('egt')
         cfgfname = os.path.join(outdir, "state")
         with atomic_writer(cfgfname) as fd:
             cp.write(fd)
         log.debug("updated state in %s", cfgfname)
+
+    def rescan(self):
+        # Read and detect duplicates
+        new_projects = dict()
+        for fname in scan():
+            p = Project(fname)
+            if p.name in new_projects:
+                log.warn("%s: project %s already exists in %s: skipping", fname, p.name, p.fname)
+            else:
+                new_projects[p.name] = p
+
+        # Log the difference with the old info
+        old_projects = set(self.projects.keys())
+        for name, p in new_projects.iteritems():
+            old_projects.discard(name)
+            op = self.projects.get(name, None)
+            if op is None:
+                log.info("add %s: %s", name, p.fname)
+            elif op.pathname != p.fname:
+                log.info("mv %s: %s -> %s", name, p.pathname, p.fname)
+            else:
+                log.info("hit %s: %s", name, p.fname)
+        for name in old_projects:
+            log.info("rm %s", name)
+
+        # Commit the new project set
+        self.projects = new_projects
+        self.save()
