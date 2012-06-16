@@ -1,0 +1,7 @@
+#!/bin/sh
+if [ -t 1 ]
+then
+	pylint egtlib tests egt | less
+else
+	pylint egtlib tests egt
+fi
