@@ -224,6 +224,7 @@ class Project(object):
         return ", ".join(sorted(self.tags))
 
     def spawn_terminal(self, with_editor=False):
+        import pipes
         with open("/dev/null", "rw+") as devnull:
             cmdline = [
                 "x-terminal-emulator",
@@ -232,12 +233,12 @@ class Project(object):
                 cmdline.append("-e")
                 cmdline.append("sh")
                 cmdline.append("-c")
-                cmdline.append(self.editor + " ore")
+                cmdline.append(self.editor + " " + pipes.quote(self.fname))
             subprocess.Popen(cmdline, stdin=devnull, stdout=devnull, stderr=devnull, cwd=self.path, close_fds=True)
             # Let go in the background
 
     def run_editor(self):
-        p = subprocess.Popen([self.editor, "ore"], cwd=self.path, close_fds=True)
+        p = subprocess.Popen([self.editor, self.fname], cwd=self.path, close_fds=True)
         p.wait()
 
     def summary(self, out=sys.stdout):
