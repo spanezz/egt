@@ -68,8 +68,8 @@ class State(object):
             op = self.projects.get(name, None)
             if op is None:
                 log.info("add %s: %s", name, p.fname)
-            elif op.pathname != p.fname:
-                log.info("mv %s: %s -> %s", name, p.pathname, p.fname)
+            elif op.fname != p.fname:
+                log.info("mv %s: %s -> %s", name, p.fname, p.fname)
             else:
                 log.info("hit %s: %s", name, p.fname)
         for name in old_projects:
