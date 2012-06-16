@@ -7,7 +7,7 @@ import os.path
 from distutils.core import setup
 from distutils.command.install import INSTALL_SCHEMES
 
-for line in open(os.path.join(os.path.dirname(sys.argv[0]),'egt')):
+for line in open(os.path.join(os.path.dirname(sys.argv[0]), 'egt')):
     if line.startswith('VERSION='):
         version = eval(line.split('=')[-1])
 
@@ -19,6 +19,7 @@ for line in open(os.path.join(os.path.dirname(sys.argv[0]),'egt')):
 # http://groups.google.com/group/comp.lang.python/browse_thread/thread/35ec7b2fed36eaec/2105ee4d9e8042cb
 for scheme in INSTALL_SCHEMES.values():
     scheme['data'] = scheme['purelib']
+
 
 def fullsplit(path, result=None):
     """
@@ -33,6 +34,7 @@ def fullsplit(path, result=None):
     if head == path:
         return result
     return fullsplit(head, [tail] + result)
+
 
 def is_data(fname):
     return not (fname.endswith(".py") or fname.endswith(".pyc") or fname.startswith("."))

@@ -8,6 +8,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class State(object):
     def __init__(self):
         self.clear()

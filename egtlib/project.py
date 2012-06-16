@@ -20,9 +20,11 @@ MONTHS = {
     "dicembre": 12,
 }
 
+
 def parsetime(s):
     h, m = s.split(":")
     return datetime.time(int(h), int(m), 0)
+
 
 def format_duration(mins):
     h = mins / 60
@@ -32,11 +34,13 @@ def format_duration(mins):
     else:
         return "%dh" % h
 
+
 def format_td(td):
     if td.days > 0:
         return "%d days" % td.days
     else:
-        return format_duration(td.seconds/60)
+        return format_duration(td.seconds / 60)
+
 
 class Log(object):
     def __init__(self, begin, until, body):
@@ -62,7 +66,7 @@ class Log(object):
         return format_duration(self.duration)
 
     def output(self, project=None):
-        head = [ self.begin.strftime("%d %B: %H:%M-") ]
+        head = [self.begin.strftime("%d %B: %H:%M-")]
         if self.until:
             head.append(self.until.strftime("%H:%M "))
             head.append(format_duration(self.duration))
@@ -70,6 +74,7 @@ class Log(object):
             head.append(" [%s]" % project)
         print "".join(head)
         print self.body
+
 
 class LogParser(object):
     re_yearline = re.compile("(?:^|\n)\s*(?P<year>[12][0-9]{3})\s*(?:$|\n)")
@@ -121,7 +126,7 @@ class Project(object):
         self.name = os.path.basename(path)
         self.fname = os.path.join(self.path, basename)
         self.tags = set()
-        self.editor = os.environ.get("EDITOR","vim")
+        self.editor = os.environ.get("EDITOR", "vim")
         # TODO: make configurable, use as default of no Tags: header is found
         # in metadata
         if "dev/deb" in self.path: self.tags.add("debian")
@@ -217,8 +222,9 @@ class Project(object):
                 cmdline.append("-e")
                 cmdline.append("sh")
                 cmdline.append("-c")
-                cmdline.append(self.editor+" ore")
-            p = subprocess.Popen(cmdline, stdin=devnull, stdout=devnull, stderr=devnull, cwd=self.path, close_fds=True)
+                cmdline.append(self.editor + " ore")
+            subprocess.Popen(cmdline, stdin=devnull, stdout=devnull, stderr=devnull, cwd=self.path, close_fds=True)
+            # Let go in the background
 
     def run_editor(self):
         p = subprocess.Popen([self.editor, "ore"], cwd=self.path, close_fds=True)
@@ -261,9 +267,8 @@ class Project(object):
                 if fn.startswith("."): continue
                 d = os.path.join(root, fn)
                 if os.path.isdir(d):
-                    for gd in self.gitdirs(depth-1, d):
+                    for gd in self.gitdirs(depth - 1, d):
                         yield gd
-
 
     def backup(self, tarout):
         # Backup the main todo/log file
@@ -281,7 +286,6 @@ class Project(object):
         # TODO: the content of directories optionally listed in metadata
         #       (documentation, archives)
         # (if you don't push, you don't back up, and it's fair enough)
-
 
     @classmethod
     def has_project(cls, path, basename="ore"):

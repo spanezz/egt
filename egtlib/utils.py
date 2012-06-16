@@ -4,6 +4,7 @@ import tempfile
 import os.path
 import os
 
+
 class atomic_writer(object):
     """
     Atomically write to a file
@@ -29,6 +30,7 @@ class atomic_writer(object):
         self.outfd.close()
         return False
 
+
 def intervals_intersect(p1s, p1e, p2s, p2e):
     """
     Return True if the two intervals intersect
@@ -36,4 +38,3 @@ def intervals_intersect(p1s, p1e, p2s, p2e):
     if p1e < p2s: return False
     if p1s > p2e: return False
     return True
-

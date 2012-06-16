@@ -11,6 +11,7 @@ from .utils import intervals_intersect
 
 log = logging.getLogger(__name__)
 
+
 class WeeklyReport(object):
     def __init__(self):
         self.projs = []
@@ -42,9 +43,9 @@ class WeeklyReport(object):
 
         res.update(
             count=count,
-            hours=mins/60,
-            hours_per_day=mins/60/days,
-            hours_per_workday=mins/60/5, # FIXME: properly compute work days in period
+            hours=mins / 60,
+            hours_per_day=mins / 60 / days,
+            hours_per_workday=mins / 60 / 5,  # FIXME: properly compute work days in period
             log=log,
         )
 
@@ -149,7 +150,6 @@ class Egt(object):
             if len(newdirs) != len(dirs):
                 dirs[0:len(dirs)] = newdirs
 
-
     def project_by_name(self, name):
         """
         Return a Project by its name
@@ -177,4 +177,3 @@ class Egt(object):
         for p in self.projects.itervalues():
             p.backup(tarout)
         tarout.close()
-

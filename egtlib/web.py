@@ -1,14 +1,15 @@
 import flask
-import egtlib
-import os.path
+
 
 #app = flask.Flask(__name__, template_folder=os.path.abspath("./templates"))
 app = flask.Flask(__name__)
+
 
 @app.route('/')
 def index():
     egt = app.make_egt()
     return flask.render_template("index.html", egt=egt)
+
 
 @app.route('/stats')
 def stats():
@@ -22,10 +23,11 @@ def stats():
         else:
             worked.append(p)
 
-    blanks.sort(key=lambda p:p.name)
-    worked.sort(key=lambda p:p.last_updated)
+    blanks.sort(key=lambda p: p.name)
+    worked.sort(key=lambda p: p.last_updated)
     projs = blanks + worked
     return flask.render_template("stats.html", blanks=blanks, worked=worked, projs=projs)
+
 
 @app.route('/weekrpt')
 @app.route('/weekrpt/<path:tags>')
