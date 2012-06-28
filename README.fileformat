@@ -28,3 +28,57 @@ Metadata fields at start of file:
   Editor: name
    Editor to use for this project. Defaults to $EDITOR from the environment, if
    defined, or else 'vim'.
+
+  Title: name
+   Freeform title for the project.
+
+
+Project log:
+
+  Starts with the first non-metadata line, uses the following format.
+
+  - An optional line with a year, used as a default for the following dates.
+  - A date + time range in the format "date: %H:%M-%H:%M", where date is 
+    something parsable by python-dateutils parsedate. If no year is 
+    specified it is taken from the previous line(s), or the current year 
+    if no year is found.
+  - A list of actions done in that time.
+
+  There is no whiteline between entries.
+
+  Example:
+
+     2012
+     28 giugno: 10:00-11:00
+      - done something
+      - done something else
+     29 giugno: 15:45-16:30
+      - done something different
+
+
+Next Actions:
+
+  This section is separated by the project log with a whiteline.
+
+  Whiteline separated lists of next actions; they may be introduced by 
+  a line of comma separated contexts.
+  Contexts that reference people may use the @nick syntax.
+
+  Example:
+
+     at home:
+     - do this
+     - do that
+
+     at home, @somebody:
+     - chat with @somebody about something
+
+     @somebodyelse
+     - ask about stuff
+
+
+Additional freeform informations:
+
+  The first line that starts with "\s*[#*] " marks the end of parsed data i
+  and the start of a freeform information section.
+
