@@ -79,6 +79,6 @@ Next Actions:
 
 Additional freeform informations:
 
-  The first line that starts with "\s*[#*] " marks the end of parsed data i
+  The first line that starts with "\s*[#*] " marks the end of parsed data
   and the start of a freeform information section.
 
