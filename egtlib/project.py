@@ -4,6 +4,7 @@ import subprocess
 import datetime
 import sys
 import re
+from .egtparser import BodyParser
 
 MONTHS = {
     "gennaio": 1,
@@ -25,7 +26,6 @@ def parsetime(s):
     h, m = s.split(":")
     return datetime.time(int(h), int(m), 0)
 
-
 def format_duration(mins):
     h = mins / 60
     m = mins % 60
@@ -33,7 +33,6 @@ def format_duration(mins):
         return "%dh %dm" % (h, m)
     else:
         return "%dh" % h
-
 
 def format_td(td):
     if td.days > 0:
@@ -196,7 +195,11 @@ class Project(object):
         self.log = list(LogParser().parse(head.split("\n")))
 
         # Parse/store body
-        self.body = body
+        self.body = body.split("\n")
+
+        bp = BodyParser(self.body)
+        #for i, m, l in annotate_with_indent_and_markers(self.body):
+            #print "%02d '%s' %s" % (i, " " if m is None else m, l)
 
     @property
     def last_updated(self):

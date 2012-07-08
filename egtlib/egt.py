@@ -1,12 +1,8 @@
 from __future__ import absolute_import
-import os
-import os.path
 import logging
 import datetime
-import itertools
 import sys
 from .state import State
-from .project import Project
 from .utils import intervals_intersect
 
 log = logging.getLogger(__name__)
