@@ -1,3 +1,5 @@
+import re
+
 
 def annotate_with_indent_and_markers(lines):
     """
@@ -47,6 +49,7 @@ def annotate_with_indent_and_markers(lines):
     for l in last_empty_lines:
         yield 0, ' ', l
 
+
 class GeneratorLookahead(object):
     """
     Wrap a generator providing a 1-element lookahead
@@ -68,6 +71,7 @@ class GeneratorLookahead(object):
             return self.lookahead
         else:
             return self.gen.next()
+
 
 class Spacer(object):
     TAG = "spacer"
@@ -128,7 +132,7 @@ class BodyParser(object):
                 return
             elif i == 0 and l.rstrip().endswith(":"):
                 # Start of a context line
-                contexts = frozenset(l.strip(" :\t").split())
+                contexts = frozenset(re.split(r"\s*,\s*", l.strip(" :\t")))
                 self.parse_next_action_list(contexts)
             elif m == '-':
                 # Contextless context lines
@@ -167,5 +171,3 @@ class BodyParser(object):
         while True:
             i, m, l = self.lines.pop()
             self.parsed[-1].lines.append(l)
-
-

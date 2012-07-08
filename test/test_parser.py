@@ -1,6 +1,4 @@
 import unittest
-import os
-import os.path
 from egtlib import egtparser
 
 class TestAnnotator(unittest.TestCase):
@@ -102,7 +100,7 @@ class TestParser(unittest.TestCase):
     def test_mixed(self):
         sample = [
             "Remember, remember, the 5th of November!",
-            "context:",
+            "context, context1:",
             " - foo",
             " - bar",
             "",
@@ -115,4 +113,4 @@ class TestParser(unittest.TestCase):
         ]
         parsed = egtparser.BodyParser(sample).parse_body()
         self.assertEquals([x.TAG for x in parsed], ["freeform", "next-actions", "spacer", "next-actions", "someday-maybe"])
-
+        self.assertEquals(sorted(parsed[1].contexts), ["context", "context1"])
