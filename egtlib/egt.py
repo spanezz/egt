@@ -86,6 +86,19 @@ class Egt(object):
     def scan(self):
         return self.state.rescan()
 
+    def print_next_actions(self, contexts):
+        for p in self.projects.itervalues():
+            has_name = False
+            for el in p.body_parsed:
+                if el.TAG != "next-actions": continue
+                if contexts and el.contexts.isdisjoint(contexts): continue
+                if not has_name:
+                    has_name = True
+                    print " * %s" % p.name
+                for l in el.lines:
+                    print l
+
+
     def weekrpt(self, tags=None, end=None, days=7):
         rep = WeeklyReport()
         if tags is None:

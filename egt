@@ -88,6 +88,14 @@ class EgtApp(cliapp.Application):
             proj = e.project_by_name(name)
             proj.run_editor()
 
+    def cmd_when(self, args):
+        """
+        Show next-action lists that intersect the given context set
+        """
+        contexts = frozenset(args)
+        e = self.make_egt()
+        e.print_next_actions(contexts)
+
     def cmd_weekrpt(self, args):
         """
         Compute weekly reports
