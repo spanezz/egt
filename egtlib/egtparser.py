@@ -1,5 +1,14 @@
 
 def annotate_with_indent_and_markers(lines):
+    """
+    Annotate each line with indent level and bullet marker
+
+    Markers are:
+        None: ordinary line
+         ' ': empty line
+         '-': dash bullet
+         '*': star bullet
+    """
     last_indent = 0
     last_empty_lines = []
     for l in lines:
@@ -60,51 +69,103 @@ class GeneratorLookahead(object):
         else:
             return self.gen.next()
 
+class Spacer(object):
+    TAG = "spacer"
+
+    def __init__(self, lines):
+        self.lines = lines
+
+class FreeformText(object):
+    TAG = "freeform"
+
+    def __init__(self, lines):
+        self.lines = lines
+
+class NextActions(object):
+    TAG = "next-actions"
+
+    def __init__(self, lines, contexts=None):
+        self.contexts = contexts if contexts is not None else frozenset()
+        self.lines = lines
+
+class SomedayMaybe(object):
+    TAG = "someday-maybe"
+
+    def __init__(self, lines):
+        self.lines = lines
+
+
 class BodyParser(object):
     def __init__(self, lines):
         # Annotated lines generator
         self.lines = GeneratorLookahead(annotate_with_indent_and_markers(lines))
+        self.parsed = []
+
+    def add_to_spacer(self, line):
+        if not self.parsed or self.parsed[-1].TAG != Spacer.TAG:
+            self.parsed.append(Spacer([]))
+        self.parsed[-1].lines.append(line)
+
+    def add_to_freeform(self, line):
+        if not self.parsed or self.parsed[-1].TAG != FreeformText.TAG:
+            self.parsed.append(FreeformText([]))
+        self.parsed[-1].lines.append(line)
 
     def parse_body(self):
-        self.parse_next_actions()
-        self.parse_someday_maybe()
+        try:
+            self.parse_next_actions()
+            self.parse_someday_maybe()
+        except StopIteration:
+            pass
+        return self.parsed
 
     def parse_next_actions(self):
         while True:
             i, m, l = self.lines.peek()
 
-            # End of next actions, return the first line of someday/maybe
             if m == '*':
+                # End of next actions, return the first line of someday/maybe
                 return
-
-            # Start of a context line
             elif i == 0 and l.rstrip().endswith(":"):
+                # Start of a context line
                 contexts = frozenset(l.strip(" :\t").split())
-                self.lines.pop()
                 self.parse_next_action_list(contexts)
-
-            # Contextless context lines
             elif m == '-':
-                self.parse_next_action_list(frozenset())
-
-            # Empty lines
+                # Contextless context lines
+                self.parse_next_action_list()
             elif m == ' ':
-                # TODO append it somewhere
+                # Empty lines
+                self.add_to_spacer(l)
                 self.lines.pop()
-
-            # Freeform text
             else:
-                # TODO: append it somewhere
+                # Freeform text
+                self.add_to_freeform(l)
                 self.lines.pop()
 
-    def parse_next_action_list(self):
-        last_indent = 0
-        #for i, m, l, in self.lines:
+    def parse_next_action_list(self, contexts=None):
+        na = NextActions([], contexts)
+        self.parsed.append(na)
+
+        if contexts is not None:
+            # Store the context line
+            na.lines.append(self.lines.pop()[2])
+
+        last_indent = None
+        while True:
+            i, m, l = self.lines.peek()
+            if m == "*": break
+            if last_indent is None:
+                last_indent = i
+            if i < last_indent:
+                break
+            na.lines.append(l)
+            self.lines.pop()
+            last_indent = i
 
     def parse_someday_maybe(self):
-        someday_maybe = []
+        self.parsed.append(SomedayMaybe([]))
         while True:
-            i, m, l = self.lines,pop()
-            someday_maybe.append(l)
+            i, m, l = self.lines.pop()
+            self.parsed[-1].lines.append(l)
 
 

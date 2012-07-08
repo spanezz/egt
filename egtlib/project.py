@@ -198,6 +198,9 @@ class Project(object):
         self.body = body.split("\n")
 
         bp = BodyParser(self.body)
+        bp.parse_body()
+        self.body_parsed = bp.parsed
+        #print repr(bp.parsed)
         #for i, m, l in annotate_with_indent_and_markers(self.body):
             #print "%02d '%s' %s" % (i, " " if m is None else m, l)
 

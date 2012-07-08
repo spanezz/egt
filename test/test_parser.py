@@ -57,3 +57,62 @@ class TestAnnotator(unittest.TestCase):
             (0, None),
         ])
 
+class TestParser(unittest.TestCase):
+    def test_simple(self):
+        sample = []
+        parsed = egtparser.BodyParser(sample).parse_body()
+        self.assertEquals(parsed, [])
+
+    def test_spacers(self):
+        sample = ["", "", ""]
+        parsed = egtparser.BodyParser(sample).parse_body()
+        self.assertEquals([x.TAG for x in parsed], ["spacer"])
+
+    def test_freeform(self):
+        sample = ["foo", "bar"]
+        parsed = egtparser.BodyParser(sample).parse_body()
+        self.assertEquals([x.TAG for x in parsed], ["freeform"])
+
+    def test_nextactions(self):
+        sample = [
+            " - contextless",
+            " - multiline",
+            "   foo",
+            "",
+            "   bar",
+            " - baz",
+            "",
+            "context:",
+            " - foo",
+            " - bar",
+        ]
+        parsed = egtparser.BodyParser(sample).parse_body()
+        self.assertEquals([x.TAG for x in parsed], ["next-actions", "spacer", "next-actions"])
+
+    def test_somedaymaybe(self):
+        sample = [
+            " * title",
+            "someday, maybe",
+            "",
+            "someday, maybe"
+        ]
+        parsed = egtparser.BodyParser(sample).parse_body()
+        self.assertEquals([x.TAG for x in parsed], ["someday-maybe"])
+
+    def test_mixed(self):
+        sample = [
+            "Remember, remember, the 5th of November!",
+            "context:",
+            " - foo",
+            " - bar",
+            "",
+            "context:",
+            " - foo",
+            " - bar",
+            " * title",
+            "",
+            "someday, maybe",
+        ]
+        parsed = egtparser.BodyParser(sample).parse_body()
+        self.assertEquals([x.TAG for x in parsed], ["freeform", "next-actions", "spacer", "next-actions", "someday-maybe"])
+
