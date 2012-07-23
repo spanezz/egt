@@ -1,5 +1,7 @@
 import flask
-
+from flask import request
+from .utils import intervals_intersect
+import datetime
 
 #app = flask.Flask(__name__, template_folder=os.path.abspath("./templates"))
 app = flask.Flask(__name__)
@@ -7,12 +9,18 @@ app = flask.Flask(__name__)
 
 @app.route('/')
 def index():
+    """
+    Main index page
+    """
     egt = app.make_egt()
     return flask.render_template("index.html", egt=egt)
 
 
 @app.route('/stats')
 def stats():
+    """
+    General statistics
+    """
     egt = app.make_egt()
 
     blanks = []
@@ -32,6 +40,9 @@ def stats():
 @app.route('/weekrpt')
 @app.route('/weekrpt/<path:tags>')
 def weekrpt(tags=None):
+    """
+    Weekly report
+    """
     egt = app.make_egt()
     if tags is None:
         rep = egt.weekrpt()
@@ -41,5 +52,41 @@ def weekrpt(tags=None):
 
 @app.route('/cal')
 def cal():
+    """
+    Activity calendar
+    """
     egt = app.make_egt()
     return flask.render_template("calendar.html", egt=egt)
+
+@app.route('/api/events')
+def api_events():
+    """
+    Return events as JSON
+    """
+    egt = app.make_egt()
+
+    # Parse date ranges
+    since = request.args.get("since", None)
+    until = request.args.get("until", None)
+    if since is not None: since = datetime.datetime.fromtimestamp(long(since) / 1000.0).date()
+    if until is not None: until = datetime.datetime.fromtimestamp(long(until) / 1000.0).date()
+
+    log = []
+    count = 0
+    for name, p in egt.projects.iteritems():
+        for l in p.log:
+            if intervals_intersect(l.begin.date(), l.until.date() if l.until else datetime.date.today(), since, until):
+                print repr(l.begin), repr(l.until)
+                l_until = l.until if l.until is not None else datetime.datetime.utcnow()
+                log.append(dict(
+                    id=count,
+                    title=p.name,
+                    allDay=False,
+                    start=l.begin.strftime("%s"),
+                    end=l_until.strftime("%s"),
+                    description=l.body,
+                    className="log",
+                ))
+                count += 1
+
+    return flask.jsonify(log=log, count=count)
