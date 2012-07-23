@@ -76,7 +76,6 @@ def api_events():
     for name, p in egt.projects.iteritems():
         for l in p.log:
             if intervals_intersect(l.begin.date(), l.until.date() if l.until else datetime.date.today(), since, until):
-                print repr(l.begin), repr(l.until)
                 l_until = l.until if l.until is not None else datetime.datetime.utcnow()
                 log.append(dict(
                     id=count,
