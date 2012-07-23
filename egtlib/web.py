@@ -38,3 +38,8 @@ def weekrpt(tags=None):
     else:
         rep = egt.weekrpt(tags=frozenset(tags.split("/")))
     return flask.render_template("weekrpt.html", rep=rep)
+
+@app.route('/cal')
+def cal():
+    egt = app.make_egt()
+    return flask.render_template("calendar.html", egt=egt)

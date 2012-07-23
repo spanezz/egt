@@ -1,0 +1,59 @@
+<html>
+<head>
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='css/fullcalendar.css') }}">
+<script src="{{ url_for('static', filename='js/jquery-1.7.2.min.js') }}"> </script>
+<script src="{{ url_for('static', filename='js/fullcalendar.min.js') }}"> </script>
+<script type="text/javascript">
+$(function() {
+    $('#calendar').fullCalendar({
+        header: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'month,agendaWeek,agendaDay'
+        },
+        defaultView: 'agendaWeek',
+        selectable: true,
+        editable: false,
+        ignoreTimezone: false,
+//        events: function(start, end, callback) {
+//            $.ajax({
+//                url: API_URL + "appointments/?limit=0&" + API_ARGS,
+//                data: {
+//                  "since__lte": end,
+//                  "until__gte": start,
+//                },
+//                dataType: 'json',
+//                success: function(data) {
+//                    console.log("Populate calendar", data);
+//                    var events = $.map(data.objects, function(el, idx) {
+//                        return api_to_event(el);
+//                    });
+//                    callback(events);
+//                },
+//                error: function(xhr) { log_tastypie_error(xhr); },
+//            });
+//        },
+//        select: function(start, end, allDay) {
+//            new_contact.event_editor("create", start, end, allDay);
+//        },
+//
+//        eventClick: function(event, jsEvent, view) {
+//            new_contact.event_editor("edit", event);
+//        },
+//
+//        eventDrop: function(event, delta) {
+//            ajax_update_event(event);
+//        },
+//        eventResize: function(event, delta) {
+//            ajax_update_event(event);
+//        },
+    });
+});
+</script>
+</head>
+
+<body>
+    <h1>Calendar</h1>
+    <div style="width: 100%" id="calendar"></div>
+</body>
+</html>
