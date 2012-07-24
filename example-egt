@@ -1,0 +1,22 @@
+2012
+24 luglio: 16:00-18:00
+ - example log entry
+25 luglio:  8:00-12:00
+ - another log entry
+ - anything goes here, as long as it starts with whitespace and it does not
+   contain empty lines
+ - logs are terminated with an empty line
+
+ - this is a next-action entry
+ - this is another next-action entry
+
+home:
+ - next action entries can be tagged with contexts
+
+work, john:
+ - there can be more contexts, comma-separated
+
+ * Someday/maybe
+
+The first line that starts with "\s*[#*] " marks the end of parsed data and the
+start of a freeform information section.
