@@ -71,21 +71,56 @@ def api_events():
     if since is not None: since = datetime.datetime.fromtimestamp(long(since) / 1000.0).date()
     if until is not None: until = datetime.datetime.fromtimestamp(long(until) / 1000.0).date()
 
-    log = []
+    def ser_dt(dt):
+        if dt is None:
+            return None
+        return dt.strftime("%s")
+
+    events = []
     count = 0
+
+    # Add logs
     for name, p in egt.projects.iteritems():
         for l in p.log:
             if intervals_intersect(l.begin.date(), l.until.date() if l.until else datetime.date.today(), since, until):
                 l_until = l.until if l.until is not None else datetime.datetime.utcnow()
-                log.append(dict(
+                events.append(dict(
                     id=count,
                     title=p.name,
                     allDay=False,
-                    start=l.begin.strftime("%s"),
-                    end=l_until.strftime("%s"),
+                    start=ser_dt(l.begin),
+                    end=ser_dt(l_until),
                     description=l.body,
                     className="log",
+                    color="#689",
                 ))
                 count += 1
 
-    return flask.jsonify(log=log, count=count)
+    # Add next-actions with date contexts
+    for name, p in egt.projects.iteritems():
+        for na in p.next_actions:
+            if na.event is None: continue
+            d_since = na.event.get("start", None)
+            if d_since is not None: d_since = d_since.date()
+            d_until = na.event.get("end", None)
+            if d_until is not None:
+                d_until = d_until.date()
+            else:
+                d_until = d_since
+            if not intervals_intersect(d_since, d_until, since, until): continue
+            ev = dict(
+                id=count,
+                allDay=na.event["allDay"],
+                start=ser_dt(na.event["start"]),
+                end=ser_dt(na.event["end"]),
+                description="\n".join(na.lines),
+                className="cal",
+            )
+            if len(na.lines) > 1:
+                ev["title"] = "%s: %s" % (p.name, na.lines[1].strip(" -"))
+            else:
+                ev["title"] = p.name
+            events.append(ev)
+            count += 1
+
+    return flask.jsonify(events=events, count=count)

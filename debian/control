@@ -12,7 +12,7 @@ Standards-Version: 3.9.1.0
 Package: python-egtlib
 Section: python
 Architecture: all
-Depends: python, python-xdg, ${python:Depends}, ${misc:Depends}
+Depends: python, python-xdg, python-dateutil, ${python:Depends}, ${misc:Depends}
 Description: Enrico's Getting Things Done backend code
  .
 

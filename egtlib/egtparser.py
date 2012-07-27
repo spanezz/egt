@@ -1,4 +1,9 @@
+# coding: utf8
+from __future__ import absolute_import
 import re
+import datetime
+import dateutil.parser
+from .dateutil import get_parserinfo
 
 
 def annotate_with_indent_and_markers(lines):
@@ -73,6 +78,55 @@ class GeneratorLookahead(object):
             return self.gen.next()
 
 
+class EventParser(object):
+    def __init__(self, lang):
+        # Defaults for missing parsedate values
+        self.default = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        self.parserinfo = get_parserinfo(lang)
+        # TODO: remember the last date to use as default for time-only things
+
+    def _parse(self, s, set_default=True):
+        try:
+            d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
+            if set_default:
+                self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
+            return d
+        except ValueError, e:
+            return None
+
+    def _to_event(self, dt):
+        if dt is None: return None
+        return dict(
+            start=dt,
+            end=None,
+            allDay=(dt.hour == 0 and dt.minute == 0 and dt.second == 0)
+        )
+
+    def parsedate(self, s):
+        """
+        Return the parsed date, or None if it wasn't recognised
+        """
+        if not s:
+            return None
+        if " -- " in s:
+            #print "R"
+            # Parse range
+            since, until = s.split(" -- ", 1)
+            since = self._parse(since)
+            until = self._parse(until, set_default=False)
+            return dict(
+                start=since,
+                end=until,
+                allDay=False,
+            )
+        elif s[0].isdigit():
+            #print "D"
+            return self._to_event(self._parse(s))
+        elif s.startswith("d:"):
+            #print "P"
+            return self._to_event(self._parse(s[2:]))
+        return None
+
 class Spacer(object):
     TAG = "spacer"
 
@@ -88,9 +142,17 @@ class FreeformText(object):
 class NextActions(object):
     TAG = "next-actions"
 
-    def __init__(self, lines, contexts=None):
-        self.contexts = contexts if contexts is not None else frozenset()
+    def __init__(self, lines, contexts=None, event=None):
+        # TODO: identify datetimes and parse them into datetime objects
+        self.contexts = frozenset(contexts) if contexts is not None else frozenset()
         self.lines = lines
+        self.event = event
+
+    def at(self, ev):
+        """
+        Return a copy of this next action list, with a given event
+        """
+        return NextActions(list(self.lines), self.contexts, ev)
 
 class SomedayMaybe(object):
     TAG = "someday-maybe"
@@ -100,7 +162,8 @@ class SomedayMaybe(object):
 
 
 class BodyParser(object):
-    def __init__(self, lines):
+    def __init__(self, lines, lang=None):
+        self.lang = lang
         # Annotated lines generator
         self.lines = GeneratorLookahead(annotate_with_indent_and_markers(lines))
         self.parsed = []
@@ -124,6 +187,7 @@ class BodyParser(object):
         return self.parsed
 
     def parse_next_actions(self):
+        eparser = EventParser(self.lang)
         while True:
             i, m, l = self.lines.peek()
 
@@ -132,8 +196,15 @@ class BodyParser(object):
                 return
             elif i == 0 and l.rstrip().endswith(":"):
                 # Start of a context line
-                contexts = frozenset(re.split(r"\s*,\s*", l.strip(" :\t")))
-                self.parse_next_action_list(contexts)
+                contexts = []
+                events = []
+                for t in re.split(r"\s*,\s*", l.strip(" :\t")):
+                    ev = eparser.parsedate(t)
+                    if ev is not None:
+                        events.append(ev)
+                    else:
+                        contexts.append(t)
+                self.parse_next_action_list(contexts, events)
             elif m == '-':
                 # Contextless context lines
                 self.parse_next_action_list()
@@ -146,9 +217,8 @@ class BodyParser(object):
                 self.add_to_freeform(l)
                 self.lines.pop()
 
-    def parse_next_action_list(self, contexts=None):
+    def parse_next_action_list(self, contexts=None, events=[]):
         na = NextActions([], contexts)
-        self.parsed.append(na)
 
         if contexts is not None:
             # Store the context line
@@ -165,6 +235,12 @@ class BodyParser(object):
             na.lines.append(l)
             self.lines.pop()
             last_indent = i
+
+        if not events:
+            self.parsed.append(na)
+        else:
+            for e in events:
+                self.parsed.append(na.at(e))
 
     def parse_someday_maybe(self):
         self.parsed.append(SomedayMaybe([]))

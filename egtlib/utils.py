@@ -35,6 +35,6 @@ def intervals_intersect(p1s, p1e, p2s, p2e):
     """
     Return True if the two intervals intersect
     """
-    if p1e < p2s: return False
-    if p1s > p2e: return False
+    if p1e is not None and p2s is not None and p1e < p2s: return False
+    if p1s is not None and p2e is not None and p1s > p2e: return False
     return True

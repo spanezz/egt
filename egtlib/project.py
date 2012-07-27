@@ -232,6 +232,12 @@ class Project(object):
     def formatted_tags(self):
         return ", ".join(sorted(self.tags))
 
+    @property
+    def next_actions(self):
+        for el in self.body_parsed:
+            if el.TAG != "next-actions": continue
+            yield el
+
     def spawn_terminal(self, with_editor=False):
         import pipes
         with open("/dev/null", "rw+") as devnull:
