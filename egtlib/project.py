@@ -5,6 +5,9 @@ import datetime
 import sys
 import re
 from .egtparser import BodyParser
+import logging
+
+log = logging.getLogger(__name__)
 
 MONTHS = {
     "gennaio": 1,
@@ -246,6 +249,15 @@ class Project(object):
     def run_editor(self):
         p = subprocess.Popen([self.editor, self.fname], cwd=self.path, close_fds=True)
         p.wait()
+
+    def run_grep(self, args):
+        for gd in self.gitdirs():
+            cwd = os.path.abspath(os.path.join(gd, ".."))
+            cmd = ["git", "grep"] + args
+            log.info("%s: git grep %s", cwd, " ".join(cmd))
+            p = subprocess.Popen(cmd, cwd=cwd, close_fds=True)
+            p.wait()
+
 
     def summary(self, out=sys.stdout):
         mins = self.elapsed

@@ -88,6 +88,14 @@ class EgtApp(cliapp.Application):
             proj = e.project_by_name(name)
             proj.run_editor()
 
+    def cmd_grep(self, args):
+        """
+        Open a terminal in a project directory, and edit the project file.
+        """
+        e = self.make_egt()
+        for name, proj in e.projects.iteritems():
+            proj.run_grep(args)
+
     def cmd_when(self, args):
         """
         Show next-action lists that intersect the given context set
