@@ -9,6 +9,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class Regexps(object):
     """
     Repository of precompiled regexps
@@ -107,7 +108,7 @@ class EventParser(object):
             if set_default:
                 self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
             return d
-        except ValueError, e:
+        except ValueError:
             return None
 
     def _to_event(self, dt):
@@ -145,17 +146,20 @@ class EventParser(object):
             return self._to_event(self.parse(s[2:]))
         return None
 
+
 class Spacer(object):
     TAG = "spacer"
 
     def __init__(self, lines):
         self.lines = lines
 
+
 class FreeformText(object):
     TAG = "freeform"
 
     def __init__(self, lines):
         self.lines = lines
+
 
 class NextActions(object):
     TAG = "next-actions"
@@ -190,9 +194,11 @@ class SomedayMaybe(object):
     def __init__(self, lines):
         self.lines = lines
 
+
 def parsetime(s):
     h, m = s.split(":")
     return datetime.time(int(h), int(m), 0)
+
 
 class LogParser(object):
     def __init__(self, re=None, lang=None):
@@ -352,6 +358,7 @@ class BodyParser(object):
         while True:
             i, m, l = self.lines.pop()
             self.parsed[-1].lines.append(l)
+
 
 class ProjectParser(object):
     def __init__(self, re=None):

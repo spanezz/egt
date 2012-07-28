@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 import dateutil.parser
 
+
 class ItalianParserInfo(dateutil.parser.parserinfo):
     WEEKDAYS = [
         ("Lun", "Lunedì"),
@@ -26,6 +27,7 @@ class ItalianParserInfo(dateutil.parser.parserinfo):
         ("Nov", "Novembre"),
         ("Dic", "Dicembre"),
     ]
+
     def __init__(self, dayfirst=True, yearfirst=False):
         # for german dates, set ``dayfirst`` by default
         super(ItalianParserInfo, self).__init__(dayfirst=dayfirst, yearfirst=yearfirst)
@@ -35,10 +37,9 @@ by_lang = dict(
     it=ItalianParserInfo,
 )
 
+
 def get_parserinfo(lang):
     res = by_lang.get(lang, None)
     if res is not None:
         return res()
     return dateutil.parser.parserinfo()
-
-

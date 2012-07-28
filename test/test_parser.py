@@ -1,10 +1,12 @@
 import unittest
 from egtlib import egtparser
 
+
 class TestAnnotator(unittest.TestCase):
     """
     Test scan results
     """
+
     def test_indent(self):
         sample = [
             "zero",
@@ -54,6 +56,7 @@ class TestAnnotator(unittest.TestCase):
             (0, ' '),
             (0, None),
         ])
+
 
 class TestParser(unittest.TestCase):
     def test_simple(self):

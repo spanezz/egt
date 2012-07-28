@@ -11,6 +11,7 @@ LEAF_FILE_MARKERS = frozenset((
     "manage.py", "configure.ac", "setup.py", "Rakefile"
 ))
 
+
 def is_script(fname):
     """
     Check if a file looks like a script
@@ -19,6 +20,7 @@ def is_script(fname):
         if fd.readline().startswith("#!"):
             return True
     return False
+
 
 def scan(top=os.path.expanduser("~")):
     """

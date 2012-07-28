@@ -48,10 +48,9 @@ def format_duration(mins):
     else:
         return "%dh" % h
 
+
 def format_td(td):
     if td.days > 0:
         return "%d days" % td.days
     else:
         return format_duration(td.seconds / 60)
-
-

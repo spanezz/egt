@@ -110,7 +110,6 @@ class Egt(object):
                 for l in el.lines:
                     print l
 
-
     def weekrpt(self, tags=None, end=None, days=7):
         rep = WeeklyReport()
         for p in self.projects_by_tags(tags):

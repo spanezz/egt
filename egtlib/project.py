@@ -10,6 +10,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 def default_name(fname):
     """
     Guess a project name from the project file pathname
@@ -138,7 +139,6 @@ class Project(object):
             log.info("%s: git grep %s", cwd, " ".join(cmd))
             p = subprocess.Popen(cmd, cwd=cwd, close_fds=True)
             p.wait()
-
 
     def summary(self, out=sys.stdout):
         mins = self.elapsed

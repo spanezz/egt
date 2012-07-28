@@ -8,12 +8,14 @@ if not basedir: basedir = os.getcwd()
 basedir = os.path.abspath(os.path.join(basedir, ".."))
 testdir = os.path.join(basedir, "test")
 
+
 class TestScan(unittest.TestCase):
     """
     Test scan results
     """
+
     def test_scan(self):
-        res = sorted([x[len(testdir)+10:] for x in scan(os.path.join(testdir, "testdata"))])
+        res = sorted([x[len(testdir) + 10:] for x in scan(os.path.join(testdir, "testdata"))])
         self.assertEqual(res, [
             "bar/ore",
             "baz/egt",
@@ -23,4 +25,3 @@ class TestScan(unittest.TestCase):
             "onedir/wibble.egt",
             "onedir/wobble.egt",
         ])
-

@@ -1,7 +1,8 @@
 # coding: utf8
 from __future__ import absolute_import
-from .utils import format_duration, format_td
+from .utils import format_duration
 import datetime
+
 
 class Log(object):
     def __init__(self, begin, until, body):
@@ -35,4 +36,3 @@ class Log(object):
             head.append(" [%s]" % project)
         print "".join(head)
         print self.body
-
