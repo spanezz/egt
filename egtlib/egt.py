@@ -123,14 +123,6 @@ class Egt(object):
         if end is None:
             end = start + datetime.timedelta(days=days)
 
-        try:
-            # http://blog.thescoop.org/archives/2007/07/31/django-ical-and-vobject/
-            import vobject
-            cal = vobject.iCalendar()
-            cal.add('method').value = 'PUBLISH'  # IE/Outlook needs this
-        except ImportError:
-            cal = None
-
         events = []
         for p in self.projects_by_tags(tags):
             for na in p.next_events(start, end):
@@ -138,28 +130,7 @@ class Egt(object):
 
         events.sort(key=lambda x: x.event["start"])
 
-        if cal is None:
-            pass
-        else:
-            for e in events:
-                e.add_to_vobject(cal)
-            print cal.serialize()
-
-#                # TODO: output as vcal
-#                ev = dict(
-#                    id=count,
-#                    allDay=na.event["allDay"],
-#                    start=ser_dt(na.event["start"]),
-#                    end=ser_dt(na.event["end"]),
-#                    description="\n".join(na.lines),
-#                    className="cal",
-#                )
-#                if len(na.lines) > 1:
-#                    ev["title"] = "%s: %s" % (p.name, na.lines[1].strip(" -"))
-#                else:
-#                    ev["title"] = p.name
-#                events.append(ev)
-#                count += 1
+        return events
 
     def backup(self, out=sys.stdout):
         import tarfile

@@ -17,6 +17,7 @@ class EgtApp(cliapp.Application):
     def add_settings(self):
         self.settings.string(['tag', 't'], "limit processing to projects with the given (comma separated) tag(s)", metavar="tag")
         self.settings.string(['backup-output'], "backup tarball to generate (by default it is sent to stdout) (the filename is passed to strftime, so you can use something like %Y-%m-%d in the configuration)", metavar="filename")
+        self.settings.boolean(['vcal'], "output events in vCalendar format")
 
     def make_egt(self):
         if self.settings["tag"]:
@@ -129,7 +130,25 @@ class EgtApp(cliapp.Application):
             end = datetime.datetime.strptime(args[0], "%Y-%m-%d").date()
         else:
             end = None
-        e.calendar(tags=self.settings["tag"].split(","))
+
+        events = e.calendar(tags=self.settings["tag"].split(","))
+
+        cal = None
+        if self.settings["vcal"]:
+            # http://blog.thescoop.org/archives/2007/07/31/django-ical-and-vobject/
+            import vobject
+            cal = vobject.iCalendar()
+            cal.add('method').value = 'PUBLISH'  # IE/Outlook needs this
+
+        if cal is None:
+            for e in events:
+                sys.stdout.write("\n".join(e.lines))
+                sys.stdout.write("\n")
+        else:
+            for e in events:
+                e.add_to_vobject(cal)
+            print cal.serialize()
+
 
     def cmd_backup(self, args):
         out = self.settings["backup-output"]
