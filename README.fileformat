@@ -40,22 +40,59 @@ Project log:
 
   Starts with the first non-metadata line, uses the following format.
 
-  - An optional line with a year, used as a default for the following dates.
-  - A date + time range in the format "date: %H:%M-%H:%M", where date is 
-    something parsable by python-dateutils parsedate. If no year is 
-    specified it is taken from the previous line(s), or the current year 
-    if no year is found.
-  - A list of actions done in that time.
+  Each log entry starts with a header line stating start and end of the entry,
+  followed by a freeform text without empty lines.
+
+  The header line is: "<date>: <start time>-<end-time>"
+
+  The times are in the format "hh:mm". The end time can be omitted for the
+  entry you are currently working on, and it will default to the current time.
+
+  The date can be anything you like, according to http://labix.org/python-dateutil/.
+  Use the "Lang" metadata to choose the language if you want to use day/month names.
+
+  If you use a partial date (like "june 28"), the missing bits (like the year)
+  are taken from the previous entry.
+
+  You can provide a date on a line by itself, introduced by one or more dashes,
+  to serve as a default for the following log entries. A 4-digit year, without
+  dashes, also works.
 
   There is no whiteline between entries.
 
   Example:
 
-     2012
-     28 giugno: 10:00-11:00
+     june 28, 2012: 10:00-11:00
       - done something
       - done something else
-     29 giugno: 15:45-16:30
+     june 29, 2012: 15:45-16:30
+      - done something different
+
+   or:
+
+     2012
+     june 28: 10:00-11:00
+      - done something
+      - done something else
+     june 29: 15:45-16:30
+      - done something different
+
+   or:
+
+     --june 2012
+     28: 10:00-11:00
+      - done something
+      - done something else
+     29: 15:45-16:30
+      - done something different
+
+   or:
+
+     --25 june 2012
+     thu: 10:00-11:00
+      - done something
+      - done something else
+     fri: 15:45-16:30
       - done something different
 
 

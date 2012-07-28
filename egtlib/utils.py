@@ -38,3 +38,20 @@ def intervals_intersect(p1s, p1e, p2s, p2e):
     if p1e is not None and p2s is not None and p1e < p2s: return False
     if p1s is not None and p2e is not None and p1s > p2e: return False
     return True
+
+
+def format_duration(mins):
+    h = mins / 60
+    m = mins % 60
+    if m:
+        return "%dh %dm" % (h, m)
+    else:
+        return "%dh" % h
+
+def format_td(td):
+    if td.days > 0:
+        return "%d days" % td.days
+    else:
+        return format_duration(td.seconds / 60)
+
+

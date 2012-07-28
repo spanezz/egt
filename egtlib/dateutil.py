@@ -31,6 +31,7 @@ class ItalianParserInfo(dateutil.parser.parserinfo):
         super(ItalianParserInfo, self).__init__(dayfirst=dayfirst, yearfirst=yearfirst)
 
 by_lang = dict(
+    en=dateutil.parser.parserinfo,
     it=ItalianParserInfo,
 )
 

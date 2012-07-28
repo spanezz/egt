@@ -4,123 +4,11 @@ import subprocess
 import datetime
 import sys
 import re
-from .egtparser import BodyParser
+from .egtparser import ProjectParser
+from .utils import format_duration, format_td
 import logging
 
 log = logging.getLogger(__name__)
-
-MONTHS = {
-    "gennaio": 1,
-    "febbraio": 2,
-    "marzo": 3,
-    "aprile": 4,
-    "maggio": 5,
-    "giugno": 6,
-    "luglio": 7,
-    "agosto": 8,
-    "settembre": 9,
-    "ottobre": 10,
-    "novembre": 11,
-    "dicembre": 12,
-}
-
-
-def parsetime(s):
-    h, m = s.split(":")
-    return datetime.time(int(h), int(m), 0)
-
-def format_duration(mins):
-    h = mins / 60
-    m = mins % 60
-    if m:
-        return "%dh %dm" % (h, m)
-    else:
-        return "%dh" % h
-
-def format_td(td):
-    if td.days > 0:
-        return "%d days" % td.days
-    else:
-        return format_duration(td.seconds / 60)
-
-
-class Log(object):
-    def __init__(self, begin, until, body):
-        self.begin = begin
-        self.until = until
-        self.body = body
-
-    @property
-    def duration(self):
-        """
-        Return the duration in minutes
-        """
-        if not self.until:
-            until = datetime.datetime.now()
-        else:
-            until = self.until
-
-        td = (until - self.begin)
-        return (td.days * 86400 + td.seconds) / 60
-
-    @property
-    def formatted_duration(self):
-        return format_duration(self.duration)
-
-    def output(self, project=None):
-        head = [self.begin.strftime("%d %B: %H:%M-")]
-        if self.until:
-            head.append(self.until.strftime("%H:%M "))
-            head.append(format_duration(self.duration))
-        if project is not None:
-            head.append(" [%s]" % project)
-        print "".join(head)
-        print self.body
-
-
-class LogParser(object):
-    re_yearline = re.compile("(?:^|\n)\s*(?P<year>[12][0-9]{3})\s*(?:$|\n)")
-    re_loghead = re.compile(r"^(?P<day>[0-9 ][0-9]) (?P<month>\w+)(?:\s+(?P<year>\d+))?:\s+(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?")
-
-    def __init__(self):
-        self.year = datetime.date.today().year
-        self.begin = None
-        self.until = None
-        self.logbody = []
-
-    def flush(self):
-        res = Log(self.begin, self.until, "\n".join(self.logbody))
-        self.begin = None
-        self.end = None
-        self.logbody = []
-        return res
-
-    def parse(self, lines):
-        for line in lines:
-            mo = self.re_yearline.match(line)
-            if mo:
-                if self.begin is not None: yield self.flush()
-                self.year = int(mo.group("year"))
-                continue
-
-            mo = self.re_loghead.match(line)
-            if mo:
-                if self.begin is not None: yield self.flush()
-                if mo.group("year"): self.year = int(mo.group("year"))
-                date = datetime.date(self.year, MONTHS[mo.group("month")], int(mo.group("day")))
-                self.begin = datetime.datetime.combine(date, parsetime(mo.group("start")))
-                if mo.group("end"):
-                    self.until = datetime.datetime.combine(date, parsetime(mo.group("end")))
-                    if self.until < self.begin:
-                        # Deal with intervals across midnight
-                        self.until += datetime.timedelta(days=1)
-                else:
-                    self.until = None
-                continue
-
-            self.logbody.append(line)
-        if self.begin is not None: yield self.flush()
-
 
 def default_name(fname):
     """
@@ -164,28 +52,12 @@ class Project(object):
         self.log = []
         self.body = None
 
-        re_secsep = re.compile("\n\n+")
+        self.parser = ProjectParser()
+        self.parser.parse(fname=self.fname)
 
-        with open(self.fname) as fd:
-            body = fd.read()
-
-        # Split on the first empty line
-        t = re_secsep.split(body, 1)
-        if len(t) == 1:
-            head, body = t[0], ""
-        else:
-            head, body = t
-        if not LogParser.re_yearline.match(head) and not LogParser.re_loghead.match(head):
-            # There seems to be metadata: parse it as RFC822 fields
-            import email
-            self.meta = dict(((k.lower(), v) for k, v in email.message_from_string(head).items()))
-
-            # Extract the log from the rest
-            t = re_secsep.split(body, 1)
-            if len(t) == 1:
-                head, body = "", t[0]
-            else:
-                head, body = t
+        self.meta = self.parser.meta
+        self.log = self.parser.log
+        self.body = self.parser.body
 
         # Amend path using meta's path if found
         self.path = self.meta.get("path", self.path)
@@ -193,19 +65,6 @@ class Project(object):
         self.editor = self.meta.get("editor", self.editor)
         if 'tags' in self.meta:
             self.tags = set(re.split("[ ,\t]+", self.meta["tags"]))
-
-        # Parse head as log entries
-        self.log = list(LogParser().parse(head.split("\n")))
-
-        # Parse/store body
-        self.body = body.split("\n")
-
-        bp = BodyParser(self.body, self.meta.get("lang", None))
-        bp.parse_body()
-        self.body_parsed = bp.parsed
-        #print repr(bp.parsed)
-        #for i, m, l in annotate_with_indent_and_markers(self.body):
-            #print "%02d '%s' %s" % (i, " " if m is None else m, l)
 
     @property
     def last_updated(self):

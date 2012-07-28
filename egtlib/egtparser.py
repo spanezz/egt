@@ -4,6 +4,20 @@ import re
 import datetime
 import dateutil.parser
 from .dateutil import get_parserinfo
+from .log import Log
+import logging
+
+log = logging.getLogger(__name__)
+
+class Regexps(object):
+    """
+    Repository of precompiled regexps
+    """
+    def __init__(self):
+        self.event_range = re.compile(r"\s*--\s*")
+        self.meta_head = re.compile(r"^\w.*:")
+        self.log_date = re.compile("^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
+        self.log_head = re.compile(r"^(?P<date>(?:\S| \d).*?):\s+(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?")
 
 
 def annotate_with_indent_and_markers(lines):
@@ -79,14 +93,15 @@ class GeneratorLookahead(object):
 
 
 class EventParser(object):
-    def __init__(self, lang):
+    def __init__(self, re=None, lang=None):
+        self.re = Regexps() if re is None else re
+        self.lang = lang
         # Defaults for missing parsedate values
-        self.re_range = re.compile(r"\s*--\s*")
         self.default = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         self.parserinfo = get_parserinfo(lang)
         # TODO: remember the last date to use as default for time-only things
 
-    def _parse(self, s, set_default=True):
+    def parse(self, s, set_default=True):
         try:
             d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
             if set_default:
@@ -109,14 +124,14 @@ class EventParser(object):
         """
         if not s:
             return None
-        mo = self.re_range.search(s)
+        mo = self.re.event_range.search(s)
         if mo:
             #print "R"
             # Parse range
             since = s[:mo.start()]
             until = s[mo.end():]
-            since = self._parse(since)
-            until = self._parse(until, set_default=False)
+            since = self.parse(since)
+            until = self.parse(until, set_default=False)
             return dict(
                 start=since,
                 end=until,
@@ -124,10 +139,10 @@ class EventParser(object):
             )
         elif s[0].isdigit():
             #print "D"
-            return self._to_event(self._parse(s))
+            return self._to_event(self.parse(s))
         elif s.startswith("d:"):
             #print "P"
-            return self._to_event(self._parse(s[2:]))
+            return self._to_event(self.parse(s[2:]))
         return None
 
 class Spacer(object):
@@ -163,9 +178,84 @@ class SomedayMaybe(object):
     def __init__(self, lines):
         self.lines = lines
 
+def parsetime(s):
+    h, m = s.split(":")
+    return datetime.time(int(h), int(m), 0)
+
+class LogParser(object):
+    def __init__(self, re=None, lang=None):
+        self.re = Regexps() if re is None else re
+        self.ep = EventParser(re=re, lang=lang)
+        self.ep.default = datetime.datetime(datetime.date.today().year, 1, 1)
+        self.begin = None
+        self.until = None
+        self.logbody = []
+
+    def flush(self):
+        res = Log(self.begin, self.until, "\n".join(self.logbody))
+        self.begin = None
+        self.end = None
+        self.logbody = []
+        return res
+
+    def is_log(self, lines):
+        """
+        Check if the next line looks like the start of a log block
+        """
+        first = lines.peek()
+        return self.re.log_date.match(first) or self.re.log_head.match(first)
+
+    def parse(self, lines):
+        entries = []
+        while True:
+            line = lines.next()
+            if not line: break
+
+            # Look for a date context
+            mo = self.re.log_date.match(line)
+            if mo:
+                if self.begin is not None:
+                    entries.append(self.flush())
+                val = mo.group("date") or mo.group("year")
+                log.debug("%s:%d: stand-alone date: %s", lines.fname, lines.lineno, val)
+                # Just parse the next line, storing it nowhere, but updating
+                # the 'default' datetime context
+                self.ep.parse(val)
+                continue
+
+            # Look for a log head
+            mo = self.re.log_head.match(line)
+            if mo:
+                if self.begin is not None:
+                    entries.append(self.flush())
+                log.debug("%s:%d: log header: %s %s-%s", lines.fname, lines.lineno, mo.group("date"), mo.group("start"), mo.group("end"))
+                date = self.ep.parse(mo.group("date"))
+                if date is None:
+                    log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, lines.lineno, mo.group("date"), self.ep.lang)
+                    date = self.ep.default
+                date = date.date()
+                self.begin = datetime.datetime.combine(date, parsetime(mo.group("start")))
+                if mo.group("end"):
+                    self.until = datetime.datetime.combine(date, parsetime(mo.group("end")))
+                    if self.until < self.begin:
+                        # Deal with intervals across midnight
+                        self.until += datetime.timedelta(days=1)
+                else:
+                    self.until = None
+                continue
+
+            # Else append to the previous log body
+            self.logbody.append(line)
+
+        if self.begin is not None:
+            entries.append(self.flush())
+
+        return entries
+
 
 class BodyParser(object):
-    def __init__(self, lines, lang=None):
+    def __init__(self, lines, re=None, lang=None):
+        self.re = Regexps() if re is None else re
         self.lang = lang
         # Annotated lines generator
         self.lines = GeneratorLookahead(annotate_with_indent_and_markers(lines))
@@ -190,7 +280,7 @@ class BodyParser(object):
         return self.parsed
 
     def parse_next_actions(self):
-        eparser = EventParser(self.lang)
+        eparser = EventParser(re=self.re, lang=self.lang)
         while True:
             i, m, l = self.lines.peek()
 
@@ -250,3 +340,119 @@ class BodyParser(object):
         while True:
             i, m, l = self.lines.pop()
             self.parsed[-1].lines.append(l)
+
+class ProjectParser(object):
+    def __init__(self, re=None):
+        self.re = Regexps() if re is None else re
+        self.lines = None
+        # Current line being parsed
+        self.lineno = 0
+        # Defaults
+        self.meta = dict()
+
+    def peek(self):
+        """
+        Return the next line to be parsed, without advancing the cursor.
+        Return None if we are at the end.
+        """
+        if self.lineno < len(self.lines):
+            return self.lines[self.lineno]
+        else:
+            return None
+
+    def next(self):
+        """
+        Return the next line to be parsed, advancing the cursor.
+        Return None if we are at the end.
+        """
+        if self.lineno < len(self.lines):
+            res = self.lines[self.lineno]
+            self.lineno += 1
+            return res
+        else:
+            return None
+
+    def discard(self):
+        """
+        Just advance the cursor to the next line
+        """
+        if self.lineno < len(self.lines):
+            self.lineno += 1
+
+    def skip_empty_lines(self):
+        while True:
+            l = self.peek()
+            if l is None: break
+            if l: break
+            self.discard()
+
+    def parse_meta(self):
+        first = self.peek()
+
+        self.firstline_meta = None
+        self.meta = dict()
+
+        # If it starts with a log, there is no metadata: stop
+        if self.re.log_date.match(first) or self.re.log_head.match(first):
+            return
+
+        # If the first line doesn't look like a header, stop
+        if not self.re.meta_head.match(first):
+            return
+
+        log.debug("%s:%d: parsing metadata", self.fname, self.lineno)
+        self.firstline_meta = self.lineno
+
+        # Get everything until we reach an empty line
+        meta = []
+        while True:
+            l = self.next()
+            # Stop at an empty line or at EOF
+            if not l: break
+            meta.append(l)
+
+        # Parse like an email headers
+        import email
+        self.meta = dict(((k.lower(), v) for k, v in email.message_from_string("\n".join(meta)).items()))
+
+    def parse_log(self):
+        lp = LogParser(re=self.re, lang=self.meta.get("lang", None))
+        if lp.is_log(self):
+            log.debug("%s:%d: parsing log", self.fname, self.lineno)
+            self.firstline_log = self.lineno
+            self.log = lp.parse(self)
+        else:
+            self.firstline_log = None
+            self.log = []
+
+    def parse_body(self):
+        log.debug("%s:%d: parsing body", self.fname, self.lineno)
+        bp = BodyParser(self.lines[self.lineno:], re=self.re, lang=self.meta.get("lang", None))
+        bp.parse_body()
+        self.body = bp.parsed
+
+    def parse(self, fname=None, fd=None):
+        self.fname = fname
+
+        # Read the file, split in trimmed lines
+        if fd is None:
+            with open(fname) as fd:
+                self.lines = [x.rstrip() for x in fd]
+        else:
+            self.lines = [x.rstrip() for x in fd]
+
+        # Reset current line cursor
+        self.lineno = 0
+
+        # Parse metadata
+        self.parse_meta()
+
+        self.skip_empty_lines()
+
+        # Parse log entries
+        self.parse_log()
+
+        self.skip_empty_lines()
+
+        # Parse/store body
+        self.parse_body()
