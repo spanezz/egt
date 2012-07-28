@@ -3,6 +3,7 @@ import cliapp
 import egtlib
 import datetime
 import sys
+import logging
 
 VERSION="0.1"
 
@@ -14,10 +15,23 @@ class EgtApp(cliapp.Application):
             description="Enrico's Getting Things Done",
         )
 
+    def setup_logging(self):
+        if not self.settings["log"] and (self.settings["verbose"] or self.settings["debug"]):
+            FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
+            if self.settings["debug"]:
+                logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
+            else:
+                logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
+        else:
+            super(EgtApp, self).setup_logging()
+
+
     def add_settings(self):
         self.settings.string(['tag', 't'], "limit processing to projects with the given (comma separated) tag(s)", metavar="tag")
         self.settings.string(['backup-output'], "backup tarball to generate (by default it is sent to stdout) (the filename is passed to strftime, so you can use something like %Y-%m-%d in the configuration)", metavar="filename")
         self.settings.boolean(['vcal'], "output events in vCalendar format")
+        self.settings.boolean(['verbose', 'v'], "verbose output")
+        self.settings.boolean(['debug'], "debug output")
 
     def make_egt(self):
         if self.settings["tag"]:
