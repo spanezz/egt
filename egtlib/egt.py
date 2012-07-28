@@ -89,7 +89,7 @@ class Egt(object):
     def print_next_actions(self, contexts):
         for p in self.projects.itervalues():
             has_name = False
-            for el in p.body_parsed:
+            for el in p.body:
                 if el.TAG != "next-actions": continue
                 if contexts and el.contexts.isdisjoint(contexts): continue
                 if not has_name:

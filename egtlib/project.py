@@ -93,7 +93,7 @@ class Project(object):
 
     @property
     def next_actions(self):
-        for el in self.body_parsed:
+        for el in self.body:
             if el.TAG != "next-actions": continue
             yield el
 
