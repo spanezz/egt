@@ -81,6 +81,7 @@ class GeneratorLookahead(object):
 class EventParser(object):
     def __init__(self, lang):
         # Defaults for missing parsedate values
+        self.re_range = re.compile(r"\s*--\s*")
         self.default = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         self.parserinfo = get_parserinfo(lang)
         # TODO: remember the last date to use as default for time-only things
@@ -108,10 +109,12 @@ class EventParser(object):
         """
         if not s:
             return None
-        if " -- " in s:
+        mo = self.re_range.search(s)
+        if mo:
             #print "R"
             # Parse range
-            since, until = s.split(" -- ", 1)
+            since = s[:mo.start()]
+            until = s[mo.end():]
             since = self._parse(since)
             until = self._parse(until, set_default=False)
             return dict(

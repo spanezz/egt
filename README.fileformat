@@ -32,6 +32,9 @@ Metadata fields at start of file:
   Title: name
    Freeform title for the project.
 
+  Lang: code
+   Language used for parsing dates. Only 'it' is supported at the moment.
+   English is the default.
 
 Project log:
 

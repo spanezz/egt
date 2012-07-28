@@ -200,7 +200,7 @@ class Project(object):
         # Parse/store body
         self.body = body.split("\n")
 
-        bp = BodyParser(self.body)
+        bp = BodyParser(self.body, self.meta.get("lang", None))
         bp.parse_body()
         self.body_parsed = bp.parsed
         #print repr(bp.parsed)
