@@ -303,9 +303,12 @@ class BodyParser(object):
             i, m, l = self.lines.peek()
 
             if m == '*':
+                log.debug("next action terminator '%s'", l)
                 # End of next actions, return the first line of someday/maybe
                 return
-            elif i == 0 and l.rstrip().endswith(":"):
+            elif i == 0 and l.endswith(":"):
+                #log.debug("%s:%d: next action context '%s'", self.lines.fname, self.lines.lineno, l)
+                log.debug("next action context '%s'", l)
                 # Start of a context line
                 contexts = []
                 events = []
@@ -317,13 +320,16 @@ class BodyParser(object):
                         contexts.append(t)
                 self.parse_next_action_list(contexts, events)
             elif m == '-':
+                log.debug("contextless next action list '%s'", l)
                 # Contextless context lines
                 self.parse_next_action_list()
             elif m == ' ':
+                log.debug("spacer '%s'", l)
                 # Empty lines
                 self.add_to_spacer(l)
                 self.lines.pop()
             else:
+                log.debug("freeform text '%s'", l)
                 # Freeform text
                 self.add_to_freeform(l)
                 self.lines.pop()
@@ -337,7 +343,10 @@ class BodyParser(object):
 
         last_indent = None
         while True:
-            i, m, l = self.lines.peek()
+            try:
+                i, m, l = self.lines.peek()
+            except StopIteration:
+                break
             if m == "*": break
             if last_indent is None:
                 last_indent = i
@@ -348,9 +357,11 @@ class BodyParser(object):
             last_indent = i
 
         if not events:
+            log.debug("Add eventless next action")
             self.parsed.append(na)
         else:
             for e in events:
+                log.debug("Add eventful next action")
                 self.parsed.append(na.at(e))
 
     def parse_someday_maybe(self):
