@@ -120,6 +120,17 @@ class EgtApp(cliapp.Application):
         for l, p in rep["log"]:
             l.output(p.name)
 
+    def cmd_cal(self, args):
+        """
+        Compute calendar of next actions
+        """
+        e = self.make_egt()
+        if args:
+            end = datetime.datetime.strptime(args[0], "%Y-%m-%d").date()
+        else:
+            end = None
+        e.calendar(tags=self.settings["tag"].split(","))
+
     def cmd_backup(self, args):
         out = self.settings["backup-output"]
         e = self.make_egt()

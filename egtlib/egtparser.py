@@ -172,6 +172,18 @@ class NextActions(object):
         """
         return NextActions(list(self.lines), self.contexts, ev)
 
+    def add_to_vobject(self, cal):
+        if self.event is None: return
+        vevent = cal.add("vevent")
+        vevent.add("categories").value = list(self.contexts)
+        vevent.add("dtstart").value = self.event["start"]
+        if self.event["end"]:
+            vevent.add("dtend").value = self.event["start"]
+        if len(self.lines) > 1:
+            vevent.add("summary").value = self.lines[1].strip(" -")
+        vevent.add("description").value = "\n".join(self.lines[1:])
+
+
 class SomedayMaybe(object):
     TAG = "someday-maybe"
 

@@ -83,6 +83,18 @@ class Egt(object):
                 return v
         return None
 
+    def projects_by_tags(self, tags=None):
+        """
+        Generate a sequence of projects which have all the given tags
+        """
+        if tags:
+            for p in self.projects.itervalues():
+                yield p
+        else:
+            for p in self.projects.itervalues():
+                if p.tags.issuperset(tags):
+                    yield p
+
     def scan(self):
         return self.state.rescan()
 
@@ -101,15 +113,53 @@ class Egt(object):
 
     def weekrpt(self, tags=None, end=None, days=7):
         rep = WeeklyReport()
-        if tags is None:
-            for p in self.projects.itervalues():
-                rep.add(p)
-        else:
-            for p in self.projects.itervalues():
-                if p.tags.issuperset(tags):
-                    rep.add(p)
-
+        for p in self.projects_by_tags(tags):
+            rep.add(p)
         return rep.report(end, days)
+
+    def calendar(self, tags=None, start=None, end=None, days=7):
+        if start is None:
+            start = datetime.date.today()
+        if end is None:
+            end = start + datetime.timedelta(days=days)
+
+        try:
+            # http://blog.thescoop.org/archives/2007/07/31/django-ical-and-vobject/
+            import vobject
+            cal = vobject.iCalendar()
+            cal.add('method').value = 'PUBLISH'  # IE/Outlook needs this
+        except ImportError:
+            cal = None
+
+        events = []
+        for p in self.projects_by_tags(tags):
+            for na in p.next_events(start, end):
+                events.append(na)
+
+        events.sort(key=lambda x: x.event["start"])
+
+        if cal is None:
+            pass
+        else:
+            for e in events:
+                e.add_to_vobject(cal)
+            print cal.serialize()
+
+#                # TODO: output as vcal
+#                ev = dict(
+#                    id=count,
+#                    allDay=na.event["allDay"],
+#                    start=ser_dt(na.event["start"]),
+#                    end=ser_dt(na.event["end"]),
+#                    description="\n".join(na.lines),
+#                    className="cal",
+#                )
+#                if len(na.lines) > 1:
+#                    ev["title"] = "%s: %s" % (p.name, na.lines[1].strip(" -"))
+#                else:
+#                    ev["title"] = p.name
+#                events.append(ev)
+#                count += 1
 
     def backup(self, out=sys.stdout):
         import tarfile

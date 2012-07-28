@@ -98,16 +98,7 @@ def api_events():
 
     # Add next-actions with date contexts
     for name, p in egt.projects.iteritems():
-        for na in p.next_actions:
-            if na.event is None: continue
-            d_since = na.event.get("start", None)
-            if d_since is not None: d_since = d_since.date()
-            d_until = na.event.get("end", None)
-            if d_until is not None:
-                d_until = d_until.date()
-            else:
-                d_until = d_since
-            if not intervals_intersect(d_since, d_until, since, until): continue
+        for na in p.next_events(since, until):
             ev = dict(
                 id=count,
                 allDay=na.event["allDay"],

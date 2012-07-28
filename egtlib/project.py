@@ -5,7 +5,7 @@ import datetime
 import sys
 import re
 from .egtparser import ProjectParser
-from .utils import format_duration, format_td
+from .utils import format_duration, format_td, intervals_intersect
 import logging
 
 log = logging.getLogger(__name__)
@@ -96,6 +96,22 @@ class Project(object):
         for el in self.body:
             if el.TAG != "next-actions": continue
             yield el
+
+    def next_events(self, since=None, until=None):
+        """
+        Return the next events within the given date range
+        """
+        for na in self.next_actions:
+            if na.event is None: continue
+            d_since = na.event.get("start", None)
+            if d_since is not None: d_since = d_since.date()
+            d_until = na.event.get("end", None)
+            if d_until is not None:
+                d_until = d_until.date()
+            else:
+                d_until = d_since
+            if not intervals_intersect(d_since, d_until, since, until): continue
+            yield na
 
     def spawn_terminal(self, with_editor=False):
         import pipes
