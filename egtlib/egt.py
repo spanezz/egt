@@ -87,7 +87,7 @@ class Egt(object):
         """
         Generate a sequence of projects which have all the given tags
         """
-        if tags:
+        if not tags:
             for p in self.projects.itervalues():
                 yield p
         else:
