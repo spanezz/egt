@@ -275,11 +275,13 @@ class LogParser(object):
 
 
 class BodyParser(object):
-    def __init__(self, lines, re=None, lang=None):
+    def __init__(self, lines, re=None, lang=None, fname=None, first_lineno=1):
         self.re = Regexps() if re is None else re
         self.lang = lang
+        self.fname = fname
+        self.first_lineno = first_lineno
         # Annotated lines generator
-        self.lines = GeneratorLookahead(annotate_with_indent_and_markers(lines))
+        self.lines = GeneratorLookahead(annotate_with_indent_and_markers(lines, first_lineno))
         self.parsed = []
 
     def add_to_spacer(self, line):
@@ -306,12 +308,12 @@ class BodyParser(object):
             lineno, i, m, l = self.lines.peek()
 
             if m == '*':
-                log.debug("next action terminator '%s'", l)
+                log.debug("%s:%d: next action terminator '%s'", self.fname, lineno, l)
                 # End of next actions, return the first line of someday/maybe
                 return
             elif i == 0 and l.endswith(":"):
                 #log.debug("%s:%d: next action context '%s'", self.lines.fname, self.lines.lineno, l)
-                log.debug("next action context '%s'", l)
+                log.debug("%s:%d: next action context '%s'", self.fname, lineno, l)
                 # Start of a context line
                 contexts = []
                 events = []
@@ -323,16 +325,16 @@ class BodyParser(object):
                         contexts.append(t)
                 self.parse_next_action_list(contexts, events)
             elif m == '-':
-                log.debug("contextless next action list '%s'", l)
+                log.debug("%s:%d: contextless next action list '%s'", self.fname, lineno, l)
                 # Contextless context lines
                 self.parse_next_action_list()
             elif m == ' ':
-                log.debug("spacer '%s'", l)
+                log.debug("%s:%d: spacer '%s'", self.fname, lineno, l)
                 # Empty lines
                 self.add_to_spacer(l)
                 self.lines.pop()
             else:
-                log.debug("freeform text '%s'", l)
+                log.debug("%s:%d: freeform text '%s'", self.fname, lineno, l)
                 # Freeform text
                 self.add_to_freeform(l)
                 self.lines.pop()
@@ -360,15 +362,15 @@ class BodyParser(object):
             last_indent = i
 
         if not events:
-            log.debug("Add eventless next action")
+            log.debug("%s:%d: add eventless next action", self.fname, lineno)
             self.parsed.append(na)
         else:
             for e in events:
-                log.debug("Add eventful next action")
+                log.debug("%s:%d: add eventful next action start=%s", self.fname, lineno, e["start"])
                 self.parsed.append(na.at(e))
 
     def parse_someday_maybe(self):
-        log.debug("Parsing someday/maybe")
+        log.debug("%s:%d: parsing someday/maybe", self.fname, self.lines.peek().num)
         self.parsed.append(SomedayMaybe([]))
         while True:
             lineno, i, m, l = self.lines.pop()
@@ -461,7 +463,7 @@ class ProjectParser(object):
 
     def parse_body(self):
         log.debug("%s:%d: parsing body", self.fname, self.lineno)
-        bp = BodyParser(self.lines[self.lineno:], re=self.re, lang=self.meta.get("lang", None))
+        bp = BodyParser(self.lines[self.lineno:], re=self.re, lang=self.meta.get("lang", None), fname=self.fname, first_lineno=self.lineno)
         bp.parse_body()
         self.body = bp.parsed
 
