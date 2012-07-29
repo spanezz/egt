@@ -17,7 +17,7 @@ class TestAnnotator(unittest.TestCase):
             " - three",
             "   three",
         ]
-        self.assertEquals([x[0] for x in egtparser.annotate_with_indent_and_markers(sample)],
+        self.assertEquals([x.ind for x in egtparser.annotate_with_indent_and_markers(sample)],
                           [0, 1, 2, 0, 1, 3, 3])
 
     def test_markers(self):
@@ -27,7 +27,7 @@ class TestAnnotator(unittest.TestCase):
             " - dash",
             " * star",
         ]
-        self.assertEquals([x[1] for x in egtparser.annotate_with_indent_and_markers(sample)],
+        self.assertEquals([x.mark for x in egtparser.annotate_with_indent_and_markers(sample)],
                           [None, ' ', '-', '*'])
 
     def test_manyfeatures(self):
@@ -43,7 +43,7 @@ class TestAnnotator(unittest.TestCase):
             "",
             "bar",
         ]
-        sample = list(x[:2] for x in egtparser.annotate_with_indent_and_markers(sample))
+        sample = list(x[1:3] for x in egtparser.annotate_with_indent_and_markers(sample))
         self.assertEquals(sample, [
             (0, None),
             (2, None),

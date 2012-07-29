@@ -6,8 +6,11 @@ import dateutil.parser
 from .dateutil import get_parserinfo
 from .log import Log
 import logging
+from collections import namedtuple
 
 log = logging.getLogger(__name__)
+
+Line = namedtuple("Line", ("num", "ind", "mark", "line"))
 
 
 class Regexps(object):
@@ -21,7 +24,7 @@ class Regexps(object):
         self.log_head = re.compile(r"^(?P<date>(?:\S| \d).*?):\s+(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?")
 
 
-def annotate_with_indent_and_markers(lines):
+def annotate_with_indent_and_markers(lines, first_lineno=1):
     """
     Annotate each line with indent level and bullet marker
 
@@ -33,11 +36,11 @@ def annotate_with_indent_and_markers(lines):
     """
     last_indent = 0
     last_empty_lines = []
-    for l in lines:
+    for lineno, l in enumerate(lines):
         if not l or l.isspace():
             # Empty line, get indent of previous line if followed by
             # continuation of same or higher indent level, else indent 0
-            last_empty_lines.append(l)
+            last_empty_lines.append((lineno, l))
         else:
             # Compute indent
             lev = 0
@@ -61,13 +64,13 @@ def annotate_with_indent_and_markers(lines):
                     empty_lev = last_indent
                 else:
                     empty_lev = 0
-                for x in last_empty_lines:
-                    yield empty_lev, ' ', x
+                for i, x in last_empty_lines:
+                    yield Line(first_lineno + i, empty_lev, ' ', x)
                 last_empty_lines = []
             last_indent = lev
-            yield lev, marker, l
-    for l in last_empty_lines:
-        yield 0, ' ', l
+            yield Line(first_lineno + lineno, lev, marker, l)
+    for i, l in last_empty_lines:
+        yield Line(first_lineno + i, 0, ' ', l)
 
 
 class GeneratorLookahead(object):
@@ -300,7 +303,7 @@ class BodyParser(object):
     def parse_next_actions(self):
         eparser = EventParser(re=self.re, lang=self.lang)
         while True:
-            i, m, l = self.lines.peek()
+            lineno, i, m, l = self.lines.peek()
 
             if m == '*':
                 log.debug("next action terminator '%s'", l)
@@ -339,12 +342,12 @@ class BodyParser(object):
 
         if contexts is not None:
             # Store the context line
-            na.lines.append(self.lines.pop()[2])
+            na.lines.append(self.lines.pop()[3])
 
         last_indent = None
         while True:
             try:
-                i, m, l = self.lines.peek()
+                lineno, i, m, l = self.lines.peek()
             except StopIteration:
                 break
             if m == "*": break
@@ -365,9 +368,10 @@ class BodyParser(object):
                 self.parsed.append(na.at(e))
 
     def parse_someday_maybe(self):
+        log.debug("Parsing someday/maybe")
         self.parsed.append(SomedayMaybe([]))
         while True:
-            i, m, l = self.lines.pop()
+            lineno, i, m, l = self.lines.pop()
             self.parsed[-1].lines.append(l)
 
 
