@@ -122,6 +122,8 @@ class Egt(object):
         if end is None:
             end = start + datetime.timedelta(days=days)
 
+        log.debug("Calendar %s--%s tags:%s", start, end, tags)
+
         events = []
         for p in self.projects_by_tags(tags):
             for na in p.next_events(start, end):

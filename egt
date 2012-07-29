@@ -33,11 +33,14 @@ class EgtApp(cliapp.Application):
         self.settings.boolean(['verbose', 'v'], "verbose output")
         self.settings.boolean(['debug'], "debug output")
 
-    def make_egt(self):
+    def get_tags(self):
         if self.settings["tag"]:
-            return egtlib.Egt(tags=self.settings["tag"].split(","))
+            return frozenset(self.settings["tag"].split(","))
         else:
-            return egtlib.Egt()
+            return frozenset()
+
+    def make_egt(self):
+        return egtlib.Egt(tags=self.get_tags())
 
     def cmd_scan(self, args):
         """
@@ -145,7 +148,7 @@ class EgtApp(cliapp.Application):
         else:
             end = None
 
-        events = e.calendar(tags=self.settings["tag"].split(","))
+        events = e.calendar(tags=self.get_tags())
 
         cal = None
         if self.settings["vcal"]:
