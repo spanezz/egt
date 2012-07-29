@@ -116,6 +116,20 @@ Next Actions:
      @somebodyelse
      - ask about stuff
 
+  The contexts can contain dates, in that case the entry will be used for the
+  calendar:
+
+     2012-07-12:
+      - entry with full date
+     d:mon:
+      - next monday (if the context doesn't start with a number, use 'd:' to
+        force interpretation as a date
+      - the previous date seen will be used as defaults, so this is 2012-07-16
+        (the first monday since 2012-07-12)
+     mon 12:00--13:00:
+      - event with start and end. '--' is used as a range marker, and to
+        recognise a date.
+
 
 Additional freeform informations:
 
