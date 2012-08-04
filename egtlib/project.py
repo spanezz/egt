@@ -140,24 +140,6 @@ class Project(object):
             p = subprocess.Popen(cmd, cwd=cwd, close_fds=True)
             p.wait()
 
-    def summary(self, out=sys.stdout):
-        mins = self.elapsed
-        lu = self.last_updated
-        stats = []
-        if self.tags:
-            stats.append("tags: %s" % ",".join(sorted(self.tags)))
-        if lu is None:
-            stats.append("never updated")
-        else:
-            stats.extend([
-                "%d log entries" % len(self.log),
-                "%s" % format_duration(mins),
-                "last %s (%s ago)" % (
-                    self.last_updated.strftime("%Y-%m-%d %H:%M"),
-                    format_td(datetime.datetime.now() - self.last_updated)),
-            ])
-        print "%s\t%s" % (self.name, ", ".join(stats))
-
     def gitdirs(self, depth=2, root=None):
         """
         Find all .git directories below the project path

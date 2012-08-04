@@ -40,17 +40,26 @@ def intervals_intersect(p1s, p1e, p2s, p2e):
     return True
 
 
-def format_duration(mins):
+def format_duration(mins, tabular=False):
     h = mins / 60
     m = mins % 60
-    if m:
-        return "%dh %dm" % (h, m)
+    if tabular:
+        return "%3dh %02dm" % (h, m)
     else:
-        return "%dh" % h
+        if m:
+            return "%dh %dm" % (h, m)
+        else:
+            return "%dh" % h
 
 
-def format_td(td):
-    if td.days > 0:
-        return "%d days" % td.days
+def format_td(td, tabular=False):
+    if tabular:
+        if td.days > 0:
+            return "%3d days" % td.days
+        else:
+            return format_duration(td.seconds / 60, tabular=True)
     else:
-        return format_duration(td.seconds / 60)
+        if td.days > 0:
+            return "%d days" % td.days
+        else:
+            return format_duration(td.seconds / 60)

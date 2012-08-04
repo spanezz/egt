@@ -65,6 +65,13 @@ class EgtApp(cliapp.Application):
                 print v.name.ljust(name_len), v.path
 
     def cmd_summary(self, args):
+        from egtlib.texttable import Texttable
+        from egtlib.utils import format_duration, format_td, intervals_intersect
+
+        table = Texttable()
+        table.set_deco(Texttable.HEADER)
+        table.set_cols_align(("l", "l", "r", "c", "r"))
+        table.add_row(("Name", "Tags", "Logs", "Hrs", "Last entry"))
         e = self.make_egt()
         if args:
             projs = (e.project(a) for a in args)
@@ -82,8 +89,29 @@ class EgtApp(cliapp.Application):
         blanks.sort(key=lambda p:p.name)
         worked.sort(key=lambda p:p.last_updated)
 
-        for p in blanks: p.summary()
-        for p in worked: p.summary()
+        now = datetime.datetime.now()
+
+        def add_summary(p):
+            table.add_row((
+                p.name,
+                " ".join(sorted(p.tags)),
+                len(p.log),
+                format_duration(p.elapsed, tabular=True) if p.last_updated else "--",
+                "%s ago" % format_td(now - p.last_updated, tabular=True) if p.last_updated else "--",
+            ))
+
+#        res["mins"] = self.elapsed
+#        res["last"] = self.last_updated
+#        res["tags"] = self.tags
+#        res["entries"] = len(self.log)
+#        #"%s" % format_duration(mins),
+#        #format_td(datetime.datetime.now() - self.last_updated)),
+#        print "%s\t%s" % (self.name, ", ".join(stats))
+
+        for p in blanks: add_summary(p)
+        for p in worked: add_summary(p)
+
+        print table.draw()
 
     def cmd_term(self, args):
         """
