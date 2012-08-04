@@ -55,8 +55,9 @@ class EgtApp(cliapp.Application):
         List known projects.
         """
         e = self.make_egt()
+        name_len = max((len(x) for x in e.state.projects))
         for k, v in e.state.projects.iteritems():
-            print "%s\t%s" % (v.name, v.path)
+            print v.name.ljust(name_len), v.path
 
     def cmd_summary(self, args):
         e = self.make_egt()
