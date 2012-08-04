@@ -160,16 +160,41 @@ class EgtApp(cliapp.Application):
         """
         Compute weekly reports
         """
+        from egtlib.texttable import Texttable
+        # egt weekrpt also showing stats by project, and by tags
         e = self.make_egt()
         if args:
             end = datetime.datetime.strptime(args[0], "%Y-%m-%d").date()
         else:
             end = None
+
+        table = Texttable()
+        table.set_deco(Texttable.HEADER)
+        table.set_cols_align(("l", "r", "r", "r", "r"))
+        table.set_cols_dtype(('t', "i", "i", "i", "i"))
+        table.add_row(("Tag", "Entries", "Hours", "h/day", "h/wday"))
         rep = e.weekrpt(end=end)
-        print "Activity from %s to %s:" % (rep["begin"], rep["until"])
-        print "%d entries, %d hours in total, %d hours per day, %d hours per working day" % (
-            rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"])
-        for l, p in rep["log"]:
+        print
+        print " * Activity from %s to %s" % (rep["begin"], rep["until"])
+        print
+        log = rep["log"]
+
+        # Global stats
+        table.add_row(("(any)", rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"]))
+
+        # Per-tag stats
+        all_tags = set()
+        for p in e.projects.itervalues():
+            all_tags |= p.tags
+        for t in sorted(all_tags):
+            rep = e.weekrpt(end=end, tags=frozenset((t,)))
+            table.add_row((t, rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"]))
+
+        print table.draw()
+        print
+
+        log.sort(key=lambda x: x[0].begin)
+        for l, p in log:
             l.output(p.name)
 
     def cmd_cal(self, args):
