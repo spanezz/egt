@@ -4,6 +4,7 @@ import egtlib
 import datetime
 import sys
 import logging
+import os.path
 
 VERSION="0.1"
 
@@ -56,8 +57,12 @@ class EgtApp(cliapp.Application):
         """
         e = self.make_egt()
         name_len = max((len(x) for x in e.state.projects))
-        for k, v in e.state.projects.iteritems():
-            print v.name.ljust(name_len), v.path
+        homedir = os.path.expanduser("~")
+        for k, v in sorted(e.state.projects.iteritems()):
+            if v.path.startswith(homedir):
+                print v.name.ljust(name_len), "~%s" % v.path[len(homedir):]
+            else:
+                print v.name.ljust(name_len), v.path
 
     def cmd_summary(self, args):
         e = self.make_egt()
