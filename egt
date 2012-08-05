@@ -193,6 +193,20 @@ class EgtApp(cliapp.Application):
         print table.draw()
         print
 
+        # Per-package stats
+        table = Texttable()
+        table.set_deco(Texttable.HEADER)
+        table.set_cols_align(("l", "r", "r", "r", "r"))
+        table.set_cols_dtype(('t', "i", "i", "i", "i"))
+        table.add_row(("Package", "Entries", "Hours", "h/day", "h/wday"))
+        for name, p in sorted(e.projects.iteritems()):
+            rep = e.weekrpt(end=end, projs=[p])
+            if not rep["count"]: continue
+            table.add_row((name, rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"]))
+
+        print table.draw()
+        print
+
         log.sort(key=lambda x: x[0].begin)
         for l, p in log:
             l.output(p.name)

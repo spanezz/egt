@@ -110,10 +110,14 @@ class Egt(object):
                 for l in el.lines:
                     print l
 
-    def weekrpt(self, tags=None, end=None, days=7):
+    def weekrpt(self, tags=None, end=None, days=7, projs=None):
         rep = WeeklyReport()
-        for p in self.projects_by_tags(tags):
-            rep.add(p)
+        if projs:
+            for p in projs:
+                rep.add(p)
+        else:
+            for p in self.projects_by_tags(tags):
+                rep.add(p)
         return rep.report(end, days)
 
     def calendar(self, tags=None, start=None, end=None, days=7):
