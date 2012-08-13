@@ -142,7 +142,7 @@ class EgtApp(cliapp.Application):
 
     def cmd_grep(self, args):
         """
-        Open a terminal in a project directory, and edit the project file.
+        Run 'git grep' on all project .git dirs
         """
         e = self.make_egt()
         for name, proj in e.projects.iteritems():
