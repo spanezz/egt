@@ -260,6 +260,33 @@ class EgtApp(cliapp.Application):
         web.app.debug = True
         web.app.run()
 
+    def cmd_completion(self, args):
+        if not args:
+            raise cliapp.AppException("Usage: completion {projects|tags|contexts}")
+        if args[0] == "projects":
+            e = self.make_egt()
+            names = e.projects.keys()
+            names.sort()
+            for n in names:
+                print n
+        elif args[0] == "tags":
+            e = self.make_egt()
+            res = set()
+            for p in e.projects.itervalues():
+                res |= p.tags
+            for n in sorted(res):
+                print n
+        elif args[0] == "contexts":
+            e = self.make_egt()
+            res = set()
+            for p in e.projects.itervalues():
+                res |= p.contexts
+            for n in sorted(res):
+                print n
+        else:
+            raise cliapp.AppException("Usage: completion {projects|tags|contexts}")
+
+
 if __name__ == '__main__':
     EgtApp().run()
 

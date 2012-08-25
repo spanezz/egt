@@ -98,6 +98,17 @@ class Project(object):
             if el.TAG != "next-actions": continue
             yield el
 
+    @property
+    def contexts(self):
+        """
+        Return a set with all contexts in this project
+        """
+        res = set()
+        for el in self.body:
+            if el.TAG != "next-actions": continue
+            res |= el.contexts
+        return res
+
     def next_events(self, since=None, until=None):
         """
         Return the next events within the given date range
