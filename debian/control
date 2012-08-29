@@ -3,7 +3,7 @@ Section: misc
 Priority: optional
 Maintainer: Enrico Zini <enrico@debian.org>
 Build-Depends: debhelper (>= 7.0.50~)
-Build-Depends-Indep: help2man, python, python-support
+Build-Depends-Indep: help2man, python, python-support, bash-completion (>= 1:1.0-1~)
 Standards-Version: 3.9.1.0
 #Vcs-Git: git://git.debian.org/git/collab-maint/apt-xapian-index.git
 #Vcs-Browser: http://git.debian.org/?p=collab-maint/apt-xapian-index.git
