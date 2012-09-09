@@ -198,7 +198,7 @@ class EgtApp(cliapp.Application):
         table.set_deco(Texttable.HEADER)
         table.set_cols_align(("l", "r", "r", "r", "r"))
         table.set_cols_dtype(('t', "i", "i", "i", "i"))
-        table.add_row(("Package", "Entries", "Hours", "h/day", "h/wday"))
+        table.add_row(("Project", "Entries", "Hours", "h/day", "h/wday"))
         for name, p in sorted(e.projects.iteritems()):
             rep = e.weekrpt(end=end, projs=[p])
             if not rep["count"]: continue
