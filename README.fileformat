@@ -36,6 +36,15 @@ Metadata fields at start of file:
    Language used for parsing dates. Only 'it' is supported at the moment.
    English is the default.
 
+  Billing: daily|hourly
+   Work worktime accounting, specify if it's accounted by the hour or by the day.
+   Default: hourly
+
+  Day: <period>
+   For daily billing, specify the length of a work day. It is a space-separated
+   list of numbers with 'h' or 'm' suffix.
+   Default: 8h
+
 Project log:
 
   Starts with the first non-metadata line, uses the following format.
