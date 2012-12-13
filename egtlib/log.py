@@ -9,6 +9,7 @@ class Log(object):
         self.begin = begin
         self.until = until
         self.body = body
+        self.day_billing = None
 
     @property
     def duration(self):
@@ -31,7 +32,14 @@ class Log(object):
         head = [self.begin.strftime("%d %B: %H:%M-")]
         if self.until:
             head.append(self.until.strftime("%H:%M "))
-            head.append(format_duration(self.duration))
+            if self.day_billing is None:
+                head.append(format_duration(self.duration))
+            elif self.day_billing == 0.0:
+                head.append("-")
+            elif self.day_billing == 0.5:
+                head.append("½d")
+            else:
+                head.append("%.1fd" % self.day_billing)
         if project is not None:
             head.append(" [%s]" % project)
         print "".join(head)

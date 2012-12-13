@@ -82,6 +82,12 @@ class Project(object):
         if 'tags' in self.meta:
             self.tags = set(re.split("[ ,\t]+", self.meta["tags"]))
 
+        # If we're doing daily billing, annotate log entries with the number of
+        # days (or fraction of days) accounted for them
+        if self.meta.get("billing", "hourly") == "daily":
+            self.annotate_log_with_daily_billing()
+
+
     @property
     def last_updated(self):
         """
@@ -106,8 +112,27 @@ class Project(object):
             mins += l.duration
         return mins
 
-    @property
-    def elapsed_days(self):
+    def annotate_log_with_daily_billing(self):
+        # Find out which is the last log entry for each day
+        lastentries = {}
+        for l in self.log:
+            lastentries[l.begin.date()] = l
+
+        # Compute effective work time for each day
+        days = self.compute_daily_billing()
+
+        # Annotate the last log entries with the work time, all others with 0
+        for l in self.log:
+            if lastentries[l.begin.date()] == l:
+                l.day_billing = days[l.begin.date()]
+            else:
+                l.day_billing = 0.0
+
+    def compute_daily_billing(self):
+        """
+        For each day in the log, compute the number of work days or half work
+        days logged for it.
+        """
         from collections import Counter
         daymins = float(self.daymins)
 
@@ -118,8 +143,8 @@ class Project(object):
             days[d] += l.duration
 
         # Iterate days
-        dcount = 0.0
         karma = 0
+        res = {}
         for d, mins in sorted(days.iteritems()):
             # Allow one hour slack
             if mins >= (daymins/2 - 60) and mins < daymins/2:
@@ -140,13 +165,17 @@ class Project(object):
                 # Closer to full day
                 account = 1
 
-            dcount += account
+            res[d] = account
             #print d, "%4.1f + %4.1f = %4.1f" % (mins/60, karma/60, amount/60),\
             #         "-> %4.1f + %4.1f" % (account, (amount-account*daymins)/60), dcount
             karma = amount - account * daymins
 
-        print daymins, self.elapsed / daymins, dcount, karma
-        return dcount
+        return res
+
+    @property
+    def elapsed_days(self):
+        days = self.compute_daily_billing()
+        return sum(days.itervalues())
 
     @property
     def formatted_elapsed(self):
