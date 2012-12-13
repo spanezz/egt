@@ -133,14 +133,16 @@ class Project(object):
         For each day in the log, compute the number of work days or half work
         days logged for it.
         """
-        from collections import Counter
         daymins = float(self.daymins)
 
         # Iterate logs, aggregating the number of minutes per day
-        days = Counter()
+        days = {}
         for l in self.log:
             d = l.begin.date()
-            days[d] += l.duration
+            if d in days:
+                days[d] += l.duration
+            else:
+                days[d] = l.duration
 
         # Iterate days
         karma = 0
