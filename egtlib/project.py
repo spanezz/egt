@@ -36,6 +36,21 @@ def default_tags(fname):
     if "/lavori/truelite/" in fname: tags.add("truelite")
     return tags
 
+def parse_duration(s):
+    """
+    Parse a duration like 3d 8h 30m, returning its value in minutes
+    """
+    mins = 0
+    for tok in s.split():
+        if tok.endswith("d"):
+            mins += int(tok[:-1]) * (24 * 60)
+        elif tok.endswith("h"):
+            mins += int(tok[:-1]) * 60
+        elif tok.endswith("m"):
+            mins += int(tok[:-1])
+        else:
+            raise ValueError("cannot parse '%s' in '%s'" % (tok, s))
+    return mins
 
 class Project(object):
     def __init__(self, fname):
@@ -78,11 +93,60 @@ class Project(object):
         return datetime.datetime.now()
 
     @property
+    def daymins(self):
+        """
+        Return the number of minutes per work day
+        """
+        return parse_duration(self.meta.get("day", "8h"))
+
+    @property
     def elapsed(self):
         mins = 0
         for l in self.log:
             mins += l.duration
         return mins
+
+    @property
+    def elapsed_days(self):
+        from collections import Counter
+        daymins = float(self.daymins)
+
+        # Iterate logs, aggregating the number of minutes per day
+        days = Counter()
+        for l in self.log:
+            d = l.begin.date()
+            days[d] += l.duration
+
+        # Iterate days
+        dcount = 0.0
+        karma = 0
+        for d, mins in sorted(days.iteritems()):
+            # Allow one hour slack
+            if mins >= (daymins/2 - 60) and mins < daymins/2:
+                mins = daymins/2
+            elif mins >= daymins-60 and mins < daymins:
+                mins = daymins
+
+            # Apply minutes carried forward from old roundings
+            amount = mins + karma
+
+            if amount < daymins/4:
+                # Skip day
+                account = 0
+            elif abs(daymins/2 - amount) < abs(daymins - amount):
+                # Closer to half day
+                account = 0.5
+            else:
+                # Closer to full day
+                account = 1
+
+            dcount += account
+            #print d, "%4.1f + %4.1f = %4.1f" % (mins/60, karma/60, amount/60),\
+            #         "-> %4.1f + %4.1f" % (account, (amount-account*daymins)/60), dcount
+            karma = amount - account * daymins
+
+        print daymins, self.elapsed / daymins, dcount, karma
+        return dcount
 
     @property
     def formatted_elapsed(self):
