@@ -212,6 +212,33 @@ class EgtApp(cliapp.Application):
         for l, p in log:
             l.output(p.name)
 
+    def cmd_print_log(self, args):
+        """
+        Output the log for one or more projects
+        """
+        e = self.make_egt()
+        log = []
+        projs = set()
+        if not args:
+            for p in e.projects.itervalues():
+                for l in p.log:
+                    log.append((l, p))
+                projs.add(p)
+        else:
+            for name in args:
+                p = e.project_by_name(name)
+                for l in p.log:
+                    log.append((l, p))
+                projs.add(p)
+
+        log.sort(key=lambda x:x[0].begin)
+        if len(projs) == 1:
+            for l, p in log:
+                l.output()
+        else:
+            for l, p in log:
+                l.output(p.name)
+
     def cmd_cal(self, args):
         """
         Compute calendar of next actions
