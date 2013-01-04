@@ -17,15 +17,16 @@ class EgtApp(cliapp.Application):
         )
 
     def setup_logging(self):
-        if not self.settings["log"] and (self.settings["verbose"] or self.settings["debug"]):
+        if not self.settings["log"]:
             FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
             if self.settings["debug"]:
                 logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
-            else:
+            elif self.settings["verbose"]:
                 logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
+            else:
+                logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
         else:
             super(EgtApp, self).setup_logging()
-
 
     def add_settings(self):
         self.settings.string(['tag', 't'], "limit processing to projects with the given (comma separated) tag(s)", metavar="tag")
