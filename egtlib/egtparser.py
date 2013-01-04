@@ -247,23 +247,26 @@ class LogParser(object):
             # Look for a log head
             mo = self.re.log_head.match(line)
             if mo:
-                if self.begin is not None:
-                    entries.append(self.flush())
-                log.debug("%s:%d: log header: %s %s-%s", lines.fname, lines.lineno, mo.group("date"), mo.group("start"), mo.group("end"))
-                date = self.ep.parse(mo.group("date"))
-                if date is None:
-                    log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, lines.lineno, mo.group("date"), self.ep.lang)
-                    date = self.ep.default
-                date = date.date()
-                self.begin = datetime.datetime.combine(date, parsetime(mo.group("start")))
-                if mo.group("end"):
-                    self.until = datetime.datetime.combine(date, parsetime(mo.group("end")))
-                    if self.until < self.begin:
-                        # Deal with intervals across midnight
-                        self.until += datetime.timedelta(days=1)
-                else:
-                    self.until = None
-                continue
+                try:
+                    if self.begin is not None:
+                        entries.append(self.flush())
+                    log.debug("%s:%d: log header: %s %s-%s", lines.fname, lines.lineno, mo.group("date"), mo.group("start"), mo.group("end"))
+                    date = self.ep.parse(mo.group("date"))
+                    if date is None:
+                        log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, lines.lineno, mo.group("date"), self.ep.lang)
+                        date = self.ep.default
+                    date = date.date()
+                    self.begin = datetime.datetime.combine(date, parsetime(mo.group("start")))
+                    if mo.group("end"):
+                        self.until = datetime.datetime.combine(date, parsetime(mo.group("end")))
+                        if self.until < self.begin:
+                            # Deal with intervals across midnight
+                            self.until += datetime.timedelta(days=1)
+                    else:
+                        self.until = None
+                    continue
+                except ValueError, e:
+                    log.error("%s:%d: %s", lines.fname, lines.lineno, str(e))
 
             # Else append to the previous log body
             self.logbody.append(line)
