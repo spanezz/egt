@@ -31,6 +31,7 @@ class EgtApp(cliapp.Application):
     def add_settings(self):
         self.settings.string(['tag', 't'], "limit processing to projects with the given (comma separated) tag(s)", metavar="tag")
         self.settings.string(['backup-output'], "backup tarball to generate (by default it is sent to stdout) (the filename is passed to strftime, so you can use something like %Y-%m-%d in the configuration)", metavar="filename")
+        self.settings.string(['directory'], "directory where egt files are found", default=os.path.expanduser("~"), metavar="dirname")
         self.settings.boolean(['vcal'], "output events in vCalendar format")
         self.settings.boolean(['verbose', 'v'], "verbose output")
         self.settings.boolean(['debug'], "debug output")
@@ -50,7 +51,12 @@ class EgtApp(cliapp.Application):
         the home directory.
         """
         e = self.make_egt()
-        e.scan()
+        if args:
+            dirs = args
+        else:
+            dirs = [self.settings["directory"]]
+        for dirname in dirs:
+            e.scan(dirname)
 
     def cmd_list(self, args):
         """
