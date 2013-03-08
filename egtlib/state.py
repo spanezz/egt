@@ -56,7 +56,11 @@ class State(object):
         new_projects = dict()
         for dirname in dirs:
             for fname in scan(dirname):
-                p = Project(fname)
+                try:
+                    p = Project(fname)
+                except Exception, e:
+                    log.warn("%s: failed to parse: %s", fname, str(e))
+                    continue
                 if p.name in new_projects:
                     log.warn("%s: project %s already exists in %s: skipping", fname, p.name, p.fname)
                 else:

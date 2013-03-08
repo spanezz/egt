@@ -224,10 +224,7 @@ class LogParser(object):
         Check if the next line looks like the start of a log block
         """
         first = lines.peek()
-        try:
-            return self.re.log_date.match(first) or self.re.log_head.match(first)
-        except TypeError:
-            return False
+        return self.re.log_date.match(first) or self.re.log_head.match(first)
 
     def parse(self, lines):
         entries = []
