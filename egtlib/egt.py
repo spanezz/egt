@@ -95,8 +95,8 @@ class Egt(object):
                 if p.tags.issuperset(tags):
                     yield p
 
-    def scan(self, dirname):
-        return self.state.rescan(dirname)
+    def scan(self, dirs):
+        return self.state.rescan(dirs)
 
     def print_next_actions(self, contexts):
         for p in self.projects.itervalues():

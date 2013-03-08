@@ -51,15 +51,16 @@ class State(object):
             cp.write(fd)
         log.debug("updated state in %s", cfgfname)
 
-    def rescan(self,dirname):
+    def rescan(self, dirs):
         # Read and detect duplicates
         new_projects = dict()
-        for fname in scan(dirname):
-            p = Project(fname)
-            if p.name in new_projects:
-                log.warn("%s: project %s already exists in %s: skipping", fname, p.name, p.fname)
-            else:
-                new_projects[p.name] = p
+        for dirname in dirs:
+            for fname in scan(dirname):
+                p = Project(fname)
+                if p.name in new_projects:
+                    log.warn("%s: project %s already exists in %s: skipping", fname, p.name, p.fname)
+                else:
+                    new_projects[p.name] = p
 
         # Log the difference with the old info
         old_projects = set(self.projects.keys())

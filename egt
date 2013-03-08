@@ -55,8 +55,7 @@ class EgtApp(cliapp.Application):
             dirs = args
         else:
             dirs = [self.settings["directory"]]
-        for dirname in dirs:
-            e.scan(dirname)
+        e.scan(dirs)
 
     def cmd_list(self, args):
         """
