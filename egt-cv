@@ -1,0 +1,188 @@
+#!/usr/bin/python
+import cliapp
+import egtlib
+import yaml
+import logging
+import sys
+import os
+import babel
+
+VERSION="0.1"
+
+class CV(object):
+    def __init__(self, dirname):
+        self.dirname = dirname
+        self.personal = {}
+        self.shortbio = []
+        self.languages = []
+        self.skills = []
+
+    def load(self):
+        for fn in sorted(os.listdir(self.dirname)):
+            if not fn.endswith(".yaml"): continue
+            pathname = os.path.join(self.dirname, fn)
+            with open(pathname) as fd:
+                info = yaml.load(fd)
+                self.acquire_structured(info)
+
+    def acquire_structured(self, info):
+        """
+        Acquire general info from a data structure
+        """
+        i = info.get("personal", None)
+        if i is not None:
+            for k, v in i.iteritems():
+                if k == "telephone":
+                    tels = self.personal.setdefault(k, [])
+                    for t in v:
+                        for tk, tv in t.iteritems():
+                            tels.append({
+                                "name": tk,
+                                "value": tv,
+                            })
+                else:
+                    self.personal[k] = v
+
+        i = info.get("shortbio", None)
+        if i is not None:
+            if isinstance(i, basestring):
+                self.shortbio.append(i)
+            else:
+                self.shortbio.extend(i)
+
+        i = info.get("languages", None)
+        if i is not None:
+            for lang in i:
+                for k, v in lang.iteritems():
+                    self.languages.append({
+                        "name": k,
+                        "skill": v,
+                    })
+
+        i = info.get("skills", None)
+        if i is not None:
+            if isinstance(i, basestring):
+                self.skills.append(i)
+            else:
+                self.skills.extend(i)
+
+    def dump(self, out=sys.stdout):
+        """
+        Dump all info we have to the given file descriptor
+        """
+        yaml.dump({
+            "dirname": self.dirname,
+            "personal": self.personal,
+            "shortbio": self.shortbio,
+            "languages": self.languages,
+            "skills": self.skills,
+        }, out)
+
+    def translatable_strings(self):
+        """
+        Generate all the translatable strings found in the data
+        """
+        for k in ("nationality", "notes"):
+            s = self.personal.get(k, None)
+            if s is not None:
+                yield s
+
+        tel = self.personal.get("telephone", None)
+        if tel is not None:
+            for t in tel:
+                for k in t:
+                    yield k
+
+        for s in self.shortbio:
+            yield s
+
+        for l in self.languages:
+            for k, v in l.iteritems():
+                yield k
+                yield v
+
+        for s in self.skills:
+            yield s
+
+    def extract_strings(self):
+        from babel.messages import Catalog
+        c = Catalog()
+        for s in self.translatable_strings():
+            c.add(s)
+        return c
+
+    def update_catalogs(self):
+        from babel.messages.pofile import read_po, write_po
+
+        new_catalog = self.extract_strings()
+
+        # Scan locale dirs
+        localedir = os.path.join(self.dirname, "locale")
+        for lang in os.listdir(localedir):
+            if lang[0] == ".": continue
+            dn = os.path.join(localedir, lang)
+            if not os.path.isdir(dn): continue
+            # If a locale dir exists, make sure it contains what is needed
+            msgdir = os.path.join(dn, "LC_MESSAGES")
+            if not os.path.isdir(msgdir):
+                os.mkdir(msgdir)
+            msgfile = os.path.join(msgdir, "cv.po")
+            # Read the existing potfile if it exists
+            if os.path.isfile(msgfile):
+                with open(msgfile) as fd:
+                    cat = read_po(fd)
+                    cat.update(new_catalog)
+            else:
+                cat = new_catalog
+
+            # Write updated catalogs
+            with open(msgfile, "w") as fd:
+                write_po(fd, cat)
+                print lang
+
+
+class EgtCVApp(cliapp.Application):
+    def __init__(self):
+        super(EgtCVApp, self).__init__(
+            progname="egt-cv",
+            version=VERSION,
+            description="Enrico's Getting Things Done",
+        )
+
+    def setup_logging(self):
+        if not self.settings["log"]:
+            FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
+            if self.settings["debug"]:
+                logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
+            elif self.settings["verbose"]:
+                logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
+            else:
+                logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
+        else:
+            super(EgtCVApp, self).setup_logging()
+
+    def add_settings(self):
+        self.settings.boolean(['verbose', 'v'], "verbose output")
+        self.settings.boolean(['debug'], "debug output")
+
+    def cmd_dump(self, args):
+        """
+        Dump all cv information to standard output
+        """
+        cv = CV(args[0])
+        cv.load()
+        cv.dump()
+
+    def cmd_update_catalogs(self, args):
+        """
+        Update the catalogs of translatable strings.
+
+        In order to start a translation, just run:
+          mkdir $cvdir/locale/$LANG
+        """
+        cv = CV(args[0])
+        cv.load()
+        cv.update_catalogs()
+
+if __name__ == '__main__':
+    EgtCVApp().run()
