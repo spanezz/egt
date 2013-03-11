@@ -5,7 +5,7 @@ import yaml
 import logging
 import sys
 import os
-import babel
+import shutil
 
 VERSION="0.1"
 
@@ -105,9 +105,33 @@ class CV(object):
     def extract_strings(self):
         from babel.messages import Catalog
         c = Catalog()
+
+        # Add our strings
         for s in self.translatable_strings():
             c.add(s)
+
+        # Add strings from jinja2 templates
+        from jinja2.ext import babel_extract, GETTEXT_FUNCTIONS
+        tpldir = os.path.join(self.dirname, "templates")
+        for fn in os.listdir(tpldir):
+            if not fn.endswith(".html"): continue
+            pathname = os.path.join(tpldir, fn)
+            with open(pathname) as fd:
+                for lineno, func, msg, comments in babel_extract(fd, GETTEXT_FUNCTIONS, "", {}):
+                    c.add(msg, locations=((pathname, lineno),))
+
         return c
+
+    def list_languages(self):
+        """
+        Get the list of available output languages
+        """
+        localedir = os.path.join(self.dirname, "locale")
+        for lang in os.listdir(localedir):
+            if lang[0] == ".": continue
+            dn = os.path.join(localedir, lang)
+            if not os.path.isdir(dn): continue
+            yield lang, dn
 
     def update_catalogs(self):
         from babel.messages.pofile import read_po, write_po
@@ -115,13 +139,9 @@ class CV(object):
         new_catalog = self.extract_strings()
 
         # Scan locale dirs
-        localedir = os.path.join(self.dirname, "locale")
-        for lang in os.listdir(localedir):
-            if lang[0] == ".": continue
-            dn = os.path.join(localedir, lang)
-            if not os.path.isdir(dn): continue
+        for lang, langdir in self.list_languages():
             # If a locale dir exists, make sure it contains what is needed
-            msgdir = os.path.join(dn, "LC_MESSAGES")
+            msgdir = os.path.join(langdir, "LC_MESSAGES")
             if not os.path.isdir(msgdir):
                 os.mkdir(msgdir)
             msgfile = os.path.join(msgdir, "cv.po")
@@ -137,6 +157,34 @@ class CV(object):
             with open(msgfile, "w") as fd:
                 write_po(fd, cat)
                 print lang
+
+    def render(self, outdir):
+        """
+        Render the curriculum, writing results to the given output directory
+        """
+        # Reset the output directory
+        if os.path.exists(outdir):
+            shutil.rmtree(outdir)
+        os.mkdir(outdir)
+
+        tpldir = os.path.join(self.dirname, "templates")
+
+        # Copy everything except .html files
+        for fn in os.listdir(tpldir):
+            if fn.startswith("."): continue
+            if fn.endswith(".html"):
+                # Render .html files with jinja2
+                pass
+            else:
+                shutil.copyfile(os.path.join(tpldir, fn), os.path.join(outdir, fn))
+
+    def render_all_languages(self):
+        """
+        Render the curriculum for all languages
+        """
+        for lang, langdir in self.list_languages():
+            outdir = os.path.join(self.dirname, "cv-" + lang)
+            self.render(outdir)
 
 
 class EgtCVApp(cliapp.Application):
@@ -181,6 +229,14 @@ class EgtCVApp(cliapp.Application):
         cv = CV(args[0])
         cv.load()
         cv.update_catalogs()
+
+    def cmd_render(self, args):
+        """
+        Render the CV for all configured languages
+        """
+        cv = CV(args[0])
+        cv.load()
+        cv.render_all_languages()
 
 if __name__ == '__main__':
     EgtCVApp().run()
