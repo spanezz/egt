@@ -32,6 +32,17 @@ Metadata fields at start of file:
   Title: name
    Freeform title for the project.
 
+  Description: text
+   Freeform description for the project.
+
+  Start-date: date
+   Official start date of the project. Default: the first log date.
+   It can be freeform, as in "November 2012".
+
+  End-date: date
+   Official end date for the project. Default: the last log date.
+   It can be freeform, as in "November 2012".
+
   Lang: code
    Language used for parsing dates. Only 'it' is supported at the moment.
    English is the default.

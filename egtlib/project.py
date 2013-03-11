@@ -204,6 +204,23 @@ class Project(object):
             res |= el.contexts
         return res
 
+    @property
+    def formal_period(self):
+        """
+        Compute the begin and end dates for this project.
+
+        If Start-date and End-date are provided in the metadata, return those.
+        Else infer them from the first or last log entries.
+        """
+        since = self.meta.get("start-date", None)
+        until = self.meta.get("end-date", None)
+        if since is None and self.log:
+            since = self.log[0].begin.date()
+        if until is None and self.log:
+            until = self.log[0].until.date()
+        return since, until
+
+
     def next_events(self, since=None, until=None):
         """
         Return the next events within the given date range

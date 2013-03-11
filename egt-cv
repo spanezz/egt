@@ -8,6 +8,7 @@ import os
 import shutil
 import jinja2
 import subprocess
+import datetime
 
 VERSION="0.1"
 
@@ -18,14 +19,40 @@ class CV(object):
         self.shortbio = []
         self.languages = []
         self.skills = []
+        self.tags = {}
+        self.logs = {}
 
     def load(self):
+        # Load base info from yaml files
         for fn in sorted(os.listdir(self.dirname)):
             if not fn.endswith(".yaml"): continue
             pathname = os.path.join(self.dirname, fn)
             with open(pathname) as fd:
                 info = yaml.load(fd)
                 self.acquire_structured(info)
+
+        # Load historical info from egt, based on tags set in yaml files
+        for k, v in self.tags.iteritems():
+            if isinstance(v, basestring):
+                tags = frozenset((v,))
+            else:
+                tags = frozenset(v)
+            egt = egtlib.Egt(tags=tags)
+            logs = []
+            for p in egt.projects.itervalues():
+                # Get the period
+                since, until = p.formal_period
+                if isinstance(until, datetime.date) and until > datetime.date.today() - datetime.timedelta(days=7):
+                    until = None
+                logs.append({
+                    "name": p.name,
+                    "title": p.meta.get("title", p.name.capitalize()),
+                    "employer": p.meta.get("employer", None),
+                    "description": p.meta.get("description", None),
+                    "period": { "since": since, "until": until },
+                })
+            if logs:
+                self.logs.setdefault(k, []).extend(logs)
 
     def acquire_structured(self, info):
         """
@@ -42,6 +69,12 @@ class CV(object):
                                 "name": tk,
                                 "value": tv,
                             })
+                elif k in ("email", "homepage"):
+                    # Coerce to list
+                    if isinstance(v, basestring):
+                        self.personal[k] = [v]
+                    else:
+                        self.personal[k] = v
                 else:
                     self.personal[k] = v
 
@@ -68,13 +101,22 @@ class CV(object):
             else:
                 self.skills.extend(i)
 
+        i = info.get("tags", {})
+        for k, v in i.iteritems():
+            self.tags[k] = v
+
     def template_context(self):
+        """
+        Return a dict with all the arguments to pass to the template renderer
+        """
         return {
             "dirname": self.dirname,
             "personal": self.personal,
             "shortbio": self.shortbio,
             "languages": self.languages,
             "skills": self.skills,
+            "lastedit": datetime.date.today(),
+            "logs": self.logs,
         }
 
     def dump(self, out=sys.stdout):
@@ -208,7 +250,6 @@ class CV(object):
         Render the curriculum for all languages
         """
         for lang, langdir in self.list_languages():
-            #trans_file = os.path.join(langdir, "
             # Ensure translations are up to date
             subprocess.check_call(["msgfmt", "-c", "-f", "-o",
                                    os.path.join(langdir, "LC_MESSAGES/cv.mo"),
