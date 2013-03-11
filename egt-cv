@@ -6,6 +6,8 @@ import logging
 import sys
 import os
 import shutil
+import jinja2
+import subprocess
 
 VERSION="0.1"
 
@@ -66,17 +68,20 @@ class CV(object):
             else:
                 self.skills.extend(i)
 
-    def dump(self, out=sys.stdout):
-        """
-        Dump all info we have to the given file descriptor
-        """
-        yaml.dump({
+    def template_context(self):
+        return {
             "dirname": self.dirname,
             "personal": self.personal,
             "shortbio": self.shortbio,
             "languages": self.languages,
             "skills": self.skills,
-        }, out)
+        }
+
+    def dump(self, out=sys.stdout):
+        """
+        Dump all info we have to the given file descriptor
+        """
+        yaml.dump(self.template_context(), out)
 
     def translatable_strings(self):
         """
@@ -106,18 +111,20 @@ class CV(object):
         from babel.messages import Catalog
         c = Catalog()
 
+        # Instantiate jinja2 machinery to get string extraction
+        jinja_env = jinja2.Environment(extensions=['jinja2.ext.i18n'])
+
         # Add our strings
         for s in self.translatable_strings():
             c.add(s)
 
         # Add strings from jinja2 templates
-        from jinja2.ext import babel_extract, GETTEXT_FUNCTIONS
         tpldir = os.path.join(self.dirname, "templates")
         for fn in os.listdir(tpldir):
             if not fn.endswith(".html"): continue
             pathname = os.path.join(tpldir, fn)
             with open(pathname) as fd:
-                for lineno, func, msg, comments in babel_extract(fd, GETTEXT_FUNCTIONS, "", {}):
+                for lineno, func, msg in jinja_env.extract_translations(fd.read()):
                     c.add(msg, locations=((pathname, lineno),))
 
         return c
@@ -158,24 +165,42 @@ class CV(object):
                 write_po(fd, cat)
                 print lang
 
-    def render(self, outdir):
+    def render(self, outdir, locales):
         """
         Render the curriculum, writing results to the given output directory
         """
+        from babel.support import Translations
         # Reset the output directory
         if os.path.exists(outdir):
             shutil.rmtree(outdir)
         os.mkdir(outdir)
 
+        # Get translations
+        translations = Translations.load(
+            os.path.join(self.dirname, "locale"),
+            locales,
+            "cv")
+
+        # Instantiate jinja2 template machinery
         tpldir = os.path.join(self.dirname, "templates")
+        jinja_env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(tpldir),
+            extensions=['jinja2.ext.i18n'])
+        jinja_env.install_gettext_translations(translations, True)
+
+        jinja_context = self.template_context()
 
         # Copy everything except .html files
         for fn in os.listdir(tpldir):
             if fn.startswith("."): continue
             if fn.endswith(".html"):
                 # Render .html files with jinja2
-                pass
+                tpl = jinja_env.get_template(fn)
+                rendered = tpl.render(**jinja_context)
+                with open(os.path.join(outdir, fn), "w") as fd:
+                    fd.write(rendered)
             else:
+                # Copy all other files
                 shutil.copyfile(os.path.join(tpldir, fn), os.path.join(outdir, fn))
 
     def render_all_languages(self):
@@ -183,8 +208,14 @@ class CV(object):
         Render the curriculum for all languages
         """
         for lang, langdir in self.list_languages():
+            #trans_file = os.path.join(langdir, "
+            # Ensure translations are up to date
+            subprocess.check_call(["msgfmt", "-c", "-f", "-o",
+                                   os.path.join(langdir, "LC_MESSAGES/cv.mo"),
+                                   os.path.join(langdir, "LC_MESSAGES/cv.po")])
+
             outdir = os.path.join(self.dirname, "cv-" + lang)
-            self.render(outdir)
+            self.render(outdir, (lang,))
 
 
 class EgtCVApp(cliapp.Application):
