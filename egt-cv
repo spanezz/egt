@@ -90,16 +90,14 @@ class CV(object):
         tel = self.personal.get("telephone", None)
         if tel is not None:
             for t in tel:
-                for k in t:
-                    yield k
+                yield t["name"]
 
         for s in self.shortbio:
             yield s
 
         for l in self.languages:
-            for k, v in l.iteritems():
-                yield k
-                yield v
+            yield l["name"]
+            yield l["skill"]
 
         for s in self.skills:
             yield s
