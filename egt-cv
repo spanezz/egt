@@ -427,11 +427,17 @@ class CV(object):
         Render the curriculum for all languages
         """
         for lang, langdir in self.list_languages():
-            # Ensure translations are up to date
-            subprocess.check_call(["msgfmt", "-c", "-f", "-o",
-                                   os.path.join(langdir, "LC_MESSAGES/cv.mo"),
-                                   os.path.join(langdir, "LC_MESSAGES/egt-cv.po"),
-                                   os.path.join(langdir, "LC_MESSAGES/cv.po")])
+            merged_fname = os.path.join(langdir, "LC_MESSAGES/merged.po")
+
+            # Merge all translations
+            subprocess.check_call([
+                "msgcat",
+                os.path.join(langdir, "LC_MESSAGES/egt-cv.po"),
+                os.path.join(langdir, "LC_MESSAGES/cv.po"),
+                "-o", merged_fname])
+
+            # Compile the merged translations
+            subprocess.check_call(["msgfmt", "-c", "-f", "-o", os.path.join(langdir, "LC_MESSAGES/cv.mo"), merged_fname])
 
             outdir = os.path.join(self.dirname, "cv-" + lang)
             self.render(outdir, (lang,))
