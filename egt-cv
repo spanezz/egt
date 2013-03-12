@@ -44,6 +44,8 @@ class CV(object):
                 since, until = p.formal_period
                 if isinstance(until, datetime.date) and until > datetime.date.today() - datetime.timedelta(days=7):
                     until = None
+                if since is None:
+                    continue
                 logs.append({
                     "name": p.name,
                     "title": p.meta.get("title", p.name.capitalize()),
@@ -52,6 +54,7 @@ class CV(object):
                     "period": { "since": since, "until": until },
                 })
             if logs:
+                logs.sort(key=lambda x:x["period"]["until"] or x["period"]["since"] or datetime.date.today(), reverse=True)
                 self.logs.setdefault(k, []).extend(logs)
 
     def acquire_structured(self, info):
