@@ -47,6 +47,7 @@ class ProjectGroup(object):
             "group-title": None,
             "recipient": None,
             "description": None,
+            "tags": frozenset(),
         }
         all_archived = True
         unarchived_until = None
@@ -59,6 +60,9 @@ class ProjectGroup(object):
                 val = p.meta.get(field, None)
                 if val is not None:
                     info[field] = val.decode("utf8")
+
+            # Keep only the tags of the last one
+            info["tags"] = p.tags
 
             # Get the period
             since, until = p.formal_period
@@ -110,6 +114,7 @@ class CV(object):
         self.languages = []
         self.skills = []
         self.tags = {}
+        self.job_types = {}
         self.logs = {}
 
     def load(self):
@@ -180,6 +185,10 @@ class CV(object):
         for k, v in i.iteritems():
             self.tags[k] = v
 
+        i = info.get("job-types", {})
+        for k, v in i.iteritems():
+            self.job_types[k] = v
+
     def acquire_egt(self, log_group, tags):
         """
         Acquire historical info from egt projects with the given tags
@@ -201,6 +210,9 @@ class CV(object):
             info = g.get_merged_info()
             if log_group == "work" and not info["employer"]:
                 continue
+            for k, v in self.job_types.iteritems():
+                if k in info["tags"]:
+                    info["job_type"] = v
             logs.append(info)
 
         if logs:
@@ -250,6 +262,14 @@ class CV(object):
 
         for s in self.skills:
             yield s
+
+        for s in self.job_types.itervalues:
+            yield s
+
+        for l in self.logs:
+            for field in ("title", "employer", "description"):
+                if l[field]:
+                    yield l[field]
 
     def extract_strings(self):
         from babel.messages import Catalog
