@@ -41,6 +41,10 @@ Metadata fields at start of file:
    Freeform title for the project, when considered together with all the
    archived projects with the same name.
 
+  Issuer: text
+   For projects that are about obtaining some title or cerification, the
+   freeform details of the issuer.
+
   Homepage: url
    URL to the project home page
 
