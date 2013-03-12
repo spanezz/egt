@@ -45,7 +45,6 @@ class ProjectGroup(object):
         info = {
             "title": self.name.capitalize(),
             "group-title": None,
-            "recipient": None,
             "description": None,
             "tags": frozenset(),
         }
@@ -87,9 +86,6 @@ class ProjectGroup(object):
         if val is not None:
             info["title"] = val
 
-        # Rename 'recipient' to 'employer'
-        info["employer"] = info.pop("recipient", None)
-
         # If there are still active projects, unset 'until' to say that the
         # entry is still ongoing
         if not all_archived:
@@ -115,6 +111,7 @@ class CV(object):
         self.skills = []
         self.tags = {}
         self.job_types = {}
+        self.job_employers = {}
         self.logs = {}
 
     def load(self):
@@ -189,6 +186,10 @@ class CV(object):
         for k, v in i.iteritems():
             self.job_types[k] = v
 
+        i = info.get("job-employers", {})
+        for k, v in i.iteritems():
+            self.job_employers[k] = v
+
     def acquire_egt(self, log_group, tags):
         """
         Acquire historical info from egt projects with the given tags
@@ -208,11 +209,14 @@ class CV(object):
         logs = []
         for g in groups.itervalues():
             info = g.get_merged_info()
-            if log_group == "work" and not info["employer"]:
-                continue
             for k, v in self.job_types.iteritems():
                 if k in info["tags"]:
                     info["job_type"] = v
+            for k, v in self.job_employers.iteritems():
+                if k in info["tags"]:
+                    info["employer"] = v
+            if log_group == "work" and not info.get("employer"):
+                continue
             logs.append(info)
 
         if logs:
@@ -264,6 +268,9 @@ class CV(object):
             yield s
 
         for s in self.job_types.itervalues:
+            yield s
+
+        for s in self.job_employers.itervalues:
             yield s
 
         for l in self.logs:
