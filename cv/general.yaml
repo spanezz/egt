@@ -1,0 +1,108 @@
+# Personal information
+personal:
+ name: Enrico Zini
+ address: |
+   via Coso dei Cosi, 42
+   40100, Bologna (BO)
+   Italy
+ telephone:
+   - Home: +39.051.123456
+   - Mobile: +39.333.3333333
+ email:
+   - enrico@enricozini.org
+   - enrico@debian.org
+ homepage:
+   http://www.enricozini.org
+ nationality: Italian
+ birth: 1976-04-25
+ notes:
+   Does things nicely and properly.
+ signature: /home/enrico/signature.png
+
+# Short bio
+shortbio:
+ Graduated in Computer Science in Bologna University, freelance consultant on
+ Free Software, <a href="http://www.debian.org">Debian</a> Developer.
+
+# Language skills
+# See http://en.wikipedia.org/wiki/Common_European_Framework_of_Reference_for_Languages
+languages:
+ - Italian: main
+ - English: {
+    listening: c2,
+    reading: c2,
+    spoken_interaction: c2,
+    spoken_production: c2,
+    writing: c2,
+   }
+ - French: {
+    listening: c1,
+    reading: c1,
+    spoken_interaction: b2,
+    spoken_production: b2,
+    writing: b1,
+   }
+ - Spanish: {
+    listening: b1,
+    reading: b1,
+    spoken_interaction: b1,
+    spoken_production: b1,
+    writing: a2,
+   }
+
+# Skills
+
+technical_skills:
+ - Expert in Python, JavaScript, C++ and C. Has also used Perl, Java and
+   various other programming languages.
+ - Expert in Python web frameworks Django and Tornado. Has also worked with
+   microframeworks such as Bottle and Flask.
+ - Expert in JavaScript libraries JQuery, JQuery UI and JQuery mobile, also
+   used several others.
+ - Can create GUI applications in Gtk and WxWidgets.
+ - Expert git user, but can work with any version control system.
+ - At ease in agile development projects. Prefers test-driven development.
+ - Skilled in various system administration tasks on Debian GNU/Linux machines.
+ - Has experience with using various kinds of end-user software such as office
+   productivity, raster and vector image editors, desktop publishing, audio
+   editors, non-linear video editors, document typesetting systems.
+ - Generally very quick in evaluating and picking up programming languages,
+   frameworks, libraries and software tools as the need arises.
+
+social_skills:
+ - Experienced in leading as well as working with others in various Free
+   Software projects.
+ - Has been working as a facilitator for both real-life meetings and online
+   communities.
+ - Accomplished public speaker.
+
+
+# Customize how to show projects from egt
+
+# Do not show these projects
+egt-blacklist: [libept, debian-horoscope]
+
+# Tags to use to select egt files to show
+tags:
+ # egt files for work experience
+ work: work
+ # egt files for free software projects
+ freesoftware: [debian, bfsf, prodigi]
+ # egt files for titles and certifications
+ titles: title
+ # egt files for talks and public lectures
+ talks: talk
+
+# Job type description to use when an egt tag is present
+job-types:
+ devel: Software design and development
+ teach: Teaching
+ coord: Coordination
+
+# Job employer to use when an egt tag is present
+job-employers:
+ arpa: ARPA Emilia Romagna, Servizio Idro-Meteo-Clima
+ truelite: Truelite S.r.l.
+ cnr: Consiglio Nazionale delle Ricerche, Istituto di Scienze dell'Atmosfera e del Clima - ISAC
+ efossnet: Ethiopian Free and Open Source Software NETwork
+ canonical: Canonical Ltd.
