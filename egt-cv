@@ -453,7 +453,7 @@ class EgtCVApp(cliapp.Application):
         super(EgtCVApp, self).__init__(
             progname="egt-cv",
             version=VERSION,
-            description="Enrico's Getting Things Done",
+            description="Enrico's Getting Things Done - CV generator",
         )
 
     def setup_logging(self):

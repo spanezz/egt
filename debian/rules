@@ -9,6 +9,7 @@ RELEASE_PACKAGE=egt
 override_dh_auto_build:
 	dh_auto_build
 	./egt --generate-manpage=egt.1.in > egt.1
+	./egt-cv --generate-manpage=egt-cv.1.in > egt-cv.1
 
 override_dh_auto_clean:
 	dh_auto_clean

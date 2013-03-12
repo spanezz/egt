@@ -14,22 +14,17 @@
 .\" with this program; if not, write to the Free Software Foundation, Inc.,
 .\" 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 .\"
-.TH EGT 1
+.TH EGT-CV 1
 .SH NAME
-egt \- Enrico's Getting Things Done
+egt \- Enrico's Getting Things Done, Curriculum Vitae generator
 .SH SYNOPSIS
 .SH DESCRIPTION
-.B egt
-is a tool to manage todo-list-and-log files scattered around the home
-directory.
+.B egt\-cv
+is a tool to generate a Curriculum Vitae out of egt files.
 .SH OPTIONS
 .SH EXAMPLE
-To scan the home directory for egt files:
+To generate a cv:
 .IP
-egt scan
-To list projects:
+egt-cv update_catalogs cv
 .IP
-egt list
-To produce a weekly report:
-.IP
-egt weekrpt
+egt-cv render cv

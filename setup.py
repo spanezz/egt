@@ -62,6 +62,6 @@ setup(name='egt',
       platforms='any',
       packages=['egtlib'],
 #     py_modules=[''],
-      scripts=['egt'],
+      scripts=['egt', 'egt-cv'],
       data_files=data_files,
      )
