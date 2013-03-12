@@ -12,6 +12,96 @@ import datetime
 
 VERSION="0.1"
 
+class ProjectGroup(object):
+    def __init__(self, name):
+        self.name = name
+        self.entries = []
+
+    def add(self, project):
+        """
+        Add a project to this group
+        """
+        self.entries.append(project)
+
+    def _project_sort_key(self, p):
+        """
+        Get the sort key to use to sort projects before merging
+        """
+        since, until = p.formal_period
+        return (
+            not p.archived,
+            until or since or datetime.date.today(),
+            p.name,
+        )
+
+    def get_merged_info(self):
+        """
+        Merge all project info in a single CV entry
+        """
+        # Sort with the most relevant last
+        self.entries.sort(key=self._project_sort_key)
+
+        # Defaults
+        info = {
+            "title": self.name.capitalize(),
+            "group-title": None,
+            "recipient": None,
+            "description": None,
+        }
+        all_archived = True
+        unarchived_until = None
+        period_since = None
+        period_until = None
+
+        for p in self.entries:
+            # Get the various text fields, keeping the latest one
+            for field in ("group-title", "title", "recipient", "description"):
+                val = p.meta.get(field, None)
+                if val is not None:
+                    info[field] = val.decode("utf8")
+
+            # Get the period
+            since, until = p.formal_period
+
+            # Check if there are still active projects in this group
+            if not p.archived:
+                all_archived = False
+                unarchived_until = until
+
+            # Extend period ranges using since and until
+            if period_since is None:
+                period_since = since
+            elif since is not None and since < period_since:
+                period_since = since
+            if period_until is None:
+                period_until = until
+            elif until is not None and until > period_until:
+                period_until = until
+
+        # Group-title, if present, overrides title
+        val = info.pop("group-title", None)
+        if val is not None:
+            info["title"] = val
+
+        # Rename 'recipient' to 'employer'
+        info["employer"] = info.pop("recipient", None)
+
+        # If there are still active projects, unset 'until' to say that the
+        # entry is still ongoing
+        if not all_archived:
+            period_until = unarchived_until
+            if period_until is not None and period_until > datetime.date.today():
+                period_until = None
+
+        # Set the final period information
+        info["period"] = {
+            "since": period_since,
+            "until": period_until,
+        }
+
+        return info
+
+
 class CV(object):
     def __init__(self, dirname):
         self.dirname = dirname
@@ -37,25 +127,7 @@ class CV(object):
                 tags = frozenset((v,))
             else:
                 tags = frozenset(v)
-            egt = egtlib.Egt(tags=tags, archived=True)
-            logs = []
-            for p in egt.projects.itervalues():
-                # Get the period
-                since, until = p.formal_period
-                if isinstance(until, datetime.date) and until > datetime.date.today() - datetime.timedelta(days=7):
-                    until = None
-                if since is None:
-                    continue
-                logs.append({
-                    "name": p.name,
-                    "title": p.meta.get("title", p.name.capitalize()),
-                    "employer": p.meta.get("recipient", None),
-                    "description": p.meta.get("description", None),
-                    "period": { "since": since, "until": until },
-                })
-            if logs:
-                logs.sort(key=lambda x:x["period"]["until"] or x["period"]["since"] or datetime.date.today(), reverse=True)
-                self.logs.setdefault(k, []).extend(logs)
+            self.acquire_egt(k, tags)
 
     def acquire_structured(self, info):
         """
@@ -107,6 +179,33 @@ class CV(object):
         i = info.get("tags", {})
         for k, v in i.iteritems():
             self.tags[k] = v
+
+    def acquire_egt(self, log_group, tags):
+        """
+        Acquire historical info from egt projects with the given tags
+        """
+        egt = egtlib.Egt(tags=tags, archived=True)
+
+        # Collect egt entries and group them by group name
+        groups = {}
+        for p in egt.projects.itervalues():
+            group = groups.get(p.group, None)
+            if group is None:
+                group = ProjectGroup(p.group)
+                groups[p.group] = group
+            group.add(p)
+
+        # Get the merged group info
+        logs = []
+        for g in groups.itervalues():
+            info = g.get_merged_info()
+            if log_group == "work" and not info["employer"]:
+                continue
+            logs.append(info)
+
+        if logs:
+            logs.sort(key=lambda x:x["period"]["until"] or x["period"]["since"] or datetime.date.today(), reverse=True)
+            self.logs.setdefault(log_group, []).extend(logs)
 
     def template_context(self):
         """
@@ -243,7 +342,7 @@ class CV(object):
                 tpl = jinja_env.get_template(fn)
                 rendered = tpl.render(**jinja_context)
                 with open(os.path.join(outdir, fn), "w") as fd:
-                    fd.write(rendered)
+                    fd.write(rendered.encode("utf8"))
             else:
                 # Copy all other files
                 shutil.copyfile(os.path.join(tpldir, fn), os.path.join(outdir, fn))

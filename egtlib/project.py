@@ -88,6 +88,10 @@ class Project(object):
         if self.meta.get("billing", "hourly") == "daily":
             self.annotate_log_with_daily_billing()
 
+        # Allow to group archived projects with the same name
+        # Set it now before we potentially mangle the name
+        self.group = self.name
+
         # Quick access to 'archive' meta attribute
         if self.meta.get("archived", "false").lower() == "true":
             self.archived = True
@@ -228,7 +232,12 @@ class Project(object):
         elif since is not None:
             since = datetime.datetime.strptime(since, "%Y-%m-%d").date()
         if until is None and self.log:
-            until = self.log[-1].until.date()
+            until = self.log[-1].until
+            if until is None:
+                # Deal with entries that are still open
+                until = datetime.date.today()
+            else:
+                until = until.date()
         elif until is not None:
             until = datetime.datetime.strptime(until, "%Y-%m-%d").date()
         return since, until

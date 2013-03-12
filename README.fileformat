@@ -34,8 +34,12 @@ Metadata fields at start of file:
    Editor to use for this project. Defaults to $EDITOR from the environment, if
    defined, or else 'vim'.
 
-  Title: name
+  Title: text
    Freeform title for the project.
+
+  Group-title: text
+   Freeform title for the project, when considered together with all the
+   archived projects with the same name.
 
   Description: text
    Freeform description for the project.
