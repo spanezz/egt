@@ -49,7 +49,6 @@ class ProjectGroup(object):
             "tags": frozenset(),
         }
         all_archived = True
-        unarchived_until = None
         period_since = None
         period_until = None
 
@@ -69,7 +68,8 @@ class ProjectGroup(object):
             # Check if there are still active projects in this group
             if not p.archived:
                 all_archived = False
-                unarchived_until = until
+                if since or until:
+                    period_until = until
 
             # Extend period ranges using since and until
             if period_since is None:
@@ -89,8 +89,7 @@ class ProjectGroup(object):
         # If there are still active projects, unset 'until' to say that the
         # entry is still ongoing
         if not all_archived:
-            period_until = unarchived_until
-            if period_until is not None and period_until > datetime.date.today():
+            if period_until is not None and period_until >= datetime.date.today():
                 period_until = None
 
         # Set the final period information
@@ -113,6 +112,7 @@ class CV(object):
         self.job_types = {}
         self.job_employers = {}
         self.logs = {}
+        self.egt_blacklist = set()
 
     def load(self):
         # Load base info from yaml files
@@ -190,6 +190,13 @@ class CV(object):
         for k, v in i.iteritems():
             self.job_employers[k] = v
 
+        i = info.get("egt-blacklist", [])
+        if isinstance(i, basestring):
+            self.egt_blacklist.add(i)
+        else:
+            self.egt_blacklist.update(i)
+
+
     def acquire_egt(self, log_group, tags):
         """
         Acquire historical info from egt projects with the given tags
@@ -199,6 +206,8 @@ class CV(object):
         # Collect egt entries and group them by group name
         groups = {}
         for p in egt.projects.itervalues():
+            if p.name in self.egt_blacklist:
+                continue
             group = groups.get(p.group, None)
             if group is None:
                 group = ProjectGroup(p.group)
@@ -220,7 +229,7 @@ class CV(object):
             logs.append(info)
 
         if logs:
-            logs.sort(key=lambda x:x["period"]["until"] or x["period"]["since"] or datetime.date.today(), reverse=True)
+            logs.sort(key=lambda x:(x["period"]["until"] or datetime.date.today(), x["period"]["since"] or datetime.date.today()), reverse=True)
             self.logs.setdefault(log_group, []).extend(logs)
 
     def template_context(self):

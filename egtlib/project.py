@@ -93,7 +93,7 @@ class Project(object):
         self.group = self.name
 
         # Quick access to 'archive' meta attribute
-        if self.meta.get("archived", "false").lower() == "true":
+        if self.meta.get("archived", "false").lower() in ("true", "yes"):
             self.archived = True
             since, until = self.formal_period
             if until:
