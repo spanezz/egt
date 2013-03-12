@@ -20,6 +20,6 @@ Package: egt
 Architecture: all
 Depends: python, python-egtlib, python-cliapp, python-flask, ${python:Depends}, ${misc:Depends}
 Recommends: python-vobject
-Suggests: app-install-data, python-xdg, python-flask
+Suggests: app-install-data, python-xdg, python-flask, python-babel, gettext
 Description: Enrico's Getting Things Done command line tool
  .
