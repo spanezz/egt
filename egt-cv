@@ -103,11 +103,19 @@ class ProjectGroup(object):
 
 
 class CV(object):
+    LANG_SKILLS = {
+        "A1": "beginner",
+        "A2": "elementary",
+        "B1": "intermediate",
+        "B2": "upper intermediate",
+        "C1": "advanced",
+        "C2": "master",
+    }
     def __init__(self, dirname):
         self.dirname = dirname
         self.personal = {}
         self.shortbio = []
-        self.languages = []
+        self.languages = {}
         self.skills = []
         self.tags = {}
         self.job_types = {}
@@ -167,10 +175,14 @@ class CV(object):
         if i is not None:
             for lang in i:
                 for k, v in lang.iteritems():
-                    self.languages.append({
-                        "name": k,
-                        "skill": v,
-                    })
+                    if v == "main":
+                        self.languages.setdefault("mothertongue", []).append(k)
+                    else:
+                        table = self.languages.setdefault("table", [])
+                        table.append({
+                            "name": k,
+                            "skills": { lk: self.LANG_SKILLS.get(lv.upper(), lv) for lk, lv in v.iteritems() },
+                        })
 
         i = info.get("skills", None)
         if i is not None:
@@ -257,6 +269,9 @@ class CV(object):
         """
         Generate all the translatable strings found in the data
         """
+        for v in self.LANG_SKILLS.itervalues():
+            yield v
+
         for k in ("nationality", "notes"):
             s = self.personal.get(k, None)
             if s is not None:
