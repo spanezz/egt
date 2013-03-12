@@ -117,7 +117,8 @@ class CV(object):
         self.personal = {}
         self.shortbio = []
         self.languages = {}
-        self.skills = []
+        self.technical_skills = []
+        self.social_skills = []
         self.tags = {}
         self.job_types = {}
         self.job_employers = {}
@@ -185,12 +186,19 @@ class CV(object):
                             "skills": { lk: self.LANG_SKILLS.get(lv.upper(), lv) for lk, lv in v.iteritems() },
                         })
 
-        i = info.get("skills", None)
+        i = info.get("technical_skills", None)
         if i is not None:
             if isinstance(i, basestring):
-                self.skills.append(i)
+                self.technical_skills.append(i)
             else:
-                self.skills.extend(i)
+                self.technical_skills.extend(i)
+
+        i = info.get("social_skills", None)
+        if i is not None:
+            if isinstance(i, basestring):
+                self.social_skills.append(i)
+            else:
+                self.social_skills.extend(i)
 
         i = info.get("tags", {})
         for k, v in i.iteritems():
@@ -255,7 +263,8 @@ class CV(object):
             "personal": self.personal,
             "shortbio": self.shortbio,
             "languages": self.languages,
-            "skills": self.skills,
+            "technical_skills": self.technical_skills,
+            "social_skills": self.social_skills,
             "lastedit": datetime.date.today(),
             "logs": self.logs,
         }
@@ -288,7 +297,10 @@ class CV(object):
         for l in self.languages.get("table", []):
             yield l["name"]
 
-        for s in self.skills:
+        for s in self.technical_skills:
+            yield s
+
+        for s in self.social_skills:
             yield s
 
         for s in self.job_types.itervalues():

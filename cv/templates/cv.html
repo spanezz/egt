@@ -238,18 +238,27 @@
 {% endif %}
 
 <tr><td>&nbsp;</td><td/></tr>
+{% if technical_skills %}
 <tr>
   <td>{{_("Technical skills")}}</td>
-  <td><xsl:apply-templates select="general/techskills"/></td>
+  <td>
+    {% for p in technical_skills %}
+    <p>{{p}}</p>
+    {% endfor %}
+  </td>
 </tr>
+{% endif %}
+{% if social_skills %}
 <tr>
   <td>{{_("Social skills")}}</td>
-  <td><xsl:apply-templates select="general/socskills"/></td>
+  <td>
+    {% for p in social_skills %}
+    <p>{{p}}</p>
+    {% endfor %}
+  </td>
 </tr>
-<tr class="h1">
-  <td>&nbsp;</td>
-  <td></td>
-</tr>
+{% endif %}
+<tr class="h1"><td>&nbsp;</td><td></td></tr>
 
 </table>
 
