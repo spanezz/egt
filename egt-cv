@@ -428,6 +428,7 @@ class CV(object):
         """
         for lang, langdir in self.list_languages():
             merged_fname = os.path.join(langdir, "LC_MESSAGES/merged.po")
+            compiled_fname = os.path.join(langdir, "LC_MESSAGES/cv.mo")
 
             # Merge all translations
             subprocess.check_call([
@@ -437,10 +438,14 @@ class CV(object):
                 "-o", merged_fname])
 
             # Compile the merged translations
-            subprocess.check_call(["msgfmt", "-c", "-f", "-o", os.path.join(langdir, "LC_MESSAGES/cv.mo"), merged_fname])
+            subprocess.check_call(["msgfmt", "-c", "-f", "-o", compiled_fname, merged_fname])
 
             outdir = os.path.join(self.dirname, "cv-" + lang)
             self.render(outdir, (lang,))
+
+            # Cleanup the compiled translations
+            os.unlink(merged_fname)
+            os.unlink(compiled_fname)
 
 
 class EgtCVApp(cliapp.Application):
