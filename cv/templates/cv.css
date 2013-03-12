@@ -69,3 +69,8 @@ table.languages thead th {
 table.languages tbody td {
   border: 1pt solid black;
 }
+
+img.signature {
+  max-height: 3em;
+  max-width: 30em;
+}
