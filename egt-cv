@@ -286,23 +286,25 @@ class CV(object):
         for s in self.shortbio:
             yield s
 
-        for l in self.languages:
+        for l in self.languages.get("mothertongue", []):
+            yield l
+        for l in self.languages.get("table", []):
             yield l["name"]
-            yield l["skill"]
 
         for s in self.skills:
             yield s
 
-        for s in self.job_types.itervalues:
+        for s in self.job_types.itervalues():
             yield s
 
-        for s in self.job_employers.itervalues:
+        for s in self.job_employers.itervalues():
             yield s
 
-        for l in self.logs:
-            for field in ("title", "employer", "description", "issuer"):
-                if l[field]:
-                    yield l[field]
+        for name, entries in self.logs.iteritems():
+            for l in entries:
+                for field in ("title", "employer", "description", "issuer"):
+                    if l.get(field):
+                        yield l[field]
 
     def extract_strings(self):
         from babel.messages import Catalog
@@ -321,7 +323,7 @@ class CV(object):
             if not fn.endswith(".html"): continue
             pathname = os.path.join(tpldir, fn)
             with open(pathname) as fd:
-                for lineno, func, msg in jinja_env.extract_translations(fd.read()):
+                for lineno, func, msg in jinja_env.extract_translations(fd.read().decode("utf8")):
                     c.add(msg, locations=((pathname, lineno),))
 
         return c
