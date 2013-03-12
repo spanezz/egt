@@ -147,37 +147,13 @@
 
 {% if logs.talks %}
   {{head1(_("Invited talks"))}}
-<!--
-<xsl:template match="talk">
-<tr>
-  <td class="heading2">Date</td>
-  <td class="contents"><xsl:value-of select="@date"/></td>
-</tr>
-<tr>
-  <td class="heading2">Title</td>
-  <td class="contents"><a href="http://people.debian.org/~enrico/talks/{@dir}/{$index}"><xsl:apply-templates select="title"/></a></td>
-</tr>
-<tr>
-  <td class="heading2">Event</td>
-  <td class="contents">
-    <xsl:choose>
-      <xsl:when test="event and place">
-        <xsl:apply-templates select="event"/>, <xsl:apply-templates select="place"/>
-      </xsl:when>
-      <xsl:when test="event">
-        <xsl:apply-templates select="event"/>
-      </xsl:when>
-      <xsl:when test="place">
-        <xsl:apply-templates select="place"/>
-      </xsl:when>
-    </xsl:choose>
-  </td>
-</tr>
-<xsl:if test="position() != last()">
-<tr><td class="heading2">&nbsp;</td><td/></tr>
-</xsl:if>
-</xsl:template>
--->
+  {% for l in logs.talks %}
+    {{period(_("Period"), l)}}
+    {{entry_if_set(_("Title"), l.title)}}
+    {{homepage_if_set(_("Web page"), l.homepage)}}
+    {{entry_if_set(_("Description"), l.description)}}
+    {% if not loop.last %}<tr><td>&nbsp;</td><td/></tr>{% endif %}
+  {% endfor %}
 {% endif %}
 
 {{head1(_("Education and training"))}}
