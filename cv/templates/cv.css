@@ -1,0 +1,71 @@
+body {
+  background: white;
+  color: #000000;
+  font-family: Tahoma, Verdana, sans-serif;
+  font-size: 12px;
+  font-weight: normal;
+  margin-bottom: 5;
+  margin-left: 5;
+  margin-right: 5;
+  margin-top: 5;
+  text-decoration: none;
+}
+
+table.main {
+  border: 0;
+  margin: 0;
+}
+
+tr.h0 td {
+  vertical-align: top;
+  text-align: right;
+  font-weight: bold;
+  font-size: large;
+  border-right: medium solid black;
+  border-bottom: medium solid black;
+  padding-right: 1em;
+  padding-top: 2em;
+  padding-bottom: 2em;
+}
+
+tr.h1 td:first-child {
+  width: 20%;
+  vertical-align: top;
+  text-align: right;
+  font-weight: bold;
+  font-size: large;
+  border-right: medium solid black;
+  padding-right: 1em;
+  padding-top: 2em;
+  padding-bottom: 2em;
+}
+
+td:first-child {
+  vertical-align: top;
+  text-align: right;
+  font-weight: bold;
+  border-right: medium solid black;
+  padding-right: 1em;
+}
+
+td {
+  vertical-align: top;
+  text-align: left;
+  padding-left: 1em;
+}
+
+.name {
+  font-variant: small-caps;
+}
+
+table.languages {
+  text-align: center;
+  border: 1pt solid black;
+  border-collapse: collapse;
+}
+table.languages thead th {
+  border: 1pt solid black;
+}
+table.languages tbody td {
+  border: 1pt solid black;
+}

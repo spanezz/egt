@@ -1,0 +1,240 @@
+# Translations template for PROJECT.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: enrico@enricozini.org\n"
+"POT-Creation-Date: 2013-03-12 18:39+0100\n"
+"PO-Revision-Date: 2013-03-12 18:40+0100\n"
+"Last-Translator: Enrico Zini <enrico@enricozini.org>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+msgid "beginner"
+msgstr "base"
+
+msgid "elementary"
+msgstr "elementare"
+
+msgid "intermediate"
+msgstr "intermedio"
+
+msgid "upper intermediate"
+msgstr "intermedio superiore"
+
+msgid "master"
+msgstr "piena padronanza"
+
+msgid "advanced"
+msgstr "avanzato"
+
+#: cv/templates/cv.html:4
+#, python-format
+msgid "Curriculum Vitae of %(name)s"
+msgstr "Curriculum Vitae di %(name)s"
+
+#: cv/templates/cv.html:19
+#, python-format
+msgid "On %(date)s"
+msgstr "Il %(date)s"
+
+#: cv/templates/cv.html:21
+#, python-format
+msgid "From %(since)s to %(until)s"
+msgstr "Dal %(since)s al %(until)s"
+
+#: cv/templates/cv.html:24
+#, python-format
+msgid "From %(since)s, still ongoing"
+msgstr "Dal %(since)s"
+
+#: cv/templates/cv.html:30 cv/templates/cv.html:126 cv/templates/cv.html:139
+#: cv/templates/cv.html:185
+msgid "Period"
+msgstr "Periodo"
+
+#: cv/templates/cv.html:60
+#, python-format
+msgid "Curriculum Vitae of %(name)s "
+msgstr ""
+
+#: cv/templates/cv.html:61
+#, python-format
+msgid "Last updated: %(lastedit)s"
+msgstr "Ultimo aggiornamento: %(lastedit)s"
+
+#: cv/templates/cv.html:65
+msgid "Personal information"
+msgstr "Informazioni personali"
+
+#: cv/templates/cv.html:68 cv/templates/cv.html:211
+msgid "Name"
+msgstr "Nome"
+
+#: cv/templates/cv.html:72
+msgid "Address"
+msgstr "Indirizzo"
+
+#: cv/templates/cv.html:77
+#, python-format
+msgid "%(name)s phone"
+msgstr "%(name)s"
+
+#: cv/templates/cv.html:83
+msgid "E-Mail"
+msgstr "E-Mail"
+
+#: cv/templates/cv.html:89
+msgid "Website"
+msgstr "Sito web"
+
+#: cv/templates/cv.html:94
+msgid "Nationality"
+msgstr "Nazionalità"
+
+#: cv/templates/cv.html:98
+msgid "Born"
+msgstr "Data di nascita"
+
+#: cv/templates/cv.html:103
+msgid "Other information"
+msgstr "Altre informazioni"
+
+#: cv/templates/cv.html:109
+msgid "Publications"
+msgstr "Pubblicazioni"
+
+#: cv/templates/cv.html:124
+msgid "Work experience"
+msgstr "Esperienze lavorative"
+
+#: cv/templates/cv.html:127
+msgid "Employer"
+msgstr "Presso"
+
+#: cv/templates/cv.html:128
+msgid "Job type"
+msgstr "Tipologia"
+
+#: cv/templates/cv.html:129 cv/templates/cv.html:141
+msgid "Summary"
+msgstr "Nome"
+
+#: cv/templates/cv.html:130 cv/templates/cv.html:142 cv/templates/cv.html:187
+msgid "Web page"
+msgstr "Pagina web"
+
+#: cv/templates/cv.html:131 cv/templates/cv.html:143 cv/templates/cv.html:189
+msgid "Description"
+msgstr "Descrizione"
+
+#: cv/templates/cv.html:137
+msgid "Free Software projects"
+msgstr "Progetti di software libero"
+
+#: cv/templates/cv.html:140
+msgid "Project type"
+msgstr "Tipologia"
+
+#: cv/templates/cv.html:149
+msgid "Invited talks"
+msgstr "Lezioni pubbliche"
+
+#: cv/templates/cv.html:183
+msgid "Education and training"
+msgstr "Istruzione e formazione"
+
+#: cv/templates/cv.html:186
+msgid "Type of qualification"
+msgstr "Qualifica conseguita"
+
+#: cv/templates/cv.html:188
+msgid "Issuer"
+msgstr "Istituto di istruzione o formazione"
+
+#: cv/templates/cv.html:193
+msgid "Personal skills and expertise"
+msgstr "Capacità e competenze personali"
+
+#: cv/templates/cv.html:196
+msgid "Mother tongue"
+msgstr "Madrelingua"
+
+#: cv/templates/cv.html:203
+msgid "Self assessment"
+msgstr ""
+
+#: cv/templates/cv.html:204
+msgid "European level¹"
+msgstr ""
+
+#: cv/templates/cv.html:205
+msgid "¹ Common European Framework of Reference (CEF)"
+msgstr ""
+
+#: cv/templates/cv.html:212
+msgid "Understanding"
+msgstr "Comprensione"
+
+#: cv/templates/cv.html:213
+msgid "Speaking"
+msgstr "Parlare"
+
+#: cv/templates/cv.html:214
+msgid "Writing"
+msgstr "Scrivere"
+
+#: cv/templates/cv.html:217
+msgid "Listening"
+msgstr "Ascoltare"
+
+#: cv/templates/cv.html:218
+msgid "Reading"
+msgstr "Leggere"
+
+#: cv/templates/cv.html:219
+msgid "Spoken interaction"
+msgstr "Interazione parlata"
+
+#: cv/templates/cv.html:220
+msgid "Spoken production"
+msgstr "Produzione orale"
+
+#: cv/templates/cv.html:242
+msgid "Technical skills"
+msgstr "Capacità tecniche"
+
+#: cv/templates/cv.html:246
+msgid "Social skills"
+msgstr "Capacità sociali"
+
+#: cv/templates/cv.html:256
+msgid "Dichiarazione"
+msgstr ""
+
+#: cv/templates/cv.html:258
+msgid ""
+"Dichiaro che le informazioni riportate nel presente Curriculum\n"
+"Vitae sono esatte e veritiere."
+msgstr ""
+
+#: cv/templates/cv.html:261
+msgid ""
+"Autorizzo il trattamento dei dati personali, ivi compresi quelli "
+"sensibili,\n"
+"ai sensi e per gli effetti della legge 31.12.96, n. 675 per le finalità "
+"di cui\n"
+"al presente avviso di candidatura."
+msgstr ""
+
+#: cv/templates/cv.html:265
+#, python-format
+msgid "Data: %(lastedit)s"
+msgstr ""
+

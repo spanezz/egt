@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% trans name=personal.name %}Curriculum Vitae of {{name}}{% endtrans %}</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  <link rel="StyleSheet" href="cv.css" type="text/css"/>
+</head>
+<body>
+{% macro head1(text) %}
+<tr class="h1">
+  <td>{{text}}</td>
+  <td></td>
+</tr>
+{%- endmacro %}
+
+{% macro period_format(log) %}
+  {% if log.period.until %}
+    {% if log.period.until == log.period.since %}
+    {% trans date=log.period.until %}On {{date}}{% endtrans %}
+    {% else %}
+    {% trans since=log.period.since, until=log.period.until %}From {{since}} to {{until}}{% endtrans %}
+    {% endif %}
+  {% else %}
+  {% trans since=log.period.since %}From {{since}}, still ongoing{% endtrans %}
+  {% endif %}
+{%- endmacro %}
+
+{% macro period(title, log) %}
+  <tr>
+    <td>{{_("Period")}}</td>
+    <td>{{period_format(l)}}</td>
+  </tr>
+{%- endmacro %}
+
+{% macro entry_if_set(title, val) %}
+  {% if val %}
+  <tr>
+    <td>{{title}}</td>
+    <td>{{_(val)}}</td>
+  </tr>
+  {% endif %}
+{%- endmacro %}
+
+{% macro homepage_if_set(title, url) %}
+  {% if url %}
+  <tr>
+    <td>{{title}}</td>
+    <td><a href="{{url}}">{{url}}</a></td>
+  </tr>
+  {% endif %}
+{%- endmacro %}
+
+<!-- The European CV is one big table, with titles on the left and fields on
+     the right -->
+
+<table class="main">
+
+<tr class="h0">
+  <td colspan="2">
+    {% trans name=personal.name %}Curriculum Vitae of {{name}}{% endtrans %}<br/>
+    {% trans %}Last updated: {{lastedit}}{% endtrans %}<br/>
+  </td>
+</tr>
+
+{{head1(_("Personal information"))}}
+
+<tr>
+  <td>{{_("Name")}}</td>
+  <td class="name">{{personal.name}}</td>
+</tr>
+<tr>
+  <td>{{_("Address")}}</td>
+  <td>{{_(personal.address)}}</td>
+</tr>
+{% for p in personal.telephone %}
+<tr>
+  <td>{% trans name=p.name %}{{name}} phone{% endtrans %}</td>
+  <td>{{p.value}}</td>
+</tr>
+{% endfor %}
+{% for e in personal.email %}
+<tr>
+  <td>{{_("E-Mail")}}</td>
+  <td>{{e}}</td>
+</tr>
+{% endfor %}
+{% for url in personal.homepage %}
+<tr>
+  <td>{{_("Website")}}</td>
+  <td><a href="{{url}}">{{url}}</a></td>
+</tr>
+{% endfor %}
+<tr>
+  <td>{{_("Nationality")}}</td>
+  <td>{{_(personal.nationality)}}</td>
+</tr>
+<tr>
+  <td>{{_("Born")}}</td>
+  <td>{{personal.birth}}</td>
+</tr>
+{% if personal.notes %}
+<tr>
+  <td>{{_("Other information")}}</td>
+  <td>{{personal.notes}}</td>
+</tr>
+{% endif %}
+
+{% if publications %}
+{{head1(_("Publications"))}}
+<!--
+<xsl:template match="pub">
+<tr>
+  <td class="heading2">&nbsp;</td>
+  <td class="contents"><xsl:copy-of select="."/></td>
+</tr>
+<xsl:if test="position() != last()">
+<tr><td class="heading2">&nbsp;</td><td/></tr>
+</xsl:if>
+</xsl:template>
+-->
+{% endif %}
+
+{% if logs.work %}
+  {{head1(_("Work experience"))}}
+  {% for l in logs.work %}
+    {{period(_("Period"), l)}}
+    {{entry_if_set(_("Employer"), l.employer)}}
+    {{entry_if_set(_("Job type"), l.job_type)}}
+    {{entry_if_set(_("Summary"), l.title)}}
+    {{homepage_if_set(_("Web page"), l.homepage)}}
+    {{entry_if_set(_("Description"), l.description)}}
+    {% if not loop.last %}<tr><td>&nbsp;</td><td/></tr>{% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if logs.freesoftware %}
+  {{head1(_("Free Software projects"))}}
+  {% for l in logs.freesoftware %}
+    {{period(_("Period"), l)}}
+    {{entry_if_set(_("Project type"), l.job_type)}}
+    {{entry_if_set(_("Summary"), l.title)}}
+    {{homepage_if_set(_("Web page"), l.homepage)}}
+    {{entry_if_set(_("Description"), l.description)}}
+    {% if not loop.last %}<tr><td>&nbsp;</td><td/></tr>{% endif %}
+  {% endfor %}
+{% endif %}
+
+{% if logs.talks %}
+  {{head1(_("Invited talks"))}}
+<!--
+<xsl:template match="talk">
+<tr>
+  <td class="heading2">Date</td>
+  <td class="contents"><xsl:value-of select="@date"/></td>
+</tr>
+<tr>
+  <td class="heading2">Title</td>
+  <td class="contents"><a href="http://people.debian.org/~enrico/talks/{@dir}/{$index}"><xsl:apply-templates select="title"/></a></td>
+</tr>
+<tr>
+  <td class="heading2">Event</td>
+  <td class="contents">
+    <xsl:choose>
+      <xsl:when test="event and place">
+        <xsl:apply-templates select="event"/>, <xsl:apply-templates select="place"/>
+      </xsl:when>
+      <xsl:when test="event">
+        <xsl:apply-templates select="event"/>
+      </xsl:when>
+      <xsl:when test="place">
+        <xsl:apply-templates select="place"/>
+      </xsl:when>
+    </xsl:choose>
+  </td>
+</tr>
+<xsl:if test="position() != last()">
+<tr><td class="heading2">&nbsp;</td><td/></tr>
+</xsl:if>
+</xsl:template>
+-->
+{% endif %}
+
+{{head1(_("Education and training"))}}
+{% for l in logs.titles %}
+  {{period(_("Period"), l)}}
+  {{entry_if_set(_("Type of qualification"), l.title)}}
+  {{homepage_if_set(_("Web page"), l.homepage)}}
+  {{entry_if_set(_("Issuer"), l.issuer)}}
+  {{entry_if_set(_("Description"), l.description)}}
+  {% if not loop.last %}<tr><td>&nbsp;</td><td/></tr>{% endif %}
+{% endfor %}
+
+{{head1(_("Personal skills and expertise"))}}
+{% if languages.mothertongue %}
+<tr>
+  <td>{{_("Mother tongue")}}</td>
+  <td>{% for l in languages.mothertongue %}{{_(l)}}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+</tr>
+{% endif %}
+{% if languages.table %}
+<tr>
+  <td>
+    <p>{{_("Self assessment")}}</p>
+    <p>{{_("European level¹")}}</p>
+    <p>{{_("¹ Common European Framework of Reference (CEF)")}}</p>
+  </td>
+  <td>
+    <table class="languages">
+      <thead>
+	<tr>
+	  <th rowspan="2">{{_("Name")}}</th>
+	  <th colspan="2">{{_("Understanding")}}</th>
+	  <th colspan="2">{{_("Speaking")}}</th>
+	  <th rowspan="2">{{_("Writing")}}</th>
+	</tr>
+	<tr>
+	  <th>{{_("Listening")}}</th>
+	  <th>{{_("Reading")}}</th>
+	  <th>{{_("Spoken interaction")}}</th>
+	  <th>{{_("Spoken production")}}</th>
+	</tr>
+      </thead>
+      <tbody>
+	{% for l in languages.table %}
+	<tr>
+	  <td>{{_(l.name)}}</td>
+	  <td>{{_(l.skills.listening)}}</td>
+          <td>{{_(l.skills.reading)}}</td>
+	  <td>{{_(l.skills.spoken_interaction)}}</td>
+          <td>{{_(l.skills.spoken_production)}}</td>
+          <td>{{_(l.skills.writing)}}</td>
+        </tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </td>
+</tr>
+{% endif %}
+
+<tr><td>&nbsp;</td><td/></tr>
+<tr>
+  <td>{{_("Technical skills")}}</td>
+  <td><xsl:apply-templates select="general/techskills"/></td>
+</tr>
+<tr>
+  <td>{{_("Social skills")}}</td>
+  <td><xsl:apply-templates select="general/socskills"/></td>
+</tr>
+<tr class="h1">
+  <td>&nbsp;</td>
+  <td></td>
+</tr>
+
+</table>
+
+<h2>{% trans %}Dichiarazione{% endtrans %}</h2>
+
+<p>{% trans %}Dichiaro che le informazioni riportate nel presente Curriculum
+Vitae sono esatte e veritiere.{% endtrans %}</p>
+
+<p>{% trans %}Autorizzo il trattamento dei dati personali, ivi compresi quelli sensibili,
+ai sensi e per gli effetti della legge 31.12.96, n. 675 per le finalità di cui
+al presente avviso di candidatura.{% endtrans %}</p>
+
+<p>{% trans %}Data: {{lastedit}}{% endtrans %}</p>
+
+{{personal.name}}
+
+{% if personal.signature %}
+<img src="{{personal.signature}}">
+{% endif %}
+
+</body>
+</html>

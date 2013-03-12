@@ -270,9 +270,6 @@ class CV(object):
         """
         Generate all the translatable strings found in the data
         """
-        for v in self.LANG_SKILLS.itervalues():
-            yield v
-
         for k in ("nationality", "notes"):
             s = self.personal.get(k, None)
             if s is not None:
@@ -307,15 +304,24 @@ class CV(object):
                         yield l[field]
 
     def extract_strings(self):
+        """
+        Extract translatable strings.
+
+        Returns two Catalog objects: one for egt-cv and jinja2 templates, the
+        other for personal CV information. The idea is that the translations of
+        the first catalog can be public and shipped with egt-cv itself
+        """
         from babel.messages import Catalog
-        c = Catalog()
 
         # Instantiate jinja2 machinery to get string extraction
         jinja_env = jinja2.Environment(extensions=['jinja2.ext.i18n'])
 
-        # Add our strings
-        for s in self.translatable_strings():
-            c.add(s)
+        # Build the egt-cv catalog
+        c_tpl = Catalog()
+
+        # Add strings from our consts
+        for s in self.LANG_SKILLS.itervalues():
+            c_tpl.add(s)
 
         # Add strings from jinja2 templates
         tpldir = os.path.join(self.dirname, "templates")
@@ -324,9 +330,16 @@ class CV(object):
             pathname = os.path.join(tpldir, fn)
             with open(pathname) as fd:
                 for lineno, func, msg in jinja_env.extract_translations(fd.read().decode("utf8")):
-                    c.add(msg, locations=((pathname, lineno),))
+                    c_tpl.add(msg, locations=((pathname, lineno),))
 
-        return c
+        # Build the personal cv catalog
+        c_cv = Catalog()
+
+        # Add our strings
+        for s in self.translatable_strings():
+            c_cv.add(s)
+
+        return c_tpl, c_cv
 
     def list_languages(self):
         """
@@ -339,10 +352,26 @@ class CV(object):
             if not os.path.isdir(dn): continue
             yield lang, dn
 
-    def update_catalogs(self):
+    def update_catalog(self, msgfile, catalog):
         from babel.messages.pofile import read_po, write_po
 
-        new_catalog = self.extract_strings()
+        # Read the existing potfile if it exists
+        if os.path.isfile(msgfile):
+            with open(msgfile) as fd:
+                cat = read_po(fd)
+                cat.update(catalog)
+        else:
+            cat = catalog
+
+        # Write updated catalogs
+        with open(msgfile, "w") as fd:
+            write_po(fd, cat)
+
+    def update_catalogs(self):
+        """
+        Update all available translation catalogs
+        """
+        c_tpl, c_cv = self.extract_strings()
 
         # Scan locale dirs
         for lang, langdir in self.list_languages():
@@ -350,19 +379,10 @@ class CV(object):
             msgdir = os.path.join(langdir, "LC_MESSAGES")
             if not os.path.isdir(msgdir):
                 os.mkdir(msgdir)
-            msgfile = os.path.join(msgdir, "cv.po")
-            # Read the existing potfile if it exists
-            if os.path.isfile(msgfile):
-                with open(msgfile) as fd:
-                    cat = read_po(fd)
-                    cat.update(new_catalog)
-            else:
-                cat = new_catalog
-
-            # Write updated catalogs
-            with open(msgfile, "w") as fd:
-                write_po(fd, cat)
-                print lang
+            self.update_catalog(os.path.join(msgdir, "egt-cv.po"), c_tpl)
+            self.update_catalog(os.path.join(msgdir, "cv.po"), c_cv)
+            # Let the user know what we did
+            print lang
 
     def render(self, outdir, locales):
         """
@@ -410,6 +430,7 @@ class CV(object):
             # Ensure translations are up to date
             subprocess.check_call(["msgfmt", "-c", "-f", "-o",
                                    os.path.join(langdir, "LC_MESSAGES/cv.mo"),
+                                   os.path.join(langdir, "LC_MESSAGES/egt-cv.po"),
                                    os.path.join(langdir, "LC_MESSAGES/cv.po")])
 
             outdir = os.path.join(self.dirname, "cv-" + lang)
