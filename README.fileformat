@@ -18,6 +18,11 @@ Metadata fields at start of file:
    made, for example, to interact with git. Useful for things like shopping
    lists
 
+  Archvied: true
+   A project that is considered closed and is not shown by default.
+   Archived projects automatically get their end date appended to the project
+   name.
+
   Name: name
    The project name. The file or directory names are used as defaults, and are
    usually good.
@@ -37,11 +42,9 @@ Metadata fields at start of file:
 
   Start-date: date
    Official start date of the project. Default: the first log date.
-   It can be freeform, as in "November 2012".
 
   End-date: date
    Official end date for the project. Default: the last log date.
-   It can be freeform, as in "November 2012".
 
   Lang: code
    Language used for parsing dates. Only 'it' is supported at the moment.

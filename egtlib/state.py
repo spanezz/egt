@@ -11,14 +11,14 @@ log = logging.getLogger(__name__)
 
 
 class State(object):
-    def __init__(self):
+    def __init__(self, archived=False):
         self.clear()
-        self.load()
+        self.load(archived)
 
     def clear(self):
         self.projects = {}
 
-    def load(self):
+    def load(self, archived=False):
         self.clear()
 
         # Build a list of standard path locations
@@ -36,6 +36,8 @@ class State(object):
                     log.warning("project %s has disappeared from %s: please rerun scan", name, fname)
                     continue
                 proj = Project(fname)
+                if not archived and proj.archived:
+                    continue
                 self.projects[proj.name] = proj
 
     def save(self):

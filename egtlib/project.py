@@ -55,6 +55,7 @@ def parse_duration(s):
 class Project(object):
     def __init__(self, fname):
         self.fname = fname
+        self.archived = False
         # Default values, can be overridden by file metadata
         self.path = os.path.dirname(fname)
         self.name = default_name(fname)
@@ -87,6 +88,14 @@ class Project(object):
         if self.meta.get("billing", "hourly") == "daily":
             self.annotate_log_with_daily_billing()
 
+        # Quick access to 'archive' meta attribute
+        if self.meta.get("archived", "false").lower() == "true":
+            self.archived = True
+            since, until = self.formal_period
+            if until:
+                self.name += until.strftime("-%Y-%m-%d")
+            else:
+                self.name += since.strftime("-%Y-%m-%d")
 
     @property
     def last_updated(self):
@@ -216,8 +225,12 @@ class Project(object):
         until = self.meta.get("end-date", None)
         if since is None and self.log:
             since = self.log[0].begin.date()
+        elif since is not None:
+            since = datetime.datetime.strptime(since, "%Y-%m-%d").date()
         if until is None and self.log:
-            until = self.log[0].until.date()
+            until = self.log[-1].until.date()
+        elif until is not None:
+            until = datetime.datetime.strptime(until, "%Y-%m-%d").date()
         return since, until
 
 

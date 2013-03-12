@@ -49,8 +49,8 @@ class WeeklyReport(object):
 
 
 class Egt(object):
-    def __init__(self, tags=[]):
-        self.state = State()
+    def __init__(self, tags=[], archived=False):
+        self.state = State(archived)
         self.tags = frozenset(tags)
 
     @property

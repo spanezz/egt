@@ -37,7 +37,7 @@ class CV(object):
                 tags = frozenset((v,))
             else:
                 tags = frozenset(v)
-            egt = egtlib.Egt(tags=tags)
+            egt = egtlib.Egt(tags=tags, archived=True)
             logs = []
             for p in egt.projects.itervalues():
                 # Get the period

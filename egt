@@ -35,6 +35,7 @@ class EgtApp(cliapp.Application):
         self.settings.boolean(['vcal'], "output events in vCalendar format")
         self.settings.boolean(['verbose', 'v'], "verbose output")
         self.settings.boolean(['debug'], "debug output")
+        self.settings.boolean(['archived'], "also show archvied projects")
 
     def get_tags(self):
         if self.settings["tag"]:
@@ -43,7 +44,7 @@ class EgtApp(cliapp.Application):
             return frozenset()
 
     def make_egt(self):
-        return egtlib.Egt(tags=self.get_tags())
+        return egtlib.Egt(tags=self.get_tags(), archived=self.settings["archived"])
 
     def cmd_scan(self, args):
         """
