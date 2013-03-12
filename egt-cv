@@ -46,6 +46,7 @@ class ProjectGroup(object):
             "title": self.name.capitalize(),
             "group-title": None,
             "description": None,
+            "homepage": None,
             "tags": frozenset(),
         }
         all_archived = True
@@ -54,7 +55,7 @@ class ProjectGroup(object):
 
         for p in self.entries:
             # Get the various text fields, keeping the latest one
-            for field in ("group-title", "title", "recipient", "description"):
+            for field in ("group-title", "title", "recipient", "description", "homepage"):
                 val = p.meta.get(field, None)
                 if val is not None:
                     info[field] = val.decode("utf8")

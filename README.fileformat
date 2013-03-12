@@ -41,6 +41,9 @@ Metadata fields at start of file:
    Freeform title for the project, when considered together with all the
    archived projects with the same name.
 
+  Homepage: url
+   URL to the project home page
+
   Description: text
    Freeform description for the project.
 
