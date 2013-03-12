@@ -46,6 +46,9 @@ Metadata fields at start of file:
   End-date: date
    Official end date for the project. Default: the last log date.
 
+  Recipient:
+   Who the job is for (freeform)
+
   Lang: code
    Language used for parsing dates. Only 'it' is supported at the moment.
    English is the default.

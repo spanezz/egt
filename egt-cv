@@ -49,7 +49,7 @@ class CV(object):
                 logs.append({
                     "name": p.name,
                     "title": p.meta.get("title", p.name.capitalize()),
-                    "employer": p.meta.get("employer", None),
+                    "employer": p.meta.get("recipient", None),
                     "description": p.meta.get("description", None),
                     "period": { "since": since, "until": until },
                 })
