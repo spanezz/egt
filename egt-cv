@@ -183,7 +183,7 @@ class CV(object):
                         table = self.languages.setdefault("table", [])
                         table.append({
                             "name": k,
-                            "skills": { lk: self.LANG_SKILLS.get(lv.upper(), lv) for lk, lv in v.iteritems() },
+                            "skills": dict((lk, self.LANG_SKILLS.get(lv.upper(), lv)) for lk, lv in v.iteritems()),
                         })
 
         i = info.get("technical_skills", None)
