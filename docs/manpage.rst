@@ -1,0 +1,5 @@
+
+Manpage
+-------
+
+.. include:: manpage.html

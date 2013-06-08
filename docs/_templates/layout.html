@@ -1,0 +1,22 @@
+{% extends "!layout.html" %}
+
+{%- block extrahead %}
+{{ super() }}
+{% endblock %}
+
+{% block footer %}
+{{ super() }}
+<style>
+  img#logo {
+    z-index: 3;
+    position: fixed;
+    top: 1.5em;
+    right: 5%;
+    opacity: 0.6;
+  }
+  img#logo:hover {
+    opacity: 0.8;
+  }
+</style>
+</div>
+{% endblock %}
