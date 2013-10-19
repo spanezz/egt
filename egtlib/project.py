@@ -324,6 +324,15 @@ class Project(object):
         #       (documentation, archives)
         # (if you don't push, you don't back up, and it's fair enough)
 
+        # Add all paths listed in the 'backup' metadata, one per line
+        for p in [x.strip() for x in self.meta.get("backup", "").split("\n")]:
+            if not p: continue
+            path = os.path.join(self.path, p)
+            if not os.path.exists(path): continue
+            tarout.add(path)
+
+
+
     @classmethod
     def has_project(cls, fname):
         return os.path.exists(fname)

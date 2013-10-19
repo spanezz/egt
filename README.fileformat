@@ -70,6 +70,10 @@ Metadata fields at start of file:
    list of numbers with 'h' or 'm' suffix.
    Default: 8h
 
+  Backup: list of paths, one per line
+   When running 'egt backup', also backup the files or directories listed here.
+   Paths are relative to the project path.
+
 Project log:
 
   Starts with the first non-metadata line, uses the following format.
