@@ -45,7 +45,7 @@ Clone git repository, then build a Debian package:
 
 Install the egt_<version>_all.deb and python-egtlib_<version>_all.deb packages.
 
-.. Use virtualenv on package-based Linux distributions! `Learn why <http://workaround.org/easy-install-debian>`_
+.. Remember about security and stability: do not use virtualenv unless you really have to.
 
 
 Usage
