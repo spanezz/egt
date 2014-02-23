@@ -176,6 +176,17 @@ class EgtApp(cliapp.Application):
         for name, proj in e.projects.iteritems():
             proj.run_grep(args)
 
+    def cmd_mrconfig(self, args):
+        """
+        Run 'git grep' on all project .git dirs
+        """
+        e = self.make_egt()
+        for name, proj in e.projects.iteritems():
+            for gd in proj.gitdirs():
+                gd = os.path.abspath(os.path.join(gd, ".."))
+                print("[{}]".format(gd))
+                print()
+
     def cmd_when(self, args):
         """
         Show next-action lists that intersect the given context set
