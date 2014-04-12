@@ -26,6 +26,7 @@ def scan(top=os.path.expanduser("~")):
     """
     Generate the pathnames of all project files inside the given directory
     """
+    top = top.encode("utf8")
     seen = set()
     for root, dirs, files in os.walk(top, followlinks=True):
         # Since we follow links, prevent loops by remembering which inodes we
