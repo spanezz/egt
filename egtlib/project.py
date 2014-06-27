@@ -295,7 +295,7 @@ class Project(object):
 
         # Check the current dir
         cand = os.path.join(root, ".git")
-        if os.path.exists(cand):
+        if os.path.isdir(cand):
             yield cand
 
         # Recurse into subdirs if we still have some way to go
