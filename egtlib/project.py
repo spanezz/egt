@@ -260,22 +260,12 @@ class Project(object):
             yield na
 
     def spawn_terminal(self, with_editor=False):
-        import pipes
-        with open("/dev/null", "rw+") as devnull:
-            cmdline = [
-                "x-terminal-emulator",
-            ]
-            if with_editor:
-                cmdline.append("-e")
-                cmdline.append("sh")
-                cmdline.append("-c")
-                cmdline.append(self.editor + " " + pipes.quote(self.fname))
-            subprocess.Popen(cmdline, stdin=devnull, stdout=devnull, stderr=devnull, cwd=self.path, close_fds=True)
-            # Let go in the background
+        from .system import run_work_session
+        run_work_session(self, with_editor)
 
     def run_editor(self):
-        p = subprocess.Popen([self.editor, self.fname], cwd=self.path, close_fds=True)
-        p.wait()
+        from .system import run_editor
+        run_editor(self)
 
     def run_grep(self, args):
         for gd in self.gitdirs():
