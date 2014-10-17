@@ -11,24 +11,28 @@ try:
 except ImportError:
     dbus = None
 
+def connect_to_buffy():
+    if not dbus: return None
+
+    session_bus = dbus.SessionBus()
+    try:
+        buffy_obj = session_bus.get_object("org.enricozini.buffy", "/buffy")
+        return dbus.Interface(buffy_obj, dbus_interface="org.enricozini.buffy")
+    except:
+        return None
+
 
 def run_editor(proj):
-    if dbus:
-        session_bus = dbus.SessionBus()
-        try:
-            buffy_obj = session_bus.get_object("org.enricozini.buffy", "/buffy")
-            buffy = dbus.Interface(buffy_obj, dbus_interface="org.enricozini.buffy")
-        except:
-            buffy = None
-    else:
-        buffy = None
-
+    buffy = connect_to_buffy()
     if buffy:
         buffy.set_active_inbox(".egt.{}".format(proj.name).encode("utf-8"), True)
 
     p = subprocess.Popen([proj.editor, proj.fname], cwd=proj.path, close_fds=True)
     p.wait()
 
+    # Reconnect, in case buffy was restarted while we were working
+    # (it's quite useful, for example, when doing 'egt work buffy')
+    buffy = connect_to_buffy()
     if buffy:
         buffy.set_active_inbox(".egt.{}".format(proj.name), False)
 
