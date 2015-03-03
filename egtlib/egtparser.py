@@ -111,7 +111,7 @@ class EventParser(object):
             if set_default:
                 self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
             return d
-        except ValueError:
+        except TypeError, ValueError:
             return None
 
     def _to_event(self, dt):
