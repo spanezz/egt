@@ -176,6 +176,9 @@ class Project(object):
             elif abs(daymins/2 - amount) < abs(daymins - amount):
                 # Closer to half day
                 account = 0.5
+            elif amount > daymins * 1.5:
+                # More than a day and a half: count a day and a half
+                account = 1.5
             else:
                 # Closer to full day
                 account = 1
