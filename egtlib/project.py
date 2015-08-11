@@ -52,7 +52,7 @@ def parse_duration(s):
     return mins
 
 class Project(object):
-    def __init__(self, fname):
+    def __init__(self, fname, load=True):
         self.fname = fname
         self.archived = False
         # Default values, can be overridden by file metadata
@@ -61,7 +61,8 @@ class Project(object):
         self.tags = default_tags(fname)
         self.editor = os.environ.get("EDITOR", "vim")
         # Load the actual data
-        self.load()
+        if load:
+            self.load()
 
     def load(self):
         self.meta = {}
