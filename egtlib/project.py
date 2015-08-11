@@ -23,16 +23,19 @@ def default_name(fname):
         return basename[:-4]
 
 
-def default_tags(fname):
+def default_tags(config, fname):
     """
     Guess tags from the project file pathname
     """
     tags = set()
-    debhome = os.environ.get("DEBHOME", None)
-    if debhome is not None and fname.startswith(debhome):
-        tags.add("debian")
-    # FIXME: this is currently only valid for Enrico
-    if "/lavori/truelite/" in fname: tags.add("truelite")
+
+    if "autotag" in config:
+        autotags = config["autotag"]
+        if autotags is not None:
+            for tag, regexp in autotags.items():
+                if re.search(regexp, fname):
+                    tags.add(tag)
+
     return tags
 
 def parse_duration(s):
@@ -52,17 +55,30 @@ def parse_duration(s):
     return mins
 
 class Project(object):
-    def __init__(self, fname, load=True):
+    def __init__(self, fname=None, path=None, name=None, tags=set(), archived=False, editor=None):
+        if path is None and fname is not None:
+            path = os.path.dirname(fname)
+        if editor is None:
+            editor = os.environ.get("EDITOR", "vim")
         self.fname = fname
-        self.archived = False
+        self.archived = archived
+        self.path = path
+        self.name = name
+        self.tags = tags
+        self.editor = editor
+
+    @classmethod
+    def from_file(self, config, fname):
         # Default values, can be overridden by file metadata
-        self.path = os.path.dirname(fname)
-        self.name = default_name(fname)
-        self.tags = default_tags(fname)
-        self.editor = os.environ.get("EDITOR", "vim")
+        p = Project(
+            fname=fname,
+            path=os.path.dirname(fname),
+            name=default_name(fname),
+            tags=default_tags(config, fname)
+        )
         # Load the actual data
-        if load:
-            self.load()
+        p.load()
+        return p
 
     def load(self):
         self.meta = {}

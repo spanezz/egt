@@ -10,7 +10,8 @@ log = logging.getLogger(__name__)
 
 
 class State:
-    def __init__(self, archived=False):
+    def __init__(self, config, archived=False):
+        self.config = config
         self.clear()
         self.load(archived)
 
@@ -34,7 +35,7 @@ class State:
                 if not Project.has_project(fname):
                     log.warning("project %s has disappeared from %s: please rerun scan", name, fname)
                     continue
-                proj = Project(fname)
+                proj = Project.from_file(self.config, fname)
                 if not archived and proj.archived:
                     continue
                 self.projects[proj.name] = proj
@@ -58,7 +59,7 @@ class State:
         for dirname in dirs:
             for fname in scan(dirname):
                 try:
-                    p = Project(fname)
+                    p = Project.from_file(self.config, fname)
                 except Exception as e:
                     log.warn("%s: failed to parse: %s", fname, str(e))
                     continue

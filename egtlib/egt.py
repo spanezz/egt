@@ -83,8 +83,9 @@ class ProjectFilter:
 
 
 class Egt:
-    def __init__(self, filter=[], archived=False):
-        self.state = State(archived)
+    def __init__(self, config=None, filter=[], archived=False):
+        self.config = config
+        self.state = State(self.config, archived)
         self.filter = ProjectFilter(filter)
 
     @property

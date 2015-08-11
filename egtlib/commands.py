@@ -17,7 +17,7 @@ class Command:
         self.config.read([os.path.expanduser("~/.egt.conf")])
 
     def make_egt(self, filter=[]):
-        return egtlib.Egt(filter=filter, archived=self.args.archived)
+        return egtlib.Egt(config=self.config, filter=filter, archived=self.args.archived)
 
     @classmethod
     def add_args(cls, subparser):
@@ -55,13 +55,13 @@ class List(Command):
     """
     def main(self):
         e = self.make_egt(filter=self.args.projects)
-        name_len = max((len(x) for x in e.projects))
+        name_len = max((len(x.name) for x in e.projects))
         homedir = os.path.expanduser("~")
-        for k, v in sorted(e.projects.items()):
-            if v.path.startswith(homedir):
-                print(v.name.ljust(name_len), "~%s" % v.path[len(homedir):])
+        for p in e.projects:
+            if p.path.startswith(homedir):
+                print(p.name.ljust(name_len), "~%s" % p.path[len(homedir):])
             else:
-                print(v.name.ljust(name_len), v.path)
+                print(p.name.ljust(name_len), p.path)
 
     @classmethod
     def add_args(cls, subparser):
@@ -84,7 +84,7 @@ class Summary(Command):
         table.set_cols_align(("l", "l", "r", "c", "r", "r"))
         table.add_row(("Name", "Tags", "Logs", "Hrs", "Days", "Last entry"))
         e = self.make_egt(self.args.projects)
-        projs = e.projects.values()
+        projs = e.projects
 
         blanks = []
         worked = []
