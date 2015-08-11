@@ -78,8 +78,9 @@ class Summary(Command):
     def main(self):
         from egtlib.texttable import Texttable
         from egtlib.utils import format_duration, format_td
-
-        table = Texttable()
+        import shutil
+        termsize = shutil.get_terminal_size((80, 25))
+        table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
         table.set_cols_align(("l", "l", "r", "c", "r", "r"))
         table.add_row(("Name", "Tags", "Logs", "Hrs", "Days", "Last entry"))
@@ -235,6 +236,7 @@ class Weekrpt(Command):
     """
     def main(self):
         from egtlib.texttable import Texttable
+        import shutil
         # egt weekrpt also showing stats by project, and by tags
         e = self.make_egt()
         # TODO: add an option to choose the current time
@@ -244,7 +246,8 @@ class Weekrpt(Command):
             #end = None
         end = None
 
-        table = Texttable()
+        termsize = shutil.get_terminal_size((80, 25))
+        table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
         table.set_cols_align(("l", "r", "r", "r", "r"))
         table.set_cols_dtype(('t', "i", "i", "i", "i"))
@@ -270,7 +273,7 @@ class Weekrpt(Command):
         print()
 
         # Per-package stats
-        table = Texttable()
+        table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
         table.set_cols_align(("l", "r", "r", "r", "r"))
         table.set_cols_dtype(('t', "i", "i", "i", "i"))
