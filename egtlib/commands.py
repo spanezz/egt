@@ -135,7 +135,7 @@ class Term(Command):
     """
     def main(self):
         e = self.make_egt(self.args.projects)
-        for proj in e.projects.values():
+        for proj in e.projects:
             proj.spawn_terminal()
 
     @classmethod
@@ -151,7 +151,7 @@ class Work(Command):
     """
     def main(self):
         e = self.make_egt(self.args.projects)
-        for proj in e.projects.values():
+        for proj in e.projects:
             proj.spawn_terminal(with_editor=True)
 
     @classmethod
@@ -167,7 +167,7 @@ class Edit(Command):
     """
     def main(self):
         e = self.make_egt(self.args.projects)
-        for proj in e.projects.values():
+        for proj in e.projects:
             proj.run_editor()
 
     @classmethod
