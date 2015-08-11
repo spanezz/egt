@@ -114,7 +114,7 @@ class Project(object):
             since, until = self.formal_period
             if until:
                 self.name += until.strftime("-%Y-%m-%d")
-            else:
+            elif since:
                 self.name += since.strftime("-%Y-%m-%d")
 
     @property
