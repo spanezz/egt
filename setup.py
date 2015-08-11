@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 
 import sys
@@ -8,8 +8,8 @@ from distutils.core import setup
 from distutils.command.install import INSTALL_SCHEMES
 
 for line in open(os.path.join(os.path.dirname(sys.argv[0]), 'egt')):
-    if line.startswith('VERSION='):
-        version = eval(line.split('=')[-1])
+    if line.startswith('VERSION ='):
+        version = eval(line.split(' = ')[-1])
 
 # Datafile handling code borrowed from python-django-extensions by Bas van
 # Oostveen

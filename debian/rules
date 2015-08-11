@@ -4,17 +4,17 @@ VERSION=$(shell debian/vercheck)
 RELEASE_PACKAGE=egt
 
 %:
-	dh --with=python2 $@
+	dh $@ --with python3 --buildsystem=pybuild
 
-override_dh_auto_build:
-	dh_auto_build
-	./egt --generate-manpage=egt.1.in > egt.1
-	./egt-cv --generate-manpage=egt-cv.1.in > egt-cv.1
+#override_dh_auto_build:
+#	dh_auto_build
+#	./egt --generate-manpage=egt.1.in > egt.1
+#	./egt-cv --generate-manpage=egt-cv.1.in > egt-cv.1
 
-override_dh_auto_clean:
-	dh_auto_clean
-	find . -name "*.pyc" -delete
-	rm -f egt.1
+#override_dh_auto_clean:
+#	dh_auto_clean
+#	find . -name "*.pyc" -delete
+#	rm -f egt.1
 
 override_dh_auto_install:
 	dh_auto_install
