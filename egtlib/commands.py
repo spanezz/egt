@@ -1,4 +1,5 @@
 import egtlib
+from configparser import RawConfigParser
 import os
 import datetime
 import sys
@@ -12,6 +13,8 @@ class Command:
 
     def __init__(self, args):
         self.args = args
+        self.config = RawConfigParser()
+        self.config.read([os.path.expanduser("~/.egt.conf")])
 
     def get_tags(self):
         if self.args.tag:
@@ -359,11 +362,11 @@ class Backup(Command):
     Backup of egt project core information
     """
     def main(self):
-        out = self.settings["backup-output"]
+        out = self.config.get("config", "backup-output", fallback=None)
         e = self.make_egt()
         if out:
             out = datetime.datetime.now().strftime(out)
-            with open(out, "w") as fd:
+            with open(out, "wb") as fd:
                 e.backup(fd)
         else:
             e.backup(sys.stdout)

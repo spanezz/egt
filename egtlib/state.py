@@ -1,7 +1,7 @@
 from .utils import atomic_writer
 from .project import Project
 from .scan import scan
-from configparser import ConfigParser
+from configparser import RawConfigParser
 from xdg import BaseDirectory
 import os.path
 import logging
@@ -25,7 +25,7 @@ class State:
         for path in BaseDirectory.load_data_paths("egt"):
             paths.append(os.path.join(path, "state"))
 
-        cp = ConfigParser()
+        cp = RawConfigParser()
         cp.read(paths)
         for secname in cp.sections():
             if secname.startswith("proj "):
