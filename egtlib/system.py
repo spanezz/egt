@@ -1,8 +1,4 @@
 # coding: utf-8
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 import os
 import sys
 import subprocess
@@ -49,11 +45,6 @@ def run_work_session(proj, with_editor=True):
     # Detach from terminal
     os.setsid()
 
-    # Close file descriptors
-    sys.stdin.close()
-    sys.stdout.close()
-    sys.stderr.close()
-
     cmdline = [
         "x-terminal-emulator",
     ]
@@ -62,5 +53,10 @@ def run_work_session(proj, with_editor=True):
         cmdline.append(argv0)
         cmdline.append("edit")
         cmdline.append(proj.name)
+
+    # Close file descriptors
+    sys.stdin.close()
+    sys.stdout.close()
+    sys.stderr.close()
     proc = subprocess.Popen(cmdline, cwd=proj.path, close_fds=True)
     proc.wait()

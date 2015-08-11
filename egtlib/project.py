@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import os.path
 import subprocess
 import datetime
@@ -160,7 +159,7 @@ class Project(object):
         # Iterate days
         karma = 0
         res = {}
-        for d, mins in sorted(days.iteritems()):
+        for d, mins in sorted(days.items()):
             # Allow one hour slack
             if mins >= (daymins/2 - 60) and mins < daymins/2:
                 mins = daymins/2
@@ -193,7 +192,7 @@ class Project(object):
     @property
     def elapsed_days(self):
         days = self.compute_daily_billing()
-        return sum(days.itervalues())
+        return sum(days.values())
 
     @property
     def formatted_elapsed(self):

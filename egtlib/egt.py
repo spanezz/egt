@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import logging
 import datetime
 import sys
@@ -6,7 +5,6 @@ from .state import State
 from .utils import intervals_intersect
 
 log = logging.getLogger(__name__)
-
 
 class WeeklyReport(object):
     def __init__(self):
@@ -58,18 +56,18 @@ class Egt(object):
         if not self.tags:
             return self.state.projects
         else:
-            return dict(x for x in self.state.projects.iteritems() if not x[1].tags.isdisjoint(self.tags))
+            return dict(x for x in self.state.projects.items() if not x[1].tags.isdisjoint(self.tags))
 
     @property
     def all_tags(self):
         res = set()
-        for p in self.projects.itervalues():
+        for p in self.projects.values():
             res.update(p.tags)
         return sorted(res)
 
     def project(self, name):
         # FIXME: inefficient, but for now it will do
-        for p in self.projects.itervalues():
+        for p in self.projects.values():
             if p.name == name:
                 return p
         return None
@@ -78,7 +76,7 @@ class Egt(object):
         """
         Return a Project by its name
         """
-        for k, v in self.state.projects.iteritems():
+        for k, v in self.state.projects.items():
             if v.name == name:
                 return v
         return None
@@ -88,10 +86,10 @@ class Egt(object):
         Generate a sequence of projects which have all the given tags
         """
         if not tags:
-            for p in self.projects.itervalues():
+            for p in self.projects.values():
                 yield p
         else:
-            for p in self.projects.itervalues():
+            for p in self.projects.values():
                 if p.tags.issuperset(tags):
                     yield p
 
@@ -99,16 +97,16 @@ class Egt(object):
         return self.state.rescan(dirs)
 
     def print_next_actions(self, contexts):
-        for p in self.projects.itervalues():
+        for p in self.projects.values():
             has_name = False
             for el in p.body:
                 if el.TAG != "next-actions": continue
                 if contexts and el.contexts.isdisjoint(contexts): continue
                 if not has_name:
                     has_name = True
-                    print " * %s" % p.name
+                    print(" * {}".format(p.name))
                 for l in el.lines:
-                    print l
+                    print(l)
 
     def weekrpt(self, tags=None, end=None, days=7, projs=None):
         rep = WeeklyReport()
@@ -140,6 +138,6 @@ class Egt(object):
     def backup(self, out=sys.stdout):
         import tarfile
         tarout = tarfile.open(None, "w|", fileobj=out)
-        for p in self.projects.itervalues():
+        for p in self.projects.values():
             p.backup(tarout)
         tarout.close()

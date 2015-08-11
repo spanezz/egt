@@ -84,7 +84,7 @@ class GeneratorLookahead(object):
 
     def peek(self):
         if not self.has_lookahead:
-            self.lookahead = self.gen.next()
+            self.lookahead = next(self.gen)
             self.has_lookahead = True
         return self.lookahead
 
@@ -93,7 +93,7 @@ class GeneratorLookahead(object):
             self.has_lookahead = False
             return self.lookahead
         else:
-            return self.gen.next()
+            return next(self.gen)
 
 
 class EventParser(object):
@@ -111,7 +111,7 @@ class EventParser(object):
             if set_default:
                 self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
             return d
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None
 
     def _to_event(self, dt):
@@ -265,7 +265,7 @@ class LogParser(object):
                     else:
                         self.until = None
                     continue
-                except ValueError, e:
+                except ValueError as e:
                     log.error("%s:%d: %s", lines.fname, lines.lineno, str(e))
 
             # Else append to the previous log body

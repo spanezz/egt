@@ -16,7 +16,7 @@
 
         <h2>Projects</h2>
         <ul>
-        {% for p in egt.projects.itervalues() %}
+        {% for p in egt.projects.values() %}
         <li><a href="/TODO{{p.name}}">{{p.name}}</a></li>
         {% endfor %}
         </ul>

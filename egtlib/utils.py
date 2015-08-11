@@ -1,5 +1,4 @@
 # coding: utf-8
-
 import tempfile
 import os.path
 import os
@@ -9,12 +8,13 @@ class atomic_writer(object):
     """
     Atomically write to a file
     """
-    def __init__(self, fname, mode=0664, sync=True):
+    def __init__(self, fname, mode, osmode=0o644, sync=True, **kw):
         self.fname = fname
-        self.mode = mode
+        self.osmode = osmode
         self.sync = sync
         dirname = os.path.dirname(self.fname)
-        self.outfd = tempfile.NamedTemporaryFile(dir=dirname)
+        self.fd, self.abspath = tempfile.mkstemp(dir=dirname, text="b" not in mode)
+        self.outfd = open(self.fd, mode, closefd=True, **kw)
 
     def __enter__(self):
         return self.outfd
@@ -22,14 +22,13 @@ class atomic_writer(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         if exc_type is None:
             self.outfd.flush()
-            if self.sync:
-                os.fdatasync(self.outfd.fileno())
-            os.fchmod(self.outfd.fileno(), self.mode)
-            os.rename(self.outfd.name, self.fname)
-            self.outfd.delete = False
+            if self.sync: os.fdatasync(self.fd)
+            os.fchmod(self.fd, self.osmode)
+            os.rename(self.abspath, self.fname)
+        else:
+            os.unlink(self.abspath)
         self.outfd.close()
         return False
-
 
 def intervals_intersect(p1s, p1e, p2s, p2e):
     """

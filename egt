@@ -1,358 +1,56 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
-# Copyright (C) 2012--2014  Enrico Zini
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-import cliapp
 import egtlib
-import datetime
+import argparse
 import sys
 import logging
-import os.path
 
-VERSION="0.1"
+VERSION = "0.1"
 
-class EgtApp(cliapp.Application):
-    def __init__(self):
-        super(EgtApp, self).__init__(
-            progname="egt",
-            version=VERSION,
-            description="Enrico's Getting Things Done",
-        )
+def main():
+    parser = argparse.ArgumentParser(description="Enrico's getting things done")
+    parser.add_argument("--version", action="version", version="%(prog)s " + VERSION)
+    parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
+    parser.add_argument("--debug", action="store_true", help="debug output")
+    parser.add_argument("--tag", "--tags", "-t", metavar="tag", help="limit processing to projects with the given (comma separated) tag(s)")
+    parser.add_argument("--archived", action="store_true", help="also show archived projects")
+    # self.settings.string(['backup-output'], "backup tarball to generate (by default it is sent to stdout) (the filename is passed to strftime, so you can use something like %Y-%m-%d in the configuration)", metavar="filename")
+    # self.settings.boolean(['vcal'], "output events in vCalendar format")
+    # self.settings.boolean(['verbose', 'v'], "verbose output")
+    # self.settings.boolean(['debug'], "debug output")
+    subparsers = parser.add_subparsers(help="egt subcommands")
 
-    def setup_logging(self):
-        if not self.settings["log"]:
-            FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-            if self.settings["debug"]:
-                logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
-            elif self.settings["verbose"]:
-                logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
-            else:
-                logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
-        else:
-            super(EgtApp, self).setup_logging()
+    from egtlib.commands import Command, CommandError
 
-    def add_settings(self):
-        self.settings.string(['tag', 't'], "limit processing to projects with the given (comma separated) tag(s)", metavar="tag")
-        self.settings.string(['backup-output'], "backup tarball to generate (by default it is sent to stdout) (the filename is passed to strftime, so you can use something like %Y-%m-%d in the configuration)", metavar="filename")
-        self.settings.string(['directory'], "directory where egt files are found", default=os.path.expanduser("~"), metavar="dirname")
-        self.settings.boolean(['vcal'], "output events in vCalendar format")
-        self.settings.boolean(['verbose', 'v'], "verbose output")
-        self.settings.boolean(['debug'], "debug output")
-        self.settings.boolean(['archived'], "also show archvied projects")
+    for c in Command.COMMANDS:
+        name = getattr(c, "NAME", c.__name__.lower())
+        cmd = subparsers.add_parser(name, help=c.__doc__)
+        cmd.set_defaults(command=c)
+        c.add_args(cmd)
 
-    def get_tags(self):
-        if self.settings["tag"]:
-            return frozenset(self.settings["tag"].split(","))
-        else:
-            return frozenset()
+    args = parser.parse_args()
+    #print(args.accumulate(args.integers))
 
-    def make_egt(self):
-        return egtlib.Egt(tags=self.get_tags(), archived=self.settings["archived"])
+    # Setup logging
+    FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
+    elif args.verbose:
+        logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
+    else:
+        logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
 
-    def cmd_scan(self, args):
-        """
-        Update the list of known project files, by scanning everything below
-        the home directory.
-        """
-        e = self.make_egt()
-        if args:
-            dirs = args
-        else:
-            dirs = [self.settings["directory"]]
-        e.scan(dirs)
+    if args.command:
+        action = args.command(args)
+        try:
+            action.main()
+        except CommandError as e:
+            print(e, file=sys.stderr)
+            sys.exit(1)
 
-    def cmd_list(self, args):
-        """
-        List known projects.
-        """
-        e = self.make_egt()
-        name_len = max((len(x) for x in e.state.projects))
-        homedir = os.path.expanduser("~")
-        for k, v in sorted(e.state.projects.iteritems()):
-            if v.path.startswith(homedir):
-                print(v.name.ljust(name_len), "~%s" % v.path[len(homedir):])
-            else:
-                print(v.name.ljust(name_len), v.path)
-
-    def cmd_summary(self, args):
-        from egtlib.texttable import Texttable
-        from egtlib.utils import format_duration, format_td, intervals_intersect
-
-        table = Texttable()
-        table.set_deco(Texttable.HEADER)
-        table.set_cols_align(("l", "l", "r", "c", "r", "r"))
-        table.add_row(("Name", "Tags", "Logs", "Hrs", "Days", "Last entry"))
-        e = self.make_egt()
-        if args:
-            projs = (e.project(a) for a in args)
-        else:
-            projs = e.projects.itervalues()
-
-        blanks = []
-        worked = []
-        for p in projs:
-            if p.last_updated is None:
-                blanks.append(p)
-            else:
-                worked.append(p)
-
-        blanks.sort(key=lambda p:p.name)
-        worked.sort(key=lambda p:p.last_updated)
-
-        now = datetime.datetime.now()
-
-        def add_summary(p):
-            table.add_row((
-                p.name,
-                " ".join(sorted(p.tags)),
-                len(p.log),
-                format_duration(p.elapsed, tabular=True) if p.last_updated else "--",
-                "%.1f" % p.elapsed_days,
-                "%s ago" % format_td(now - p.last_updated, tabular=True) if p.last_updated else "--",
-            ))
-
-#        res["mins"] = self.elapsed
-#        res["last"] = self.last_updated
-#        res["tags"] = self.tags
-#        res["entries"] = len(self.log)
-#        #"%s" % format_duration(mins),
-#        #format_td(datetime.datetime.now() - self.last_updated)),
-#        print "%s\t%s" % (self.name, ", ".join(stats))
-
-        for p in blanks: add_summary(p)
-        for p in worked: add_summary(p)
-
-        print(table.draw())
-
-    def cmd_term(self, args):
-        """
-        Open a terminal in a project directory.
-        """
-        e = self.make_egt()
-        for name in args:
-            proj = e.project_by_name(name)
-            proj.spawn_terminal()
-
-    def cmd_work(self, args):
-        """
-        Open a terminal in a project directory, and edit the project file.
-        """
-        e = self.make_egt()
-        for name in args:
-            proj = e.project_by_name(name)
-            proj.spawn_terminal(with_editor=True)
-
-    def cmd_edit(self, args):
-        """
-        Open a terminal in a project directory, and edit the project file.
-        """
-        e = self.make_egt()
-        for name in args:
-            proj = e.project_by_name(name)
-            proj.run_editor()
-
-    def cmd_grep(self, args):
-        """
-        Run 'git grep' on all project .git dirs
-        """
-        e = self.make_egt()
-        for name, proj in e.projects.iteritems():
-            proj.run_grep(args)
-
-    def cmd_mrconfig(self, args):
-        """
-        Run 'git grep' on all project .git dirs
-        """
-        e = self.make_egt()
-        for name, proj in e.projects.iteritems():
-            for gd in proj.gitdirs():
-                gd = os.path.abspath(os.path.join(gd, ".."))
-                print("[{}]".format(gd))
-                print()
-
-    def cmd_when(self, args):
-        """
-        Show next-action lists that intersect the given context set
-        """
-        contexts = frozenset(args)
-        e = self.make_egt()
-        e.print_next_actions(contexts)
-
-    def cmd_weekrpt(self, args):
-        """
-        Compute weekly reports
-        """
-        from egtlib.texttable import Texttable
-        # egt weekrpt also showing stats by project, and by tags
-        e = self.make_egt()
-        if args:
-            end = datetime.datetime.strptime(args[0], "%Y-%m-%d").date()
-        else:
-            end = None
-
-        table = Texttable()
-        table.set_deco(Texttable.HEADER)
-        table.set_cols_align(("l", "r", "r", "r", "r"))
-        table.set_cols_dtype(('t', "i", "i", "i", "i"))
-        table.add_row(("Tag", "Entries", "Hours", "h/day", "h/wday"))
-        rep = e.weekrpt(end=end)
-        print()
-        print(" * Activity from %s to %s" % (rep["begin"], rep["until"]))
-        print()
-        log = rep["log"]
-
-        # Global stats
-        table.add_row(("(any)", rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"]))
-
-        # Per-tag stats
-        all_tags = set()
-        for p in e.projects.itervalues():
-            all_tags |= p.tags
-        for t in sorted(all_tags):
-            rep = e.weekrpt(end=end, tags=frozenset((t,)))
-            table.add_row((t, rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"]))
-
-        print(table.draw())
-        print()
-
-        # Per-package stats
-        table = Texttable()
-        table.set_deco(Texttable.HEADER)
-        table.set_cols_align(("l", "r", "r", "r", "r"))
-        table.set_cols_dtype(('t', "i", "i", "i", "i"))
-        table.add_row(("Project", "Entries", "Hours", "h/day", "h/wday"))
-        for name, p in sorted(e.projects.iteritems()):
-            rep = e.weekrpt(end=end, projs=[p])
-            if not rep["count"]: continue
-            table.add_row((name, rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"]))
-
-        print(table.draw())
-        print()
-
-        log.sort(key=lambda x: x[0].begin)
-        for l, p in log:
-            l.output(p.name)
-
-    def cmd_print_log(self, args):
-        """
-        Output the log for one or more projects
-        """
-        e = self.make_egt()
-        log = []
-        projs = set()
-        if not args:
-            for p in e.projects.itervalues():
-                for l in p.log:
-                    log.append((l, p))
-                projs.add(p)
-        else:
-            for name in args:
-                p = e.project_by_name(name)
-                for l in p.log:
-                    log.append((l, p))
-                projs.add(p)
-
-        log.sort(key=lambda x:x[0].begin)
-        if len(projs) == 1:
-            for l, p in log:
-                l.output()
-        else:
-            for l, p in log:
-                l.output(p.name)
-
-    def cmd_cal(self, args):
-        """
-        Compute calendar of next actions
-        """
-        e = self.make_egt()
-        if args:
-            end = datetime.datetime.strptime(args[0], "%Y-%m-%d").date()
-        else:
-            end = None
-
-        events = e.calendar(tags=self.get_tags())
-
-        cal = None
-        if self.settings["vcal"]:
-            # http://blog.thescoop.org/archives/2007/07/31/django-ical-and-vobject/
-            import vobject
-            cal = vobject.iCalendar()
-            cal.add('method').value = 'PUBLISH'  # IE/Outlook needs this
-
-        if cal is None:
-            for e in events:
-                sys.stdout.write("\n".join(e.lines))
-                sys.stdout.write("\n")
-        else:
-            for e in events:
-                e.add_to_vobject(cal)
-            print(cal.serialize())
+    sys.exit(0)
 
 
-    def cmd_backup(self, args):
-        out = self.settings["backup-output"]
-        e = self.make_egt()
-        if out:
-            out = datetime.datetime.now().strftime(out)
-            with open(out, "w") as fd:
-                e.backup(fd)
-        else:
-            e.backup(sys.stdout)
-
-    def cmd_serve(self, args):
-        """
-        Start a web server for reports
-        """
-        from egtlib import web
-        print("Server starting at localhost:5000")
-        web.app.make_egt = self.make_egt
-        web.app.debug = True
-        web.app.run()
-
-    def cmd_completion(self, args):
-        if not args:
-            raise cliapp.AppException("Usage: completion {projects|tags|contexts}")
-        if args[0] == "projects":
-            e = self.make_egt()
-            names = e.projects.keys()
-            names.sort()
-            for n in names:
-                print(n)
-        elif args[0] == "tags":
-            e = self.make_egt()
-            res = set()
-            for p in e.projects.itervalues():
-                res |= p.tags
-            for n in sorted(res):
-                print(n)
-        elif args[0] == "contexts":
-            e = self.make_egt()
-            res = set()
-            for p in e.projects.itervalues():
-                res |= p.contexts
-            for n in sorted(res):
-                print(n)
-        else:
-            raise cliapp.AppException("Usage: completion {projects|tags|contexts}")
-
-
-if __name__ == '__main__':
-    EgtApp().run()
+if __name__ == "__main__":
+    main()
 

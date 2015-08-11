@@ -25,7 +25,7 @@ def stats():
 
     blanks = []
     worked = []
-    for p in egt.projects.itervalues():
+    for p in egt.projects.values():
         if p.last_updated is None:
             blanks.append(p)
         else:
@@ -70,8 +70,8 @@ def api_events():
     # Parse date ranges
     since = request.args.get("since", None)
     until = request.args.get("until", None)
-    if since is not None: since = datetime.datetime.fromtimestamp(long(since) / 1000.0).date()
-    if until is not None: until = datetime.datetime.fromtimestamp(long(until) / 1000.0).date()
+    if since is not None: since = datetime.datetime.fromtimestamp(int(since) / 1000.0).date()
+    if until is not None: until = datetime.datetime.fromtimestamp(int(until) / 1000.0).date()
 
     def ser_dt(dt):
         if dt is None:
@@ -82,7 +82,7 @@ def api_events():
     count = 0
 
     # Add logs
-    for name, p in egt.projects.iteritems():
+    for name, p in egt.projects.items():
         for l in p.log:
             if intervals_intersect(l.begin.date(), l.until.date() if l.until else datetime.date.today(), since, until):
                 l_until = l.until if l.until is not None else datetime.datetime.utcnow()
@@ -99,7 +99,7 @@ def api_events():
                 count += 1
 
     # Add next-actions with date contexts
-    for name, p in egt.projects.iteritems():
+    for name, p in egt.projects.items():
         for na in p.next_events(since, until):
             ev = dict(
                 id=count,

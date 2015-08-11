@@ -1,8 +1,7 @@
-from __future__ import absolute_import
 from .utils import atomic_writer
 from .project import Project
 from .scan import scan
-from ConfigParser import RawConfigParser as ConfigParser
+from configparser import ConfigParser
 from xdg import BaseDirectory
 import os.path
 import logging
@@ -10,7 +9,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class State(object):
+class State:
     def __init__(self, archived=False):
         self.clear()
         self.load(archived)
@@ -42,14 +41,14 @@ class State(object):
 
     def save(self):
         cp = ConfigParser()
-        for name, p in self.projects.iteritems():
+        for name, p in self.projects.items():
             secname = "proj %s" % name
             cp.add_section(secname)
             cp.set(secname, "fname", p.fname)
 
         outdir = BaseDirectory.save_data_path('egt')
         cfgfname = os.path.join(outdir, "state")
-        with atomic_writer(cfgfname) as fd:
+        with atomic_writer(cfgfname, "wt") as fd:
             cp.write(fd)
         log.debug("updated state in %s", cfgfname)
 
@@ -60,7 +59,7 @@ class State(object):
             for fname in scan(dirname):
                 try:
                     p = Project(fname)
-                except Exception, e:
+                except Exception as e:
                     log.warn("%s: failed to parse: %s", fname, str(e))
                     continue
                 if p.name in new_projects:
@@ -70,7 +69,7 @@ class State(object):
 
         # Log the difference with the old info
         old_projects = set(self.projects.keys())
-        for name, p in new_projects.iteritems():
+        for name, p in new_projects.items():
             old_projects.discard(name)
             op = self.projects.get(name, None)
             if op is None:

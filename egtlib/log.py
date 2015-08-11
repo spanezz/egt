@@ -39,8 +39,8 @@ class Log(object):
             elif self.day_billing == 0.5:
                 head.append("½d")
             else:
-                head.append("%.1fd" % self.day_billing)
+                head.append("{:.1}d".format(self.day_billing))
         if project is not None:
             head.append(" [%s]" % project)
-        print "".join(head)
-        print self.body
+        print("".join(head))
+        print(self.body)
