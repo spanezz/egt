@@ -2,6 +2,8 @@
 import tempfile
 import os.path
 import os
+import fcntl
+import select
 
 
 class atomic_writer(object):
@@ -62,3 +64,37 @@ def format_td(td, tabular=False):
             return "%d days" % td.days
         else:
             return format_duration(td.seconds / 60)
+
+
+def stream_output(proc):
+    """
+    Take a subprocess.Popen object and generate its output, line by line,
+    annotated with "stdout" or "stderr". At process termination it generates
+    one last element: ("result", return_code) with the return code of the
+    process.
+    """
+    fds = [proc.stdout, proc.stderr]
+    bufs = [b"", b""]
+    types = ["stdout", "stderr"]
+    # Set both pipes as non-blocking
+    for fd in fds:
+        fcntl.fcntl(fd, fcntl.F_SETFL, os.O_NONBLOCK)
+    # Multiplex stdout and stderr with different prefixes
+    while len(fds) > 0:
+        s = select.select(fds, (), ())
+        for fd in s[0]:
+            idx = fds.index(fd)
+            buf = fd.read()
+            if len(buf) == 0:
+                fds.pop(idx)
+                if len(bufs[idx]) != 0:
+                    yield types[idx], bufs.pop(idx).decode("utf-8")
+                types.pop(idx)
+            else:
+                bufs[idx] += buf
+                lines = bufs[idx].split(b"\n")
+                bufs[idx] = lines.pop()
+                for l in lines:
+                    yield types[idx], l.decode("utf-8")
+    res = proc.wait()
+    yield "result", res

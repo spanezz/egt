@@ -1,10 +1,10 @@
 import os.path
 import subprocess
 import datetime
-import sys
 import re
+import sys
 from .egtparser import ProjectParser
-from .utils import format_duration, format_td, intervals_intersect
+from .utils import format_duration, intervals_intersect
 import logging
 
 log = logging.getLogger(__name__)
@@ -270,12 +270,17 @@ class Project(object):
         run_editor(self)
 
     def run_grep(self, args):
+        from .utils import stream_output
         for gd in self.gitdirs():
             cwd = os.path.abspath(os.path.join(gd, ".."))
             cmd = ["git", "grep"] + args
             log.info("%s: git grep %s", cwd, " ".join(cmd))
-            p = subprocess.Popen(cmd, cwd=cwd, close_fds=True)
-            p.wait()
+            p = subprocess.Popen(cmd, cwd=cwd, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            for ltype, line in stream_output(p):
+                if ltype == "stdout":
+                    print("{}:{}".format(self.name, line), file=sys.stdout)
+                elif ltype == "stderr":
+                    print("{}:{}".format(self.name, line), file=sys.stderr)
 
     def gitdirs(self, depth=2, root=None):
         """
