@@ -89,18 +89,18 @@ class Egt:
 
     @property
     def projects(self):
-        return dict(x for x in self.state.projects.items() if self.filter.matches(x[1]))
+        return sorted((p for p in self.state.projects.values() if self.filter.matches(p)), key=lambda p:p.name)
 
     @property
     def all_tags(self):
         res = set()
-        for p in self.projects.values():
+        for p in self.projects:
             res.update(p.tags)
         return sorted(res)
 
     def project(self, name):
         # FIXME: inefficient, but for now it will do
-        for p in self.projects.values():
+        for p in self.projects:
             if p.name == name:
                 return p
         return None
@@ -117,12 +117,33 @@ class Egt:
     def scan(self, dirs):
         return self.state.rescan(dirs)
 
-    def print_next_actions(self, contexts):
-        for p in self.projects.values():
+    def print_next_actions(self):
+        """
+        Print the first group of next actions in each project that has no
+        context and no event date.
+        """
+        for p in self.projects:
+            for el in p.body:
+                if el.TAG == "spacer": continue
+                if el.TAG != "next-actions": break
+                if el.contexts: break
+                if el.event: break
+                print(" * {}".format(p.name))
+                for l in el.lines:
+                    print(l)
+                print()
+                break
+
+    def print_context_actions(self, contexts=[]):
+        for p in self.projects:
             has_name = False
             for el in p.body:
                 if el.TAG != "next-actions": continue
-                if contexts and el.contexts.isdisjoint(contexts): continue
+                if contexts:
+                    if el.contexts.isdisjoint(contexts): continue
+                else:
+                    if el.contexts: continue
+
                 if not has_name:
                     has_name = True
                     print(" * {}".format(p.name))
@@ -135,7 +156,7 @@ class Egt:
             for p in projs:
                 rep.add(p)
         else:
-            for p in self.projects.values():
+            for p in self.projects:
                 if not tags or p.tags.issuperset(tags):
                     rep.add(p)
         return rep.report(end, days)
@@ -149,7 +170,7 @@ class Egt:
         log.debug("Calendar %s--%s filter:%s", start, end, ",".join(self.filter.args))
 
         events = []
-        for p in self.projects.values():
+        for p in self.projects:
             for na in p.next_events(start, end):
                 events.append(na)
 
@@ -160,6 +181,6 @@ class Egt:
     def backup(self, out=sys.stdout):
         import tarfile
         tarout = tarfile.open(None, "w|", fileobj=out)
-        for p in self.projects.values():
+        for p in self.projects:
             p.backup(tarout)
         tarout.close()

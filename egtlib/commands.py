@@ -213,6 +213,24 @@ class MrConfig(Command):
 
 
 @Command.register
+class Next(Command):
+    """
+    Show next-action lists that intersect the given context set
+    """
+    def main(self):
+        #contexts = frozenset(self.args.contexts)
+        e = self.make_egt(self.args.projects)
+        #e.print_next_actions(contexts)
+        e.print_next_actions()
+
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+        #subparser.add_argument("contexts", nargs="*", help="arguments for git grep")
+
+
+@Command.register
 class When(Command):
     """
     Show next-action lists that intersect the given context set
@@ -220,7 +238,7 @@ class When(Command):
     def main(self):
         contexts = frozenset(self.args.contexts)
         e = self.make_egt()
-        e.print_next_actions(contexts)
+        e.print_context_actions(contexts)
 
     @classmethod
     def add_args(cls, subparser):
@@ -262,7 +280,7 @@ class Weekrpt(Command):
 
         # Per-tag stats
         all_tags = set()
-        for p in e.projects.values():
+        for p in e.projects:
             all_tags |= p.tags
         for t in sorted(all_tags):
             rep = e.weekrpt(end=end, tags=frozenset((t,)))
@@ -277,10 +295,10 @@ class Weekrpt(Command):
         table.set_cols_align(("l", "r", "r", "r", "r"))
         table.set_cols_dtype(('t', "i", "i", "i", "i"))
         table.add_row(("Project", "Entries", "Hours", "h/day", "h/wday"))
-        for name, p in sorted(e.projects.items()):
+        for p in e.projects:
             rep = e.weekrpt(end=end, projs=[p])
             if not rep["count"]: continue
-            table.add_row((name, rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"]))
+            table.add_row((p.name, rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"]))
 
         print(table.draw())
         print()
@@ -306,7 +324,7 @@ class PrintLog(Command):
         e = self.make_egt(self.args.projects)
         log = []
         projs = set()
-        for p in e.projects.values():
+        for p in e.projects:
             for l in p.log:
                 log.append((l, p))
             projs.add(p)
@@ -406,14 +424,14 @@ class Completion(Command):
         elif self.args.subcommand == "tags":
             e = self.make_egt()
             res = set()
-            for p in e.projects.values():
+            for p in e.projects:
                 res |= p.tags
             for n in sorted(res):
                 print(n)
         elif self.args.subcommand == "contexts":
             e = self.make_egt()
             res = set()
-            for p in e.projects.values():
+            for p in e.projects:
                 res |= p.contexts
             for n in sorted(res):
                 print(n)
