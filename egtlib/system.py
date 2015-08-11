@@ -60,3 +60,4 @@ def run_work_session(proj, with_editor=True):
     sys.stderr.close()
     proc = subprocess.Popen(cmdline, cwd=proj.path, close_fds=True)
     proc.wait()
+    sys.exit(0)

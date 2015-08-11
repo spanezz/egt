@@ -40,7 +40,7 @@ class State:
                 self.projects[proj.name] = proj
 
     def save(self):
-        cp = ConfigParser()
+        cp = RawConfigParser()
         for name, p in self.projects.items():
             secname = "proj %s" % name
             cp.add_section(secname)

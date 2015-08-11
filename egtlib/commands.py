@@ -16,14 +16,8 @@ class Command:
         self.config = RawConfigParser()
         self.config.read([os.path.expanduser("~/.egt.conf")])
 
-    def get_tags(self):
-        if self.args.tag:
-            return frozenset(self.args.tag.split(","))
-        else:
-            return frozenset()
-
-    def make_egt(self):
-        return egtlib.Egt(tags=self.get_tags(), archived=self.args.archived)
+    def make_egt(self, filter=[]):
+        return egtlib.Egt(filter=filter, archived=self.args.archived)
 
     @classmethod
     def add_args(cls, subparser):
@@ -60,14 +54,19 @@ class List(Command):
     List known projects.
     """
     def main(self):
-        e = self.make_egt()
-        name_len = max((len(x) for x in e.state.projects))
+        e = self.make_egt(filter=self.args.projects)
+        name_len = max((len(x) for x in e.projects))
         homedir = os.path.expanduser("~")
-        for k, v in sorted(e.state.projects.items()):
+        for k, v in sorted(e.projects.items()):
             if v.path.startswith(homedir):
                 print(v.name.ljust(name_len), "~%s" % v.path[len(homedir):])
             else:
                 print(v.name.ljust(name_len), v.path)
+
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        subparser.add_argument("projects", nargs="*", help="projects list or filter (default: all)")
 
 
 @Command.register
@@ -84,11 +83,8 @@ class Summary(Command):
         table.set_deco(Texttable.HEADER)
         table.set_cols_align(("l", "l", "r", "c", "r", "r"))
         table.add_row(("Name", "Tags", "Logs", "Hrs", "Days", "Last entry"))
-        e = self.make_egt()
-        if self.args.projects:
-            projs = (e.project(a) for a in self.args.projects)
-        else:
-            projs = e.projects.values()
+        e = self.make_egt(self.args.projects)
+        projs = e.projects.values()
 
         blanks = []
         worked = []
@@ -138,9 +134,8 @@ class Term(Command):
     Open a terminal in the directory of the given project(s)
     """
     def main(self):
-        e = self.make_egt()
-        for name in self.args.projects:
-            proj = e.project_by_name(name)
+        e = self.make_egt(self.args.projects)
+        for proj in e.projects.values():
             proj.spawn_terminal()
 
     @classmethod
@@ -155,9 +150,8 @@ class Work(Command):
     Open a terminal in a project directory, and edit the project file.
     """
     def main(self):
-        e = self.make_egt()
-        for name in self.args.projects:
-            proj = e.project_by_name(name)
+        e = self.make_egt(self.args.projects)
+        for proj in e.projects.values():
             proj.spawn_terminal(with_editor=True)
 
     @classmethod
@@ -172,9 +166,8 @@ class Edit(Command):
     Open a terminal in a project directory, and edit the project file.
     """
     def main(self):
-        e = self.make_egt()
-        for name in self.args.projects:
-            proj = e.project_by_name(name)
+        e = self.make_egt(self.args.projects)
+        for proj in e.projects.values():
             proj.run_editor()
 
     @classmethod
@@ -189,14 +182,15 @@ class Grep(Command):
     Run 'git grep' on all project .git dirs
     """
     def main(self):
-        e = self.make_egt()
+        e = self.make_egt(self.args.projects)
         for name, proj in e.projects.items():
-            proj.run_grep(self.args.args)
+            proj.run_grep([self.args.pattern])
 
     @classmethod
     def add_args(cls, subparser):
         super().add_args(subparser)
-        subparser.add_argument("args", nargs="+", help="arguments for git grep")
+        subparser.add_argument("pattern", help="pattern to pass to git grep")
+        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
 
 
 @Command.register
@@ -205,12 +199,17 @@ class MrConfig(Command):
     Print a mr configuration snippet for all git projects
     """
     def main(self):
-        e = self.make_egt()
+        e = self.make_egt(self.args.projects)
         for name, proj in e.projects.items():
             for gd in proj.gitdirs():
                 gd = os.path.abspath(os.path.join(gd, ".."))
                 print("[{}]".format(gd))
                 print()
+
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
 
 
 @Command.register
@@ -238,7 +237,7 @@ class Weekrpt(Command):
         from egtlib.texttable import Texttable
         import shutil
         # egt weekrpt also showing stats by project, and by tags
-        e = self.make_egt()
+        e = self.make_egt(self.args.projects)
         # TODO: add an option to choose the current time
         #if self.args.projects:
             #end = datetime.datetime.strptime(self.args.projects[0], "%Y-%m-%d").date()
@@ -304,20 +303,13 @@ class PrintLog(Command):
     NAME = "print_log"
 
     def main(self):
-        e = self.make_egt()
+        e = self.make_egt(self.args.projects)
         log = []
         projs = set()
-        if not self.args.projects:
-            for p in e.projects.values():
-                for l in p.log:
-                    log.append((l, p))
-                projs.add(p)
-        else:
-            for name in self.args.projects:
-                p = e.project_by_name(name)
-                for l in p.log:
-                    log.append((l, p))
-                projs.add(p)
+        for p in e.projects.values():
+            for l in p.log:
+                log.append((l, p))
+            projs.add(p)
 
         log.sort(key=lambda x:x[0].begin)
         if len(projs) == 1:
@@ -339,8 +331,8 @@ class Cal(Command):
     Compute calendar of next actions
     """
     def main(self):
-        e = self.make_egt()
-        events = e.calendar(tags=self.get_tags())
+        e = self.make_egt(self.args.projects)
+        events = e.calendar()
 
         cal = None
         #if self.settings["vcal"]:
@@ -358,6 +350,11 @@ class Cal(Command):
         #        e.add_to_vobject(cal)
         #    print(cal.serialize())
 
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+
 
 @Command.register
 class Backup(Command):
@@ -366,13 +363,18 @@ class Backup(Command):
     """
     def main(self):
         out = self.config.get("config", "backup-output", fallback=None)
-        e = self.make_egt()
+        e = self.make_egt(self.args.projects)
         if out:
             out = datetime.datetime.now().strftime(out)
             with open(out, "wb") as fd:
                 e.backup(fd)
         else:
             e.backup(sys.stdout)
+
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
 
 
 @Command.register

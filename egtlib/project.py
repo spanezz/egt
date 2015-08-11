@@ -172,7 +172,7 @@ class Project(object):
 
             if amount < daymins/4:
                 # Skip day
-                account = 0
+                account = 0.0
             elif abs(daymins/2 - amount) < abs(daymins - amount):
                 # Closer to half day
                 account = 0.5
@@ -181,7 +181,7 @@ class Project(object):
                 account = 1.5
             else:
                 # Closer to full day
-                account = 1
+                account = 1.0
 
             res[d] = account
             #print d, "%4.1f + %4.1f = %4.1f" % (mins/60, karma/60, amount/60),\

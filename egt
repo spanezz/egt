@@ -12,12 +12,9 @@ def main():
     parser.add_argument("--version", action="version", version="%(prog)s " + VERSION)
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
     parser.add_argument("--debug", action="store_true", help="debug output")
-    parser.add_argument("--tag", "--tags", "-t", metavar="tag", help="limit processing to projects with the given (comma separated) tag(s)")
     parser.add_argument("--archived", action="store_true", help="also show archived projects")
     # self.settings.string(['backup-output'], "backup tarball to generate (by default it is sent to stdout) (the filename is passed to strftime, so you can use something like %Y-%m-%d in the configuration)", metavar="filename")
     # self.settings.boolean(['vcal'], "output events in vCalendar format")
-    # self.settings.boolean(['verbose', 'v'], "verbose output")
-    # self.settings.boolean(['debug'], "debug output")
     subparsers = parser.add_subparsers(help="egt subcommands")
 
     from egtlib.commands import Command, CommandError
@@ -29,7 +26,6 @@ def main():
         c.add_args(cmd)
 
     args = parser.parse_args()
-    #print(args.accumulate(args.integers))
 
     # Setup logging
     FORMAT = "%(asctime)-15s %(levelname)s %(message)s"

@@ -45,18 +45,51 @@ class WeeklyReport(object):
 
         return res
 
+class ProjectFilter:
+    """
+    Filter for projects, based on a list of keywords.
 
-class Egt(object):
-    def __init__(self, tags=[], archived=False):
+    A keyword can be:
+        +tag  matches projects that have this tag
+        -tag  matches projects that do not have this tag
+        name  matches projects with this name
+
+    A project matches the filter if its name is explicitly listed. If it is
+    not, it matches if its tag set contains all the +tag tags, and does not
+    contain any of the -tag tags.
+    """
+    def __init__(self, args):
+        self.args = args
+        self.names = set()
+        self.tags_wanted = set()
+        self.tags_unwanted = set()
+
+        for f in args:
+            if f.startswith("+"):
+                self.tags_wanted.add(f[1:])
+            elif f.startswith("-"):
+                self.tags_unwanted.add(f[1:])
+            else:
+                self.names.add(f)
+
+    def matches(self, project):
+        """
+        Check if this project matches the filter.
+        """
+        if self.names and project.name not in self.names: return False
+        if self.tags_wanted and not self.tags_wanted <= project.tags: return False
+        if self.tags_unwanted and not self.tags_unwanted.isdisjoint(project.tags): return False
+        return True
+
+
+class Egt:
+    def __init__(self, filter=[], archived=False):
         self.state = State(archived)
-        self.tags = frozenset(tags)
+        self.filter = ProjectFilter(filter)
 
     @property
     def projects(self):
-        if not self.tags:
-            return self.state.projects
-        else:
-            return dict(x for x in self.state.projects.items() if not x[1].tags.isdisjoint(self.tags))
+        return dict(x for x in self.state.projects.items() if self.filter.matches(x[1]))
 
     @property
     def all_tags(self):
@@ -81,18 +114,6 @@ class Egt(object):
                 return v
         return None
 
-    def projects_by_tags(self, tags=None):
-        """
-        Generate a sequence of projects which have all the given tags
-        """
-        if not tags:
-            for p in self.projects.values():
-                yield p
-        else:
-            for p in self.projects.values():
-                if p.tags.issuperset(tags):
-                    yield p
-
     def scan(self, dirs):
         return self.state.rescan(dirs)
 
@@ -114,20 +135,21 @@ class Egt(object):
             for p in projs:
                 rep.add(p)
         else:
-            for p in self.projects_by_tags(tags):
-                rep.add(p)
+            for p in self.projects.values():
+                if not tags or p.tags.issuperset(tags):
+                    rep.add(p)
         return rep.report(end, days)
 
-    def calendar(self, tags=None, start=None, end=None, days=7):
+    def calendar(self, start=None, end=None, days=7):
         if start is None:
             start = datetime.date.today()
         if end is None:
             end = start + datetime.timedelta(days=days)
 
-        log.debug("Calendar %s--%s tags:%s", start, end, tags)
+        log.debug("Calendar %s--%s filter:%s", start, end, ",".join(self.filter.args))
 
         events = []
-        for p in self.projects_by_tags(tags):
+        for p in self.projects.values():
             for na in p.next_events(start, end):
                 events.append(na)
 
