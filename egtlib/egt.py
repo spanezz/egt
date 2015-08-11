@@ -77,7 +77,7 @@ class ProjectFilter:
         Check if this project matches the filter.
         """
         if self.names and project.name not in self.names: return False
-        if self.tags_wanted and not self.tags_wanted <= project.tags: return False
+        if self.tags_wanted and self.tags_wanted.isdisjoint(project.tags): return False
         if self.tags_unwanted and not self.tags_unwanted.isdisjoint(project.tags): return False
         return True
 
