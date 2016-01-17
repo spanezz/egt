@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import re
 import datetime
 import dateutil.parser
+from collections import OrderedDict
 from .dateutil import get_parserinfo
 from .log import Log
 import logging
@@ -210,12 +211,14 @@ class LogParser(object):
         self.ep.default = datetime.datetime(datetime.date.today().year, 1, 1)
         self.begin = None
         self.until = None
+        self.loghead = None
         self.logbody = []
 
     def flush(self):
-        res = Log(self.begin, self.until, "\n".join(self.logbody))
+        res = Log(self.begin, self.until, self.loghead, "\n".join(self.logbody))
         self.begin = None
         self.end = None
+        self.loghead = None
         self.logbody = []
         return res
 
@@ -250,6 +253,7 @@ class LogParser(object):
                 try:
                     if self.begin is not None:
                         entries.append(self.flush())
+                    self.loghead = line
                     log.debug("%s:%d: log header: %s %s-%s", lines.fname, lines.lineno, mo.group("date"), mo.group("start"), mo.group("end"))
                     date = self.ep.parse(mo.group("date"))
                     if date is None:
@@ -429,7 +433,7 @@ class ProjectParser(object):
         first = self.peek()
 
         self.firstline_meta = None
-        self.meta = dict()
+        self.meta = OrderedDict()
 
         # If it starts with a log, there is no metadata: stop
         if self.re.log_date.match(first) or self.re.log_head.match(first):
@@ -449,10 +453,11 @@ class ProjectParser(object):
             # Stop at an empty line or at EOF
             if not l: break
             meta.append(l)
+        self.meta_lines = meta
 
         # Parse like an email headers
         import email
-        self.meta = dict(((k.lower(), v) for k, v in email.message_from_string("\n".join(meta)).items()))
+        self.meta = OrderedDict(((k.lower(), v) for k, v in email.message_from_string("\n".join(meta)).items()))
 
     def parse_log(self):
         lp = LogParser(re=self.re, lang=self.meta.get("lang", None))

@@ -3,6 +3,7 @@ import subprocess
 import datetime
 import re
 import sys
+from collections import OrderedDict
 from .egtparser import ProjectParser
 from .utils import format_duration, intervals_intersect
 import logging
@@ -81,7 +82,7 @@ class Project(object):
         return p
 
     def load(self):
-        self.meta = {}
+        self.meta = OrderedDict()
         self.log = []
         self.body = None
 

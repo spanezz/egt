@@ -1,8 +1,11 @@
 import egtlib
+from .utils import format_duration
 from configparser import RawConfigParser
 import os
 import datetime
+import calendar
 import sys
+import io
 
 class CommandError(Exception):
     pass
@@ -341,6 +344,66 @@ class PrintLog(Command):
     def add_args(cls, subparser):
         super().add_args(subparser)
         subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+
+
+@Command.register
+class Archive(Command):
+    """
+    Output the log for one or more projects
+    """
+    def write_archive(self, project, entries, cutoff):
+        pathname = project.meta.get("archive-dir", None)
+        if pathname is None: return "not archived: archive-dir not found in header"
+        if "%" in pathname:
+            pathname = cutoff.strftime(pathname)
+        pathname = os.path.expanduser(pathname)
+        pathname = os.path.join(pathname, cutoff.strftime("%Y%m-") + project.name + ".egt")
+        if os.path.exists(pathname):
+            return "not archived: {} already exists".format(pathname)
+        duration = sum(e.duration for e in entries)
+        with io.open(pathname, "wt") as fd:
+            if "name" not in project.meta:
+                print("Name:", project.name, file=fd)
+            print("Archived: yes", file=fd)
+            print("{}: {}".format("Total", format_duration(duration)), file=fd)
+            for k, v in project.meta.items():
+                if k == "archived": continue
+                print("{}: {}".format(k.capitalize(), v), file=fd)
+            print(file=fd)
+            for l in entries:
+                print(l.head, file=fd)
+                print(l.body, file=fd)
+        return pathname
+
+    def main(self):
+        cutoff = datetime.datetime.strptime(self.args.month, "%Y-%m").date()
+        cutoff = cutoff.replace(day=calendar.monthrange(cutoff.year, cutoff.month)[1])
+        e = self.make_egt(self.args.projects)
+        archive_results = {}
+        for p in e.projects:
+            entries = list(l for l in p.log if l.begin.date() <= cutoff)
+            if not entries: continue
+            archive_results[p.name] = self.write_archive(p, entries, cutoff)
+            duration = sum(e.duration for e in entries)
+            if "name" not in p.meta:
+                print("Name:", p.name)
+            for k, v in p.meta.items():
+                print("{}: {}".format(k.capitalize(), v))
+            print("{}: {}".format("Total", format_duration(duration)))
+            print()
+            for l in entries:
+                print(l.head)
+                print(l.body)
+            print()
+        for name, res in sorted(archive_results.items()):
+            print("Archiving {}: {}".format(name, res))
+
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+        last_month = datetime.date.today().replace(day=1) - datetime.timedelta(days=1)
+        subparser.add_argument("--month", "-m", action="store", default=last_month.strftime("%Y-%m"), help="print log until the given month (default: %(default)s)")
 
 
 @Command.register

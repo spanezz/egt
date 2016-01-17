@@ -5,9 +5,10 @@ import datetime
 
 
 class Log(object):
-    def __init__(self, begin, until, body):
+    def __init__(self, begin, until, head, body):
         self.begin = begin
         self.until = until
+        self.head = head
         self.body = body
         self.day_billing = None
 
@@ -28,7 +29,7 @@ class Log(object):
     def formatted_duration(self):
         return format_duration(self.duration)
 
-    def output(self, project=None):
+    def output(self, project=None, file=None):
         head = [self.begin.strftime("%d %B: %H:%M-")]
         if self.until:
             head.append(self.until.strftime("%H:%M "))
@@ -42,5 +43,5 @@ class Log(object):
                 head.append("{:.1}d".format(self.day_billing))
         if project is not None:
             head.append(" [%s]" % project)
-        print("".join(head))
-        print(self.body)
+        print("".join(head), file=file)
+        print(self.body, file=file)
