@@ -39,6 +39,7 @@ def default_tags(config, fname):
 
     return tags
 
+
 def parse_duration(s):
     """
     Parse a duration like 3d 8h 30m, returning its value in minutes
@@ -54,6 +55,7 @@ def parse_duration(s):
         else:
             raise ValueError("cannot parse '%s' in '%s'" % (tok, s))
     return mins
+
 
 class Project(object):
     def __init__(self, fname=None, path=None, name=None, tags=set(), archived=False, editor=None):
@@ -262,7 +264,6 @@ class Project(object):
             until = datetime.datetime.strptime(until, "%Y-%m-%d").date()
         return since, until
 
-
     def next_events(self, since=None, until=None):
         """
         Return the next events within the given date range
@@ -345,8 +346,6 @@ class Project(object):
             path = os.path.join(self.path, p)
             if not os.path.exists(path): continue
             tarout.add(path)
-
-
 
     @classmethod
     def has_project(cls, fname):

@@ -6,6 +6,7 @@ from .utils import intervals_intersect
 
 log = logging.getLogger(__name__)
 
+
 class WeeklyReport(object):
     def __init__(self):
         self.projs = []
@@ -44,6 +45,7 @@ class WeeklyReport(object):
         )
 
         return res
+
 
 class ProjectFilter:
     """
@@ -90,7 +92,7 @@ class Egt:
 
     @property
     def projects(self):
-        return sorted((p for p in self.state.projects.values() if self.filter.matches(p)), key=lambda p:p.name)
+        return sorted((p for p in self.state.projects.values() if self.filter.matches(p)), key=lambda p: p.name)
 
     @property
     def all_tags(self):

@@ -12,6 +12,8 @@ re_ignores = (
     # these pylint warnings insult my sense of good taste
     re.compile(r"E501 line too long"),
     re.compile(r"E701 multiple statements on one line \(colon\)"),
+    re.compile(r"E265 block comment should start with"),
+    re.compile(r"egtlib/texttable.py:"),
 )
 
 

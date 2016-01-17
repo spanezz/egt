@@ -7,6 +7,7 @@ import calendar
 import sys
 import io
 
+
 class CommandError(Exception):
     pass
 
@@ -97,8 +98,8 @@ class Summary(Command):
             else:
                 worked.append(p)
 
-        blanks.sort(key=lambda p:p.name)
-        worked.sort(key=lambda p:p.last_updated)
+        blanks.sort(key=lambda p: p.name)
+        worked.sort(key=lambda p: p.last_updated)
 
         now = datetime.datetime.now()
 
@@ -221,16 +222,16 @@ class Next(Command):
     Show next-action lists that intersect the given context set
     """
     def main(self):
-        #contexts = frozenset(self.args.contexts)
+        # contexts = frozenset(self.args.contexts)
         e = self.make_egt(self.args.projects)
-        #e.print_next_actions(contexts)
+        # e.print_next_actions(contexts)
         e.print_next_actions()
 
     @classmethod
     def add_args(cls, subparser):
         super().add_args(subparser)
         subparser.add_argument("projects", nargs="*", help="project(s) to work on")
-        #subparser.add_argument("contexts", nargs="*", help="arguments for git grep")
+        # subparser.add_argument("contexts", nargs="*", help="arguments for git grep")
 
 
 @Command.register
@@ -260,10 +261,10 @@ class Weekrpt(Command):
         # egt weekrpt also showing stats by project, and by tags
         e = self.make_egt(self.args.projects)
         # TODO: add an option to choose the current time
-        #if self.args.projects:
-            #end = datetime.datetime.strptime(self.args.projects[0], "%Y-%m-%d").date()
-        #else:
-            #end = None
+        # if self.args.projects:
+        #     end = datetime.datetime.strptime(self.args.projects[0], "%Y-%m-%d").date()
+        # else:
+        #     end = None
         end = None
 
         termsize = shutil.get_terminal_size((80, 25))
@@ -332,7 +333,7 @@ class PrintLog(Command):
                 log.append((l, p))
             projs.add(p)
 
-        log.sort(key=lambda x:x[0].begin)
+        log.sort(key=lambda x: x[0].begin)
         if len(projs) == 1:
             for l, p in log:
                 l.output()
@@ -416,7 +417,7 @@ class Cal(Command):
         events = e.calendar()
 
         cal = None
-        #if self.settings["vcal"]:
+        # if self.settings["vcal"]:
         #    # http://blog.thescoop.org/archives/2007/07/31/django-ical-and-vobject/
         #    import vobject
         #    cal = vobject.iCalendar()
@@ -426,7 +427,7 @@ class Cal(Command):
             for e in events:
                 sys.stdout.write("\n".join(e.lines))
                 sys.stdout.write("\n")
-        #else:
+        # else:
         #    for e in events:
         #        e.add_to_vobject(cal)
         #    print(cal.serialize())
@@ -505,4 +506,3 @@ class Completion(Command):
     def add_args(cls, subparser):
         super().add_args(subparser)
         subparser.add_argument("subcommand", nargs="?", default=None, help="command for which to provide completion")
-

@@ -131,7 +131,7 @@ class EventParser(object):
             return None
         mo = self.re.event_range.search(s)
         if mo:
-            #print "R"
+            # print "R"
             # Parse range
             since = s[:mo.start()]
             until = s[mo.end():]
@@ -143,10 +143,10 @@ class EventParser(object):
                 allDay=False,
             )
         elif s[0].isdigit():
-            #print "D"
+            # print "D"
             return self._to_event(self.parse(s))
         elif s.startswith("d:"):
-            #print "P"
+            # print "P"
             return self._to_event(self.parse(s[2:]))
         return None
 
@@ -319,7 +319,7 @@ class BodyParser(object):
                 # End of next actions, return the first line of someday/maybe
                 return
             elif i == 0 and l.endswith(":"):
-                #log.debug("%s:%d: next action context '%s'", self.lines.fname, self.lines.lineno, l)
+                # log.debug("%s:%d: next action context '%s'", self.lines.fname, self.lines.lineno, l)
                 log.debug("%s:%d: next action context '%s'", self.fname, lineno, l)
                 # Start of a context line
                 contexts = []

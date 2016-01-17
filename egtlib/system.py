@@ -7,6 +7,7 @@ try:
 except ImportError:
     dbus = None
 
+
 def connect_to_buffy():
     if not dbus: return None
 

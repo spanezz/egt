@@ -32,6 +32,7 @@ class atomic_writer(object):
         self.outfd.close()
         return False
 
+
 def intervals_intersect(p1s, p1e, p2s, p2e):
     """
     Return True if the two intervals intersect
