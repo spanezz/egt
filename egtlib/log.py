@@ -112,13 +112,14 @@ class EventParser(object):
 
 
 class LogParser(object):
-    def __init__(self, lang=None):
+    def __init__(self, dest, lang=None):
         self.ep = EventParser(lang=lang)
         self.ep.default = datetime.datetime(datetime.date.today().year, 1, 1)
         self.begin = None
         self.until = None
         self.loghead = None
         self.logbody = []
+        self.dest = dest
 
     def flush(self):
         res = Entry(self.begin, self.until, self.loghead, "\n".join(self.logbody))
@@ -129,7 +130,6 @@ class LogParser(object):
         return res
 
     def parse(self, lines):
-        entries = []
         while True:
             line = lines.next()
             if not line: break
@@ -138,7 +138,7 @@ class LogParser(object):
             mo = Regexps.log_date.match(line)
             if mo:
                 if self.begin is not None:
-                    entries.append(self.flush())
+                    self.dest.append(self.flush())
                 val = mo.group("date") or mo.group("year")
                 log.debug("%s:%d: stand-alone date: %s", lines.fname, lines.lineno, val)
                 # Just parse the next line, storing it nowhere, but updating
@@ -151,7 +151,7 @@ class LogParser(object):
             if mo:
                 try:
                     if self.begin is not None:
-                        entries.append(self.flush())
+                        self.dest.append(self.flush())
                     self.loghead = line
                     log.debug("%s:%d: log header: %s %s-%s", lines.fname, lines.lineno, mo.group("date"), mo.group("start"), mo.group("end"))
                     date = self.ep.parse(mo.group("date"))
@@ -175,16 +175,16 @@ class LogParser(object):
             self.logbody.append(line)
 
         if self.begin is not None:
-            entries.append(self.flush())
-
-        return entries
+            self.dest.append(self.flush())
 
 
-class Log(object):
+class Log(list):
     @classmethod
     def parse(cls, lines, **kw):
-        lp = LogParser(**kw)
-        return lp.parse(lines)
+        self = cls()
+        lp = LogParser(self, **kw)
+        lp.parse(lines)
+        return self
 
     @classmethod
     def is_log_start(cls, line):
