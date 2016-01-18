@@ -88,8 +88,8 @@ class Project(object):
         self.log = []
         self.body = None
 
-        self.parser = ProjectParser()
-        self.parser.parse(fname=self.fname)
+        self.parser = ProjectParser(self.fname)
+        self.parser.parse()
 
         self.meta = self.parser.meta
         self.log = self.parser.log

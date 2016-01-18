@@ -4,7 +4,7 @@ import re
 import datetime
 from collections import OrderedDict
 from . import log as egtlog
-from .parse import Regexps
+from .parse import Regexps, Lines
 import logging
 from collections import namedtuple
 
@@ -235,49 +235,11 @@ class BodyParser(object):
             self.parsed[-1].lines.append(l)
 
 
-class ProjectParser(object):
-    def __init__(self):
-        self.lines = None
-        # Current line being parsed
-        self.lineno = 0
+class ProjectParser(Lines):
+    def __init__(self, pathname, fd=None):
+        super().__init__(pathname, fd)
         # Defaults
         self.meta = dict()
-
-    def peek(self):
-        """
-        Return the next line to be parsed, without advancing the cursor.
-        Return None if we are at the end.
-        """
-        if self.lineno < len(self.lines):
-            return self.lines[self.lineno]
-        else:
-            return None
-
-    def next(self):
-        """
-        Return the next line to be parsed, advancing the cursor.
-        Return None if we are at the end.
-        """
-        if self.lineno < len(self.lines):
-            res = self.lines[self.lineno]
-            self.lineno += 1
-            return res
-        else:
-            return None
-
-    def discard(self):
-        """
-        Just advance the cursor to the next line
-        """
-        if self.lineno < len(self.lines):
-            self.lineno += 1
-
-    def skip_empty_lines(self):
-        while True:
-            l = self.peek()
-            if l is None: break
-            if l: break
-            self.discard()
 
     def parse_meta(self):
         first = self.peek()
@@ -324,19 +286,7 @@ class ProjectParser(object):
         bp.parse_body()
         self.body = bp.parsed
 
-    def parse(self, fname=None, fd=None):
-        self.fname = fname
-
-        # Read the file, split in trimmed lines
-        if fd is None:
-            with open(fname) as fd:
-                self.lines = [x.rstrip() for x in fd]
-        else:
-            self.lines = [x.rstrip() for x in fd]
-
-        # Reset current line cursor
-        self.lineno = 0
-
+    def parse(self):
         # Parse metadata
         self.parse_meta()
 
