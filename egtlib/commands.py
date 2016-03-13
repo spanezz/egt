@@ -216,40 +216,6 @@ class MrConfig(Command):
 
 
 @Command.register
-class Next(Command):
-    """
-    Show next-action lists that intersect the given context set
-    """
-    def main(self):
-        # contexts = frozenset(self.args.contexts)
-        e = self.make_egt(self.args.projects)
-        # e.print_next_actions(contexts)
-        e.print_next_actions()
-
-    @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
-        # subparser.add_argument("contexts", nargs="*", help="arguments for git grep")
-
-
-@Command.register
-class When(Command):
-    """
-    Show next-action lists that intersect the given context set
-    """
-    def main(self):
-        contexts = frozenset(self.args.contexts)
-        e = self.make_egt()
-        e.print_context_actions(contexts)
-
-    @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("contexts", nargs="*", help="arguments for git grep")
-
-
-@Command.register
 class Weekrpt(Command):
     """
     Compute weekly reports
@@ -404,37 +370,6 @@ class Archive(Command):
         subparser.add_argument("projects", nargs="*", help="project(s) to work on")
         last_month = datetime.date.today().replace(day=1) - datetime.timedelta(days=1)
         subparser.add_argument("--month", "-m", action="store", default=last_month.strftime("%Y-%m"), help="print log until the given month (default: %(default)s)")
-
-
-@Command.register
-class Cal(Command):
-    """
-    Compute calendar of next actions
-    """
-    def main(self):
-        e = self.make_egt(self.args.projects)
-        events = e.calendar()
-
-        cal = None
-        # if self.settings["vcal"]:
-        #    # http://blog.thescoop.org/archives/2007/07/31/django-ical-and-vobject/
-        #    import vobject
-        #    cal = vobject.iCalendar()
-        #    cal.add('method').value = 'PUBLISH'  # IE/Outlook needs this
-
-        if cal is None:
-            for e in events:
-                sys.stdout.write("\n".join(e.lines))
-                sys.stdout.write("\n")
-        # else:
-        #    for e in events:
-        #        e.add_to_vobject(cal)
-        #    print(cal.serialize())
-
-    @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
 
 
 @Command.register
