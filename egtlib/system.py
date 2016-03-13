@@ -24,7 +24,10 @@ def run_editor(proj):
     if buffy:
         buffy.set_active_inbox(".egt.{}".format(proj.name).encode("utf-8"), True)
 
-    p = subprocess.Popen([proj.editor, proj.fname], cwd=proj.path, close_fds=True)
+    editor = proj.editor
+    if editor is None:
+        editor = os.environ.get("EDITOR", "vim")
+    p = subprocess.Popen([editor, proj.fname], cwd=proj.path, close_fds=True)
     p.wait()
 
     # Reconnect, in case buffy was restarted while we were working

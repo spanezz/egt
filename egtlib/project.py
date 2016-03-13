@@ -58,17 +58,14 @@ def parse_duration(s):
 
 
 class Project(object):
-    def __init__(self, fname=None, path=None, name=None, tags=set(), archived=False, editor=None):
+    def __init__(self, fname=None, path=None, name=None, tags=set()):
         if path is None and fname is not None:
             path = os.path.dirname(fname)
-        if editor is None:
-            editor = os.environ.get("EDITOR", "vim")
         self.fname = fname
-        self.archived = archived
         self.path = path
         self.name = name
         self.tags = tags
-        self.editor = editor
+        self.editor = None
 
     @classmethod
     def from_file(self, config, fname):
