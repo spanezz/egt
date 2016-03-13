@@ -3,7 +3,6 @@ from __future__ import absolute_import
 import re
 import datetime
 from collections import OrderedDict
-from . import log as egtlog
 from .parse import Regexps, Lines
 import logging
 from collections import namedtuple
@@ -161,7 +160,8 @@ class BodyParser(object):
         return self.parsed
 
     def parse_next_actions(self):
-        eparser = egtlog.EventParser(lang=self.lang)
+        from .log import EventParser
+        eparser = EventParser(lang=self.lang)
         while True:
             lineno, i, m, l = self.lines.peek()
 
@@ -238,55 +238,33 @@ class BodyParser(object):
 class ProjectParser(Lines):
     def __init__(self, pathname, fd=None):
         super().__init__(pathname, fd)
-        # Defaults
-        self.meta = dict()
-
-    def parse_meta(self):
-        first = self.peek()
-
-        self.firstline_meta = None
         from .meta import Meta
         self.meta = Meta()
+        from .log import Log
+        self.log = Log()
 
+    def parse(self):
+        first = self.peek()
+
+        # Parse metadata
         # If it starts with a log, there is no metadata: stop
-        if Regexps.log_date.match(first) or Regexps.log_head.match(first):
-            return
-
         # If the first line doesn't look like a header, stop
-        if not Regexps.meta_head.match(first):
-            return
+        if not Regexps.log_date.match(first) and not Regexps.log_head.match(first) and Regexps.meta_head.match(first):
+            log.debug("%s:%d: parsing metadata", self.fname, self.lineno)
+            self.meta.parse(self)
 
-        log.debug("%s:%d: parsing metadata", self.fname, self.lineno)
-        self.firstline_meta = self.lineno
+        self.skip_empty_lines()
 
-        # Get everything until we reach an empty line
-        self.meta.parse(self)
-
-    def parse_log(self):
-        if egtlog.Log.is_log_start(self.peek()):
+        # Parse log entries
+        if self.log.is_log_start(self.peek()):
             log.debug("%s:%d: parsing log", self.fname, self.lineno)
-            self.firstline_log = self.lineno
-            self.log = egtlog.Log.parse(self, lang=self.meta.get("lang", None))
-        else:
-            self.firstline_log = None
-            self.log = []
+            self.log.parse(self, lang=self.meta.get("lang", None))
 
-    def parse_body(self):
+        self.skip_empty_lines()
+
+        # Parse/store body
         log.debug("%s:%d: parsing body", self.fname, self.lineno)
         bp = BodyParser(self.lines[self.lineno:], lang=self.meta.get("lang", None), fname=self.fname, first_lineno=self.lineno)
         bp.parse_body()
         self.body = bp.parsed
 
-    def parse(self):
-        # Parse metadata
-        self.parse_meta()
-
-        self.skip_empty_lines()
-
-        # Parse log entries
-        self.parse_log()
-
-        self.skip_empty_lines()
-
-        # Parse/store body
-        self.parse_body()

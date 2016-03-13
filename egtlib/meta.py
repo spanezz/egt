@@ -36,6 +36,7 @@ class Meta:
         Parse a metadata section from a Lines object
         """
         ## Parse raw lines
+        self._lineno = lines.lineno
 
         # Get everything until we reach an empty line
         while True:

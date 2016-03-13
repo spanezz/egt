@@ -179,12 +179,15 @@ class LogParser(object):
 
 
 class Log(list):
-    @classmethod
-    def parse(cls, lines, **kw):
-        self = cls()
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+        # Line number in the project file where the log starts
+        self._lineno = None
+
+    def parse(self, lines, **kw):
+        self._lineno = lines.lineno
         lp = LogParser(self, **kw)
         lp.parse(lines)
-        return self
 
     @classmethod
     def is_log_start(cls, line):
