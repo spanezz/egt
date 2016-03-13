@@ -11,26 +11,13 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def default_name(fname):
-    """
-    Guess a project name from the project file pathname
-    """
-    dirname, basename = os.path.split(fname)
-    if basename in ("ore", ".egt", "egt"):
-        # Use dir name
-        return os.path.basename(dirname)
-    else:
-        # Use file name
-        return basename[:-4]
-
-
 def default_tags(config, fname):
     """
     Guess tags from the project file pathname
     """
     tags = set()
 
-    if "autotag" in config:
+    if config is not None and "autotag" in config:
         autotags = config["autotag"]
         if autotags is not None:
             for tag, regexp in autotags.items():
@@ -58,26 +45,55 @@ def parse_duration(s):
 
 
 class Project(object):
-    def __init__(self, fname=None, path=None, name=None, tags=set()):
-        if path is None and fname is not None:
-            path = os.path.dirname(fname)
-        self.fname = fname
-        self.path = path
-        self.name = name
-        self.tags = tags
-        self.editor = None
+    def __init__(self, config, abspath):
+        self.abspath = abspath
+        self.default_path, basename = os.path.split(abspath)
+        # TODO: "ore" is an obsolete name for egt files: get rid of them and
+        # remove support here
+        if basename in (".egt", "ore"):
+            self.default_name = os.path.basename(self.default_path)
+        else:
+            self.default_name = os.path.splitext(basename)[0]
+        self.default_tags = default_tags(config, abspath)
+        self.archived = False
+
+    @property
+    def name(self):
+        name = self.meta.get("name", self.default_name)
+        if not self.archived: return name
+
+        since, until = self.formal_period
+        if until:
+            return name + until.strftime("-%Y-%m-%d")
+        elif since:
+            return name + since.strftime("-%Y-%m-%d")
+        else:
+            return name
+
+    @property
+    def path(self):
+        return self.meta.get("path", self.default_path)
+
+    @property
+    def tags(self):
+        return self.default_tags | self.meta.tags
 
     @classmethod
     def from_file(self, config, fname):
         # Default values, can be overridden by file metadata
-        p = Project(
-            fname=fname,
-            path=os.path.dirname(fname),
-            name=default_name(fname),
-            tags=default_tags(config, fname)
-        )
+        p = Project(config, fname)
         # Load the actual data
         p.load()
+        return p
+
+    @classmethod
+    def mock(self, abspath, name=None, path=None, tags=None):
+        p = Project(None, abspath)
+        if path is not None: p.default_path = path
+        if name is not None: p.default_name = name
+        if tags is not None: p.default_tags = tags
+        from .meta import Meta
+        p.meta = Meta()
         return p
 
     def load(self):
@@ -85,19 +101,12 @@ class Project(object):
         self.log = []
         self.body = None
 
-        self.parser = ProjectParser(self.fname)
+        self.parser = ProjectParser(self.abspath)
         self.parser.parse()
 
         self.meta = self.parser.meta
         self.log = self.parser.log
         self.body = self.parser.body
-
-        # Amend path using meta's path if found
-        self.path = self.meta.get("path", self.path)
-        self.name = self.meta.get("name", self.name)
-        self.editor = self.meta.get("editor", self.editor)
-        if 'tags' in self.meta:
-            self.tags = set(re.split("[ ,\t]+", self.meta["tags"]))
 
         # If we're doing daily billing, annotate log entries with the number of
         # days (or fraction of days) accounted for them
@@ -111,11 +120,6 @@ class Project(object):
         # Quick access to 'archive' meta attribute
         if self.meta.get("archived", "false").lower() in ("true", "yes"):
             self.archived = True
-            since, until = self.formal_period
-            if until:
-                self.name += until.strftime("-%Y-%m-%d")
-            elif since:
-                self.name += since.strftime("-%Y-%m-%d")
 
     @property
     def last_updated(self):

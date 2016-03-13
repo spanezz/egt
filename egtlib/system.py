@@ -24,7 +24,7 @@ def run_editor(proj):
     if buffy:
         buffy.set_active_inbox(".egt.{}".format(proj.name).encode("utf-8"), True)
 
-    editor = proj.editor
+    editor = proj.meta.get("editor", None)
     if editor is None:
         editor = os.environ.get("EDITOR", "vim")
     p = subprocess.Popen([editor, proj.fname], cwd=proj.path, close_fds=True)

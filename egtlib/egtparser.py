@@ -245,7 +245,8 @@ class ProjectParser(Lines):
         first = self.peek()
 
         self.firstline_meta = None
-        self.meta = OrderedDict()
+        from .meta import Meta
+        self.meta = Meta()
 
         # If it starts with a log, there is no metadata: stop
         if Regexps.log_date.match(first) or Regexps.log_head.match(first):
@@ -259,17 +260,7 @@ class ProjectParser(Lines):
         self.firstline_meta = self.lineno
 
         # Get everything until we reach an empty line
-        meta = []
-        while True:
-            l = self.next()
-            # Stop at an empty line or at EOF
-            if not l: break
-            meta.append(l)
-        self.meta_lines = meta
-
-        # Parse like an email headers
-        import email
-        self.meta = OrderedDict(((k.lower(), v) for k, v in email.message_from_string("\n".join(meta)).items()))
+        self.meta.parse(self)
 
     def parse_log(self):
         if egtlog.Log.is_log_start(self.peek()):
