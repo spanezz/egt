@@ -11,7 +11,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def default_tags(config, fname):
+def default_tags(config, abspath):
     """
     Guess tags from the project file pathname
     """
@@ -21,7 +21,7 @@ def default_tags(config, fname):
         autotags = config["autotag"]
         if autotags is not None:
             for tag, regexp in autotags.items():
-                if re.search(regexp, fname):
+                if re.search(regexp, abspath):
                     tags.add(tag)
 
     return tags
@@ -79,9 +79,9 @@ class Project(object):
         return self.default_tags | self.meta.tags
 
     @classmethod
-    def from_file(self, config, fname):
+    def from_file(self, config, abspath):
         # Default values, can be overridden by file metadata
-        p = Project(config, fname)
+        p = Project(config, abspath)
         # Load the actual data
         p.load()
         return p
@@ -248,8 +248,8 @@ class Project(object):
 
     def backup(self, tarout):
         # Backup the main todo/log file
-        tarout.add(self.fname)
-        if 'abstract' not in self.meta:
+        tarout.add(self.abspath)
+        if not self.meta.get("abstract", False):
             for gd in self.gitdirs():
                 tarout.add(os.path.join(gd, "config"))
                 hookdir = os.path.join(gd, "hooks")
@@ -271,5 +271,5 @@ class Project(object):
             tarout.add(path)
 
     @classmethod
-    def has_project(cls, fname):
-        return os.path.exists(fname)
+    def has_project(cls, abspath):
+        return os.path.exists(abspath)
