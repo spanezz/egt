@@ -97,25 +97,17 @@ class Project(object):
         return p
 
     def load(self):
-        self.meta = OrderedDict()
-        self.log = []
-        self.body = None
+        parser = ProjectParser(self.abspath)
+        parser.parse()
 
-        self.parser = ProjectParser(self.abspath)
-        self.parser.parse()
+        self.meta = parser.meta
+        self.log = parser.log
+        self.body = parser.body
 
-        self.meta = self.parser.meta
-        self.log = self.parser.log
-        self.body = self.parser.body
-
-        # If we're doing daily billing, annotate log entries with the number of
-        # days (or fraction of days) accounted for them
-        if self.meta.get("billing", "hourly") == "daily":
-            self.annotate_log_with_daily_billing()
-
-        # Allow to group archived projects with the same name
-        # Set it now before we potentially mangle the name
-        self.group = self.name
+        # Allow to group archived projects with the same name.
+        # Compute it separately to skip the archieve name mangling performed by
+        # the name property on archived project names
+        self.group = self.meta.get("name", self.default_name)
 
         # Quick access to 'archive' meta attribute
         if self.meta.get("archived", "false").lower() in ("true", "yes"):
@@ -144,76 +136,6 @@ class Project(object):
         for l in self.log:
             mins += l.duration
         return mins
-
-    def annotate_log_with_daily_billing(self):
-        # Find out which is the last log entry for each day
-        lastentries = {}
-        for l in self.log:
-            lastentries[l.begin.date()] = l
-
-        # Compute effective work time for each day
-        days = self.compute_daily_billing()
-
-        # Annotate the last log entries with the work time, all others with 0
-        for l in self.log:
-            if lastentries[l.begin.date()] == l:
-                l.day_billing = days[l.begin.date()]
-            else:
-                l.day_billing = 0.0
-
-    def compute_daily_billing(self):
-        """
-        For each day in the log, compute the number of work days or half work
-        days logged for it.
-        """
-        daymins = float(self.daymins)
-
-        # Iterate logs, aggregating the number of minutes per day
-        days = {}
-        for l in self.log:
-            d = l.begin.date()
-            if d in days:
-                days[d] += l.duration
-            else:
-                days[d] = l.duration
-
-        # Iterate days
-        karma = 0
-        res = {}
-        for d, mins in sorted(days.items()):
-            # Allow one hour slack
-            if mins >= (daymins/2 - 60) and mins < daymins/2:
-                mins = daymins/2
-            elif mins >= daymins-60 and mins < daymins:
-                mins = daymins
-
-            # Apply minutes carried forward from old roundings
-            amount = mins + karma
-
-            if amount < daymins/4:
-                # Skip day
-                account = 0.0
-            elif abs(daymins/2 - amount) < abs(daymins - amount):
-                # Closer to half day
-                account = 0.5
-            elif amount > daymins * 1.5:
-                # More than a day and a half: count a day and a half
-                account = 1.5
-            else:
-                # Closer to full day
-                account = 1.0
-
-            res[d] = account
-            #print d, "%4.1f + %4.1f = %4.1f" % (mins/60, karma/60, amount/60),\
-            #         "-> %4.1f + %4.1f" % (account, (amount-account*daymins)/60), dcount
-            karma = amount - account * daymins
-
-        return res
-
-    @property
-    def elapsed_days(self):
-        days = self.compute_daily_billing()
-        return sum(days.values())
 
     @property
     def formatted_elapsed(self):

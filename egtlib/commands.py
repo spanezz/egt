@@ -85,8 +85,8 @@ class Summary(Command):
         termsize = shutil.get_terminal_size((80, 25))
         table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
-        table.set_cols_align(("l", "l", "r", "c", "r", "r"))
-        table.add_row(("Name", "Tags", "Logs", "Hrs", "Days", "Last entry"))
+        table.set_cols_align(("l", "l", "r", "c", "r"))
+        table.add_row(("Name", "Tags", "Logs", "Hrs", "Last entry"))
         e = self.make_egt(self.args.projects)
         projs = e.projects
 
@@ -109,7 +109,6 @@ class Summary(Command):
                 " ".join(sorted(p.tags)),
                 len(p.log),
                 format_duration(p.elapsed, tabular=True) if p.last_updated else "--",
-                "%.1f" % p.elapsed_days,
                 "%s ago" % format_td(now - p.last_updated, tabular=True) if p.last_updated else "--",
             ))
 
