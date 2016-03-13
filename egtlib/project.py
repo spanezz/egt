@@ -4,7 +4,6 @@ import datetime
 import re
 import sys
 from collections import OrderedDict
-from .egtparser import ProjectParser
 from .utils import format_duration, intervals_intersect
 import logging
 
@@ -57,6 +56,13 @@ class Project(object):
         self.default_tags = default_tags(config, abspath)
         self.archived = False
 
+        from .meta import Meta
+        self.meta = Meta()
+        from .log import Log
+        self.log = Log()
+        from .body import Body
+        self.body = Body()
+
     @property
     def name(self):
         name = self.meta.get("name", self.default_name)
@@ -97,12 +103,31 @@ class Project(object):
         return p
 
     def load(self):
-        parser = ProjectParser(self.abspath)
-        parser.parse()
+        from .parse import Regexps, Lines
+        lines = Lines(self.abspath)
 
-        self.meta = parser.meta
-        self.log = parser.log
-        self.body = parser.body
+        # Parse optionalmetadata
+
+        # If it starts with a log, there is no metadata: stop
+        # If the first line doesn't look like a header, stop
+        first = lines.peek()
+        if not Regexps.log_date.match(first) and not Regexps.log_head.match(first) and Regexps.meta_head.match(first):
+            log.debug("%s:%d: parsing metadata", lines.fname, lines.lineno)
+            self.meta.parse(lines)
+
+        lines.skip_empty_lines()
+
+        # Parse log entries
+        if self.log.is_log_start(lines.peek()):
+            log.debug("%s:%d: parsing log", lines.fname, lines.lineno)
+            self.log.parse(lines, lang=self.meta.get("lang", None))
+
+        lines.skip_empty_lines()
+
+        # Parse/store body
+        log.debug("%s:%d: parsing body", lines.fname, lines.lineno)
+        self.body.parse(lines)
+
 
         # Allow to group archived projects with the same name.
         # Compute it separately to skip the archieve name mangling performed by
