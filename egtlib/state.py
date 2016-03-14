@@ -57,7 +57,7 @@ class State:
                 try:
                     p = Project.from_file(self.config, fname)
                 except Exception as e:
-                    log.warn("%s: failed to parse: %s", fname, str(e))
+                    log.exception("%s: failed to parse: %s", fname, str(e))
                     continue
                 if p.name in new_projects:
                     log.warn("%s: project %s already exists in %s: skipping", fname, p.name, p.abspath)

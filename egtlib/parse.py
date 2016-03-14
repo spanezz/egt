@@ -19,7 +19,7 @@ class Lines:
         self.lineno = 0
         # Read the file, split in trimmed lines
         if fd is None:
-            with open(self.fname) as fd:
+            with open(self.fname, "rt") as fd:
                 self.lines = [x.rstrip() for x in fd]
         else:
             self.lines = [x.rstrip() for x in fd]

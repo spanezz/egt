@@ -96,6 +96,7 @@ class Project(object):
         # If it starts with a log, there is no metadata: stop
         # If the first line doesn't look like a header, stop
         first = lines.peek()
+        if first is None: return
         if not Regexps.log_date.match(first) and not Regexps.log_head.match(first) and Regexps.meta_head.match(first):
             log.debug("%s:%d: parsing metadata", lines.fname, lines.lineno)
             self.meta.parse(lines)
@@ -103,12 +104,14 @@ class Project(object):
         lines.skip_empty_lines()
 
         # Parse log entries
+        if lines.peek() is None: return
         if self.log.is_start_line(lines.peek()):
             log.debug("%s:%d: parsing log", lines.fname, lines.lineno)
             self.log.parse(lines, lang=self.meta.get("lang", None))
             lines.skip_empty_lines()
 
         # Parse Taskwarrior next actions
+        if lines.peek() is None: return
         if self.nextactions.is_start_line(lines.peek()):
             log.debug("%s:%d: parsing next actions", lines.fname, lines.lineno)
             self.nextactions.parse(lines)
