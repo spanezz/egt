@@ -15,6 +15,12 @@ I currently use egt to:
  * print reports of my activity
 
 
+## Dependencies
+
+```sh
+apt install python3-dateutul python3-taskw python3-xdg
+```
+
 ## Quickstart
 
 1. enter a directory with one of your projects
