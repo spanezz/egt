@@ -43,6 +43,8 @@ class Project(object):
         self.meta = Meta()
         from .log import Log
         self.log = Log()
+        from .taskwarrior import Taskwarrior
+        self.nextactions = Taskwarrior(self)
         from .body import Body
         self.body = Body()
 
@@ -101,13 +103,18 @@ class Project(object):
         lines.skip_empty_lines()
 
         # Parse log entries
-        if self.log.is_log_start(lines.peek()):
+        if self.log.is_start_line(lines.peek()):
             log.debug("%s:%d: parsing log", lines.fname, lines.lineno)
             self.log.parse(lines, lang=self.meta.get("lang", None))
+            lines.skip_empty_lines()
 
-        lines.skip_empty_lines()
+        # Parse Taskwarrior next actions
+        if self.nextactions.is_start_line(lines.peek()):
+            log.debug("%s:%d: parsing next actions", lines.fname, lines.lineno)
+            self.nextactions.parse(lines)
+            lines.skip_empty_lines()
 
-        # Parse/store body
+        # Parse body
         log.debug("%s:%d: parsing body", lines.fname, lines.lineno)
         self.body.parse(lines)
 
@@ -129,6 +136,10 @@ class Project(object):
             print(file=out)
 
         if self.log.print(out):
+            print(file=out)
+
+        self.nextactions.sync_with_taskwarrior()
+        if self.nextactions.print(out):
             print(file=out)
 
         self.body.print(out)

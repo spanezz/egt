@@ -197,7 +197,7 @@ class Log(list):
         return True
 
     @classmethod
-    def is_log_start(cls, line):
+    def is_start_line(cls, line):
         """
         Check if the next line looks like the start of a log block
         """
