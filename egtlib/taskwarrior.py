@@ -59,13 +59,13 @@ class Taskwarrior:
 
     def _sync_line(self, indent, id, body):
         """
-        Returns a line build by syncing the information from a parsed next
-        action line with Taskwarrior.
+        Returns the task ID and a line build by syncing the information from a
+        parsed next action line with Taskwarrior.
 
          - If ID is unset, create a new task in taskwarrior using body
          - If ID is set, reload the body from taskwarrior
 
-        Returns None if the line should be deleted.
+        Returns None, line if a task has been completed or deleted.
         """
         if not id:
             desc = []
@@ -81,15 +81,9 @@ class Taskwarrior:
         else:
             new_id, task = self.tw.get_task(id=int(id))
             if new_id is None:
-                log.warn("taskwarrior #%d does not exist", int(id))
-                return None, None
-            if task["status"] == "deleted":
-                return None, None
+                return None, indent + "- " + body
             id = new_id
 
-        if task["project"] != self.project.name:
-            log.warn("taskwarrior #%d has project %s instead of %s", task["id"], task["project"], self.project.name)
-            return None, None
         return id, indent + self._task_to_line(task)
 
     def sync_with_taskwarrior(self):
@@ -98,6 +92,7 @@ class Taskwarrior:
         """
         seen = set()
         new_lines = []
+        removed = []
         for line in self._lines:
             mo = self.re_line.match(line)
             # Skip lines that we do not recognize
@@ -107,9 +102,7 @@ class Taskwarrior:
             else:
                 id, new_line = self._sync_line(**mo.groupdict())
                 if id is None:
-                    # Lines with IDs that taskwarrior does not know about, we
-                    # remove
-                    continue
+                    removed.append(new_line)
                 else:
                     new_lines.append(new_line)
                     seen.add(id)
@@ -117,7 +110,10 @@ class Taskwarrior:
         for task in self.tw.filter_tasks({"project": "egt"}):
             if task["id"] in seen: continue
             if task["status"] == "deleted": continue
+            if task["status"] == "completed": continue
             new_lines.append(self._task_to_line(task))
+
+        new_lines.extend(removed)
 
         self._lines = new_lines
 
