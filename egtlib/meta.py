@@ -3,6 +3,7 @@
 from collections import OrderedDict
 import re
 
+
 class Meta:
     """
     Metadata about a project.
@@ -35,7 +36,7 @@ class Meta:
         """
         Parse a metadata section from a Lines object
         """
-        ## Parse raw lines
+        # Parse raw lines
         self._lineno = lines.lineno
 
         # Get everything until we reach an empty line
@@ -50,9 +51,23 @@ class Meta:
         for k, v in email.message_from_string("\n".join(self._lines)).items():
             self._raw[k.lower()] = v.strip()
 
-        ## Extract well known values
+        # Extract well known values
 
         # Tags
         f = self._raw.get("tags", None)
         if f is not None:
             self.tags.update(re.split("[ ,\t]+", f))
+
+    def print(self, out):
+        """
+        Write the metadata as a project metadata section to the given output
+        file.
+
+        Returns True if the metadata section was printed, False if there was
+        nothing to print.
+        """
+        # So far, Meta is read only, so we only need to print self._lines
+        if not self._lines: return False
+        for line in self._lines:
+            print(line, file=out)
+        return True

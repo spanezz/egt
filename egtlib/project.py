@@ -111,7 +111,6 @@ class Project(object):
         log.debug("%s:%d: parsing body", lines.fname, lines.lineno)
         self.body.parse(lines)
 
-
         # Allow to group archived projects with the same name.
         # Compute it separately to skip the archieve name mangling performed by
         # the name property on archived project names
@@ -120,6 +119,19 @@ class Project(object):
         # Quick access to 'archive' meta attribute
         if self.meta.get("archived", "false").lower() in ("true", "yes"):
             self.archived = True
+
+    def print(self, out):
+        """
+        Serialize the whole project as a project file to the given file
+        descriptor.
+        """
+        if self.meta.print(out):
+            print(file=out)
+
+        if self.log.print(out):
+            print(file=out)
+
+        self.body.print(out)
 
     @property
     def last_updated(self):

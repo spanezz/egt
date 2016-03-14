@@ -3,24 +3,26 @@ from .project import Project
 from .scan import scan
 from configparser import RawConfigParser
 from xdg import BaseDirectory
+from collections import namedtuple
 import os.path
 import logging
 
 log = logging.getLogger(__name__)
 
+ProjectInfo = namedtuple("ProjectInfo", ["fname"])
+
 
 class State:
-    def __init__(self, config, archived=False):
-        self.config = config
-        self.clear()
-        self.load(archived)
+    """
+    Cached information about known projects.
+    """
 
-    def clear(self):
+    def __init__(self, config):
+        self.config = config
+        # Map project names to ProjectInfo objects
         self.projects = {}
 
-    def load(self, archived=False):
-        self.clear()
-
+    def load(self):
         # Build a list of standard path locations
         paths = []
         for path in BaseDirectory.load_data_paths("egt"):
@@ -32,13 +34,7 @@ class State:
             if secname.startswith("proj "):
                 name = secname.split(None, 1)[1]
                 fname = cp.get(secname, "fname")
-                if not Project.has_project(fname):
-                    log.warning("project %s has disappeared from %s: please rerun scan", name, fname)
-                    continue
-                proj = Project.from_file(self.config, fname)
-                if not archived and proj.archived:
-                    continue
-                self.projects[proj.name] = proj
+                self.projects[name] = ProjectInfo(fname=fname)
 
     def save(self):
         cp = RawConfigParser()
@@ -64,9 +60,9 @@ class State:
                     log.warn("%s: failed to parse: %s", fname, str(e))
                     continue
                 if p.name in new_projects:
-                    log.warn("%s: project %s already exists in %s: skipping", fname, p.name, p.fname)
+                    log.warn("%s: project %s already exists in %s: skipping", fname, p.name, p.abspath)
                 else:
-                    new_projects[p.name] = p
+                    new_projects[p.name] = ProjectInfo(fname=p.abspath)
 
         # Log the difference with the old info
         old_projects = set(self.projects.keys())

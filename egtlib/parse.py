@@ -59,4 +59,3 @@ class Lines:
             if l is None: break
             if l: break
             self.discard()
-

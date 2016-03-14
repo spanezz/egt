@@ -223,7 +223,7 @@ class CV(object):
         """
         Acquire historical info from egt projects with the given tags
         """
-        egt = egtlib.Egt(tags=tags, archived=True)
+        egt = egtlib.Egt(tags=tags, show_archived=True)
 
         # Collect egt entries and group them by group name
         groups = {}

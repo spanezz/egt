@@ -85,14 +85,44 @@ class ProjectFilter:
 
 
 class Egt:
-    def __init__(self, config=None, filter=[], archived=False):
+    def __init__(self, config=None, filter=[], show_archived=False):
         self.config = config
-        self.state = State(self.config, archived)
+        self.state = State(self.config)
+        self.state.load()
+        self.show_archived = show_archived
         self.filter = ProjectFilter(filter)
+        # Dict mapping project names to Project objects.
+        # It is built lazily when needed, and is None when not yet built.
+        self._projects = None
+
+    def load_project(self, fname):
+        """
+        Return a Project object given its file name.
+
+        Returns None if the file does not exist or no suitable project could be
+        created from that file.
+        """
+        from .project import Project
+        if not Project.has_project(fname):
+            log.warning("project %s has disappeared from %s: please rerun scan", name, fname)
+            return None
+        proj = Project.from_file(self.config, fname)
+        if not self.show_archived and proj.archived: return None
+        if not self.filter.matches(proj): return None
+        return proj
+
+    def _load_projects(self):
+        projs = {}
+        for name, info in self.state.projects.items():
+            proj = self.load_project(info.fname)
+            if proj is None: continue
+            projs[proj.name] = proj
+        self._projects = projs
 
     @property
     def projects(self):
-        return sorted((p for p in self.state.projects.values() if self.filter.matches(p)), key=lambda p: p.name)
+        if self._projects is None: self._load_projects()
+        return sorted(self._projects.values(), key=lambda p: p.name)
 
     @property
     def all_tags(self):
@@ -102,56 +132,20 @@ class Egt:
         return sorted(res)
 
     def project(self, name):
-        # FIXME: inefficient, but for now it will do
-        for p in self.projects:
-            if p.name == name:
-                return p
-        return None
-
-    def project_by_name(self, name):
         """
         Return a Project by its name
         """
-        for k, v in self.state.projects.items():
-            if v.name == name:
-                return v
-        return None
+        # Try loading from _projects, if we have already loaded it
+        if self._projects is not None:
+            return self._projects.get(name, None)
+
+        # Otherwise, look it up on state and load it on the fly
+        info = self.state.projects.get(name, None)
+        if info is None: return None
+        return self.load_project(info.fname)
 
     def scan(self, dirs):
         return self.state.rescan(dirs)
-
-    def print_next_actions(self):
-        """
-        Print the first group of next actions in each project that has no
-        context and no event date.
-        """
-        for p in self.projects:
-            for el in p.body:
-                if el.TAG == "spacer": continue
-                if el.TAG != "next-actions": break
-                if el.contexts: break
-                if el.event: break
-                print(" * {}".format(p.name))
-                for l in el.lines:
-                    print(l)
-                print()
-                break
-
-    def print_context_actions(self, contexts=[]):
-        for p in self.projects:
-            has_name = False
-            for el in p.body:
-                if el.TAG != "next-actions": continue
-                if contexts:
-                    if el.contexts.isdisjoint(contexts): continue
-                else:
-                    if el.contexts: continue
-
-                if not has_name:
-                    has_name = True
-                    print(" * {}".format(p.name))
-                for l in el.lines:
-                    print(l)
 
     def weekrpt(self, tags=None, end=None, days=7, projs=None):
         rep = WeeklyReport()

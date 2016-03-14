@@ -5,14 +5,15 @@ from .parse import Regexps
 from .dateutil import get_parserinfo
 import dateutil.parser
 import datetime
+import sys
 import logging
 
 log = logging.getLogger(__name__)
 
+
 def parsetime(s):
     h, m = s.split(":")
     return datetime.time(int(h), int(m), 0)
-
 
 
 class Entry(object):
@@ -21,7 +22,6 @@ class Entry(object):
         self.until = until
         self.head = head
         self.body = body
-        self.day_billing = None
 
     @property
     def duration(self):
@@ -40,18 +40,11 @@ class Entry(object):
     def formatted_duration(self):
         return format_duration(self.duration)
 
-    def output(self, project=None, file=None):
+    def print(self, file, project=None):
         head = [self.begin.strftime("%d %B: %H:%M-")]
         if self.until:
             head.append(self.until.strftime("%H:%M "))
-            if self.day_billing is None:
-                head.append(format_duration(self.duration))
-            elif self.day_billing == 0.0:
-                head.append("-")
-            elif self.day_billing == 0.5:
-                head.append("½d")
-            else:
-                head.append("{:.1}d".format(self.day_billing))
+            head.append(format_duration(self.duration))
         if project is not None:
             head.append(" [%s]" % project)
         print("".join(head), file=file)
@@ -188,6 +181,20 @@ class Log(list):
         self._lineno = lines.lineno
         lp = LogParser(self, **kw)
         lp.parse(lines)
+
+    def print(self, file):
+        """
+        Write the log as a project log section to the given output file.
+
+        Returns True if the log section was printed, False if there was
+        nothing to print.
+        """
+        if not self:
+            print(datetime.date.today().year, file=file)
+        else:
+            for entry in self:
+                entry.print(sys.stdout)
+        return True
 
     @classmethod
     def is_log_start(cls, line):

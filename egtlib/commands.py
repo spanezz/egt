@@ -21,7 +21,7 @@ class Command:
         self.config.read([os.path.expanduser("~/.egt.conf")])
 
     def make_egt(self, filter=[]):
-        return egtlib.Egt(config=self.config, filter=filter, archived=self.args.archived)
+        return egtlib.Egt(config=self.config, filter=filter, show_archived=self.args.archived)
 
     @classmethod
     def add_args(cls, subparser):
@@ -274,7 +274,7 @@ class Weekrpt(Command):
 
         log.sort(key=lambda x: x[0].begin)
         for l, p in log:
-            l.output(p.name)
+            l.print(sys.stdout, project=p.name)
 
     @classmethod
     def add_args(cls, subparser):
@@ -301,15 +301,39 @@ class PrintLog(Command):
         log.sort(key=lambda x: x[0].begin)
         if len(projs) == 1:
             for l, p in log:
-                l.output()
+                l.print(sys.stdout)
         else:
             for l, p in log:
-                l.output(p.name)
+                l.print(sys.stdout)
 
     @classmethod
     def add_args(cls, subparser):
         super().add_args(subparser)
         subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+
+
+@Command.register
+class Annotate(Command):
+    """
+    Print a project file on stdout, annotating its contents with anything
+    useful that can be computed.
+    """
+    def main(self):
+        egt = egtlib.Egt(config=self.config)
+        abspath = os.path.abspath(self.args.project)
+        if os.path.exists(abspath):
+            proj = egt.load_project(abspath)
+        else:
+            proj = egt.project(self.args.project)
+        if proj is None:
+            return
+
+        proj.print(sys.stdout)
+
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        subparser.add_argument("project", help="project to work on")
 
 
 @Command.register
