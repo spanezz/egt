@@ -27,7 +27,7 @@ def run_editor(proj):
     editor = proj.meta.get("editor", None)
     if editor is None:
         editor = os.environ.get("EDITOR", "vim")
-    p = subprocess.Popen([editor, proj.fname], cwd=proj.path, close_fds=True)
+    p = subprocess.Popen([editor, proj.abspath], cwd=proj.path, close_fds=True)
     p.wait()
 
     # Reconnect, in case buffy was restarted while we were working
