@@ -26,23 +26,6 @@ def default_tags(config, abspath):
     return tags
 
 
-def parse_duration(s):
-    """
-    Parse a duration like 3d 8h 30m, returning its value in minutes
-    """
-    mins = 0
-    for tok in s.split():
-        if tok.endswith("d"):
-            mins += int(tok[:-1]) * (24 * 60)
-        elif tok.endswith("h"):
-            mins += int(tok[:-1]) * 60
-        elif tok.endswith("m"):
-            mins += int(tok[:-1])
-        else:
-            raise ValueError("cannot parse '%s' in '%s'" % (tok, s))
-    return mins
-
-
 class Project(object):
     def __init__(self, config, abspath):
         self.abspath = abspath
@@ -147,13 +130,6 @@ class Project(object):
         last = self.log[-1]
         if last.until: return last.until
         return datetime.datetime.now()
-
-    @property
-    def daymins(self):
-        """
-        Return the number of minutes per work day
-        """
-        return parse_duration(self.meta.get("day", "8h"))
 
     @property
     def elapsed(self):
