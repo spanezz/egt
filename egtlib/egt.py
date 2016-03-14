@@ -114,7 +114,7 @@ class Egt:
     def _load_projects(self):
         projs = {}
         for name, info in self.state.projects.items():
-            proj = self.load_project(info.fname)
+            proj = self.load_project(info["fname"])
             if proj is None: continue
             projs[proj.name] = proj
         self._projects = projs
@@ -142,7 +142,7 @@ class Egt:
         # Otherwise, look it up on state and load it on the fly
         info = self.state.projects.get(name, None)
         if info is None: return None
-        return self.load_project(info.fname)
+        return self.load_project(info["fname"])
 
     def scan(self, dirs):
         return self.state.rescan(dirs)
