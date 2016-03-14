@@ -51,3 +51,37 @@ can use:
 
 See [Format of project files](project.md) for documentation of the format of
 egt project files.
+
+
+## vim integration
+
+I currently have this code in `~/.vim/filetype.vim`, to mark `.egt` files as
+being of `egt` file type:
+
+```vim
+if exists("did_load_filetypes")
+  finish
+endif
+
+augroup filetypedetect
+  " Recognise egt files
+  au! BufNewFile,BufRead *.egt,.egt setf egt
+augroup END
+```
+
+And I have this in `"~/.vim/after/ftplugin/egt.vim`, to make editing easier and
+to run `egt annotate` to update log durations and sync with TaskWarrior each
+time I save the file:
+
+```vim
+set ts=3
+set sw=3
+set expandtab
+set si
+function! EgtAnnotate()
+    let l:cur_pos = getpos(".")
+    :%!egt annotate %:p
+    call setpos(".", l:cur_pos)
+endfunction
+autocmd BufWritePost,FileWritePost <buffer> :silent call EgtAnnotate()
+```
