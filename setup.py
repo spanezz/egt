@@ -48,20 +48,21 @@ for dirpath, dirnames, filenames in os.walk("egtlib"):
     if filenames:
         data_files.append([dirpath, [os.path.join(dirpath, f) for f in filenames if is_data(f)]])
 
-setup(name='egt',
-      version=version,
-      description="Enrico's Getting Things Done script",
-      # long_description=''
-      author=['Enrico Zini'],
-      author_email=['enrico@enricozini.org'],
-      url='http://www.enricozini.org/sw/egt/',
-      #install_requires = [
-      #    "cliapp", "pyxdg",
-      #],
-      license='GPL',
-      platforms='any',
-      packages=['egtlib'],
-      # py_modules=[''],
-      scripts=['egt', 'egt-cv'],
-      data_files=data_files
+setup(
+    name='egt',
+    version=version,
+    description="Enrico's Getting Things Done script",
+    # long_description=''
+    author=['Enrico Zini'],
+    author_email=['enrico@enricozini.org'],
+    url='http://www.enricozini.org/sw/egt/',
+    #install_requires = [
+    #    "cliapp", "pyxdg",
+    #],
+    license='GPL',
+    platforms='any',
+    packages=['egtlib'],
+    # py_modules=[''],
+    scripts=['egt', 'egt-cv'],
+    data_files=data_files
 )
