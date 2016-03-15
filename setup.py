@@ -51,7 +51,7 @@ for dirpath, dirnames, filenames in os.walk("egtlib"):
 setup(name='egt',
       version=version,
       description="Enrico's Getting Things Done script",
-#      long_description=''
+      # long_description=''
       author=['Enrico Zini'],
       author_email=['enrico@enricozini.org'],
       url='http://www.enricozini.org/sw/egt/',
@@ -61,7 +61,7 @@ setup(name='egt',
       license='GPL',
       platforms='any',
       packages=['egtlib'],
-#     py_modules=[''],
+      # py_modules=[''],
       scripts=['egt', 'egt-cv'],
-      data_files=data_files,
-     )
+      data_files=data_files
+)
