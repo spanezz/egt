@@ -87,10 +87,14 @@ class Entry(object):
 
 
 class LogParser(object):
+    re_new_entry = re.compile(r"^(?P<time>\d{1,2}:\d{2})\s*$")
+
     def __init__(self, lang=None):
         self.lang = lang
         # Defaults for missing parsedate values
         self.default = datetime.datetime(datetime.date.today().year, 1, 1)
+        # Last datetime parsed
+        self.last_dt = None
         self.parserinfo = get_parserinfo(lang)
 
     def parse_date(self, s, set_default=True):
@@ -98,6 +102,7 @@ class LogParser(object):
             d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
             if set_default:
                 self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
+            self.last_dt = d
             return d
         except (TypeError, ValueError):
             return None
@@ -124,6 +129,7 @@ class LogParser(object):
             if not line: break
             if Timebase.is_start_line(line): break
             if Entry.is_start_line(line): break
+            if self.re_new_entry.match(line): break
             entry_body.append(lines.next())
 
         # Parse entry head
@@ -148,6 +154,11 @@ class LogParser(object):
 
         return Entry(entry_begin, entry_until, entry_head, entry_body)
 
+    def parse_new_time(self, lines, time):
+        lines.next()
+        entry_begin = dateutil.parser.parse(time, default=datetime.datetime.now().replace(second=0, microsecond=0), parserinfo=self.parserinfo)
+        return Entry(entry_begin, None, entry_begin.strftime("%d %B: %H:%M-"), [])
+
     def parse(self, lines):
         while True:
             line = lines.peek()
@@ -164,6 +175,12 @@ class LogParser(object):
             mo = Entry.is_start_line(line)
             if mo:
                 el = self.parse_entry(lines, **mo.groupdict())
+                if el is not None: yield el
+                continue
+
+            mo = self.re_new_entry.match(line)
+            if mo:
+                el = self.parse_new_time(lines, **mo.groupdict())
                 if el is not None: yield el
                 continue
 
