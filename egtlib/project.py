@@ -6,6 +6,9 @@ import sys
 import json
 from collections import OrderedDict
 from .utils import format_duration, intervals_intersect
+from .meta import Meta
+from .log import Log
+from .body import Body
 import logging
 
 log = logging.getLogger(__name__)
@@ -60,11 +63,8 @@ class Project(object):
         # Project state, loaded lazily, None if not loaded
         self._state = None
 
-        from .meta import Meta
         self.meta = Meta()
-        from .log import Log
         self.log = Log()
-        from .body import Body
         self.body = Body(self)
 
     @property
@@ -120,7 +120,7 @@ class Project(object):
         # If the first line doesn't look like a header, stop
         first = lines.peek()
         if first is None: return
-        if not Regexps.log_date.match(first) and not Regexps.log_head.match(first) and Regexps.meta_head.match(first):
+        if not Log.is_start_line(first) and Regexps.meta_head.match(first):
             log.debug("%s:%d: parsing metadata", lines.fname, lines.lineno)
             self.meta.parse(lines)
 

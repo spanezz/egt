@@ -6,6 +6,7 @@ from .lang import get_parserinfo
 import dateutil.parser
 import datetime
 import sys
+import re
 import logging
 
 log = logging.getLogger(__name__)
@@ -128,7 +129,7 @@ class LogParser(object):
             if not line: break
 
             # Look for a date context
-            mo = Regexps.log_date.match(line)
+            mo = Log.re_log_date.match(line)
             if mo:
                 if self.begin is not None:
                     self.dest.append(self.flush())
@@ -140,7 +141,7 @@ class LogParser(object):
                 continue
 
             # Look for a log head
-            mo = Regexps.log_head.match(line)
+            mo = Log.re_log_head.match(line)
             if mo:
                 try:
                     if self.begin is not None:
@@ -172,6 +173,9 @@ class LogParser(object):
 
 
 class Log(list):
+    re_log_date = re.compile("^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
+    re_log_head = re.compile(r"^(?P<date>(?:\S| \d)[^:]*?):\s+(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?")
+
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         # Line number in the project file where the log starts
@@ -202,4 +206,4 @@ class Log(list):
         """
         Check if the next line looks like the start of a log block
         """
-        return Regexps.log_date.match(line) or Regexps.log_head.match(line)
+        return cls.re_log_date.match(line) or cls.re_log_head.match(line)
