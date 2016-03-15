@@ -1,6 +1,7 @@
 import logging
 import datetime
 import sys
+import re
 from .state import State
 from .utils import intervals_intersect
 
@@ -85,10 +86,10 @@ class ProjectFilter:
 
 
 class Egt:
-    def __init__(self, config=None, filter=[], show_archived=False):
+    def __init__(self, config=None, filter=[], show_archived=False, statedir=None):
         self.config = config
-        self.state = State(self.config)
-        self.state.load()
+        self.state = State()
+        self.state.load(statedir)
         self.show_archived = show_archived
         self.filter = ProjectFilter(filter)
         # Dict mapping project names to Project objects.
@@ -106,8 +107,9 @@ class Egt:
         if not Project.has_project(fname):
             log.warning("project %s has disappeared from %s: please rerun scan", name, fname)
             return None
-        proj = Project.from_file(self.config, fname)
+        proj = Project.from_file(fname)
         if not self.show_archived and proj.archived: return None
+        proj.default_tags.update(self._default_tags(fname))
         if not self.filter.matches(proj): return None
         return proj
 
@@ -118,6 +120,21 @@ class Egt:
             if proj is None: continue
             projs[proj.name] = proj
         self._projects = projs
+
+    def _default_tags(self, abspath):
+        """
+        Guess tags from the project file pathname
+        """
+        if self.config is None: return set()
+        if "autotag" not in self.config: return set()
+        autotags = self.config["autotag"]
+        if autotags is None: return set()
+
+        tags = set()
+        for tag, regexp in autotags.items():
+            if re.search(regexp, abspath):
+                tags.add(tag)
+        return tags
 
     @property
     def projects(self):
@@ -144,9 +161,6 @@ class Egt:
         if info is None: return None
         return self.load_project(info["fname"])
 
-    def scan(self, dirs):
-        return self.state.rescan(dirs)
-
     def weekrpt(self, tags=None, end=None, days=7, projs=None):
         rep = WeeklyReport()
         if projs:
@@ -157,23 +171,6 @@ class Egt:
                 if not tags or p.tags.issuperset(tags):
                     rep.add(p)
         return rep.report(end, days)
-
-    def calendar(self, start=None, end=None, days=7):
-        if start is None:
-            start = datetime.date.today()
-        if end is None:
-            end = start + datetime.timedelta(days=days)
-
-        log.debug("Calendar %s--%s filter:%s", start, end, ",".join(self.filter.args))
-
-        events = []
-        for p in self.projects:
-            for na in p.next_events(start, end):
-                events.append(na)
-
-        events.sort(key=lambda x: x.event["start"])
-
-        return events
 
     def backup(self, out=sys.stdout):
         import tarfile

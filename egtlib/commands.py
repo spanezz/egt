@@ -39,12 +39,12 @@ class Scan(Command):
     home directory.
     """
     def main(self):
-        e = self.make_egt()
         if self.args.roots:
             dirs = self.args.roots
         else:
             dirs = [os.path.expanduser("~")]
-        e.scan(dirs)
+        from .state import State
+        State.rescan(dirs)
 
     @classmethod
     def add_args(cls, subparser):
@@ -328,6 +328,7 @@ class Annotate(Command):
         if proj is None:
             return
 
+        proj.body.sync_tasks()
         proj.print(sys.stdout)
 
     @classmethod

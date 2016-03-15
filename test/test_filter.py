@@ -1,3 +1,4 @@
+# coding: utf8
 import unittest
 from egtlib.egt import ProjectFilter
 from egtlib.project import Project

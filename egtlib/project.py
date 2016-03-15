@@ -3,6 +3,7 @@ import subprocess
 import datetime
 import re
 import sys
+import json
 from collections import OrderedDict
 from .utils import format_duration, intervals_intersect
 import logging
@@ -10,24 +11,41 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def default_tags(config, abspath):
-    """
-    Guess tags from the project file pathname
-    """
-    tags = set()
+class ProjectState(object):
+    def __init__(self, project):
+        statedir = project.statedir
+        if statedir is None:
+            from .state import State
+            statedir = State.get_state_dir()
+        # TODO: ensure name does not contain '/'
+        self.abspath = os.path.join(statedir, "project-{}.json".format(project.name))
+        self._state = None
 
-    if config is not None and "autotag" in config:
-        autotags = config["autotag"]
-        if autotags is not None:
-            for tag, regexp in autotags.items():
-                if re.search(regexp, abspath):
-                    tags.add(tag)
+    def get(self, name):
+        if self._state is None: self._load()
+        return self._state.get(name, None)
 
-    return tags
+    def set(self, name, val):
+        if self._state is None: self._load()
+        self._state[name] = val
+        self._save()
+
+    def _load(self):
+        if not os.path.exists(self.abspath):
+            self._state = {}
+            return
+        with open(self.abspath, "rt") as fd:
+            self._state = json.load(fd)
+
+    def _save(self):
+        from .utils import atomic_writer
+        with atomic_writer(self.abspath, "wt") as fd:
+            json.dump(self._state, fd, indent=1)
 
 
 class Project(object):
-    def __init__(self, config, abspath):
+    def __init__(self, abspath, statedir=None):
+        self.statedir = statedir
         self.abspath = abspath
         self.default_path, basename = os.path.split(abspath)
         # TODO: "ore" is an obsolete name for egt files: get rid of them and
@@ -36,17 +54,24 @@ class Project(object):
             self.default_name = os.path.basename(self.default_path)
         else:
             self.default_name = os.path.splitext(basename)[0]
-        self.default_tags = default_tags(config, abspath)
+        self.default_tags = set()
         self.archived = False
+
+        # Project state, loaded lazily, None if not loaded
+        self._state = None
 
         from .meta import Meta
         self.meta = Meta()
         from .log import Log
         self.log = Log()
-        from .taskwarrior import Taskwarrior
-        self.nextactions = Taskwarrior(self)
         from .body import Body
-        self.body = Body()
+        self.body = Body(self)
+
+    @property
+    def state(self):
+        if not self._state:
+            self._state = ProjectState(self)
+        return self._state
 
     @property
     def name(self):
@@ -70,21 +95,19 @@ class Project(object):
         return self.default_tags | self.meta.tags
 
     @classmethod
-    def from_file(self, config, abspath):
+    def from_file(self, abspath):
         # Default values, can be overridden by file metadata
-        p = Project(config, abspath)
+        p = Project(abspath)
         # Load the actual data
         p.load()
         return p
 
     @classmethod
     def mock(self, abspath, name=None, path=None, tags=None):
-        p = Project(None, abspath)
+        p = Project(abspath)
         if path is not None: p.default_path = path
         if name is not None: p.default_name = name
         if tags is not None: p.default_tags = tags
-        from .meta import Meta
-        p.meta = Meta()
         return p
 
     def load(self):
@@ -110,13 +133,6 @@ class Project(object):
             self.log.parse(lines, lang=self.meta.get("lang", None))
             lines.skip_empty_lines()
 
-        # Parse Taskwarrior next actions
-        if lines.peek() is None: return
-        if self.nextactions.is_start_line(lines.peek()):
-            log.debug("%s:%d: parsing next actions", lines.fname, lines.lineno)
-            self.nextactions.parse(lines)
-            lines.skip_empty_lines()
-
         # Parse body
         log.debug("%s:%d: parsing body", lines.fname, lines.lineno)
         self.body.parse(lines)
@@ -139,10 +155,6 @@ class Project(object):
             print(file=out)
 
         if self.log.print(out):
-            print(file=out)
-
-        self.nextactions.sync_with_taskwarrior()
-        if self.nextactions.print(out):
             print(file=out)
 
         self.body.print(out)
