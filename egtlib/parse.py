@@ -1,13 +1,6 @@
 import re
 
 
-class Regexps:
-    """
-    Repository of precompiled regexps
-    """
-    event_range = re.compile(r"\s*--\s*")
-
-
 class Lines:
     def __init__(self, pathname, fd=None):
         # File name being parsed

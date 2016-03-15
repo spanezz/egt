@@ -111,7 +111,7 @@ class Project(object):
         return p
 
     def load(self):
-        from .parse import Regexps, Lines
+        from .parse import Lines
         lines = Lines(self.abspath)
 
         # Parse optionalmetadata

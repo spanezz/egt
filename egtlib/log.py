@@ -1,7 +1,6 @@
 # coding: utf8
 from __future__ import absolute_import
 from .utils import format_duration
-from .parse import Regexps
 from .lang import get_parserinfo
 import dateutil.parser
 import datetime
@@ -53,6 +52,8 @@ class Entry(object):
 
 
 class EventParser(object):
+    re_event_range = re.compile(r"\s*--\s*")
+
     def __init__(self, lang=None):
         self.lang = lang
         # Defaults for missing parsedate values
@@ -83,7 +84,7 @@ class EventParser(object):
         """
         if not s:
             return None
-        mo = Regexps.event_range.search(s)
+        mo = self.re_event_range.search(s)
         if mo:
             # print "R"
             # Parse range
