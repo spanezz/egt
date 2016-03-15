@@ -4,6 +4,10 @@ import dateutil.parser
 
 
 class ItalianParserInfo(dateutil.parser.parserinfo):
+    # TODO: file:///usr/share/doc/python3.4-doc/html/library/locale.html has
+    #       lists for the current locale. In order to use that, however, we
+    #       need to initialize the locale for each project according to its
+    #       Lang: header
     WEEKDAYS = [
         ("Lun", "Lunedì"),
         ("Mar", "Martedì"),

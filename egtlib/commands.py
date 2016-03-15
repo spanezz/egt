@@ -329,6 +329,16 @@ class Annotate(Command):
             return
 
         proj.body.sync_tasks()
+
+        lang = proj.meta.get("lang")
+        if lang:
+            import locale
+            try:
+                locname = locale.normalize(lang + ".UTF-8")
+                locale.setlocale(locale.LC_ALL, locname)
+            except locale.Error as e:
+                log.warn("Cannot set locale %s: %s", locname, e)
+
         proj.print(sys.stdout)
 
     @classmethod

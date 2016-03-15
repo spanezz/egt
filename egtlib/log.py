@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 from .utils import format_duration
 from .parse import Regexps
-from .dateutil import get_parserinfo
+from .lang import get_parserinfo
 import dateutil.parser
 import datetime
 import sys
