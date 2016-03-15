@@ -192,8 +192,9 @@ class Log(list):
         if not self:
             print(datetime.date.today().year, file=file)
         else:
+            print(self[0].begin.year, file=file)
             for entry in self:
-                entry.print(sys.stdout)
+                entry.print(file)
         return True
 
     @classmethod
