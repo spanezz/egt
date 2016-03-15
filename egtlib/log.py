@@ -16,11 +16,35 @@ def parsetime(s):
     return datetime.time(int(h), int(m), 0)
 
 
+class Timebase:
+    re_timebase = re.compile("^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
+
+    def __init__(self, line, dt):
+        self.line = line
+        self.dt = dt
+
+    def print(self, file):
+        print(self.line, file=file)
+
+    @classmethod
+    def is_start_line(cls, line):
+        """
+        Check if the next line looks like the start of a log block
+        """
+        return cls.re_timebase.match(line)
+
+
 class Entry(object):
+    re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*?):\s+(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?")
+
     def __init__(self, begin, until, head, body):
+        # Datetime of beginning of log entry timespan
         self.begin = begin
+        # Datetime of end of log entry timespan, None if open
         self.until = until
+        # Text line of the head part of the log entry
         self.head = head
+        # List of lines with the body of the log entry
         self.body = body
 
     @property
@@ -41,6 +65,9 @@ class Entry(object):
         return format_duration(self.duration)
 
     def print(self, file, project=None):
+        # FIXME: alternative possibility: check by regexp (\d+:\d+ \d+\w+$) if
+        # head has duration, and if not just concat to it, so we preserve
+        # original head
         head = [self.begin.strftime("%d %B: %H:%M-")]
         if self.until:
             head.append(self.until.strftime("%H:%M "))
@@ -48,20 +75,25 @@ class Entry(object):
         if project is not None:
             head.append(" [%s]" % project)
         print("".join(head), file=file)
-        print(self.body, file=file)
+        for line in self.body:
+            print(line, file=file)
+
+    @classmethod
+    def is_start_line(cls, line):
+        """
+        Check if the next line looks like the start of a log block
+        """
+        return cls.re_entry.match(line)
 
 
-class EventParser(object):
-    re_event_range = re.compile(r"\s*--\s*")
-
+class LogParser(object):
     def __init__(self, lang=None):
         self.lang = lang
         # Defaults for missing parsedate values
-        self.default = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        self.default = datetime.datetime(datetime.date.today().year, 1, 1)
         self.parserinfo = get_parserinfo(lang)
-        # TODO: remember the last date to use as default for time-only things
 
-    def parse(self, s, set_default=True):
+    def parse_date(self, s, set_default=True):
         try:
             d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
             if set_default:
@@ -70,113 +102,76 @@ class EventParser(object):
         except (TypeError, ValueError):
             return None
 
-    def _to_event(self, dt):
+    def parse_timebase(self, lines, year, date):
+        val = date or year
+        log.debug("%s:%d: timebase: %s", lines.fname, lines.lineno, val)
+        # Just parse the next line, storing it nowhere, but updating
+        # the 'default' datetime context
+        dt = self.parse_date(val)
+        line = lines.next()
         if dt is None: return None
-        return dict(
-            start=dt,
-            end=None,
-            allDay=(dt.hour == 0 and dt.minute == 0 and dt.second == 0)
-        )
+        return Timebase(line, dt)
 
-    def parsedate(self, s):
-        """
-        Return the parsed date, or None if it wasn't recognised
-        """
-        if not s:
+    def parse_entry(self, lines, date, start, end):
+        # Read entry head
+        entry_lineno = lines.lineno
+        entry_head = lines.next()
+
+        # Read entry body
+        entry_body = []
+        while True:
+            line = lines.peek()
+            if not line: break
+            if Timebase.is_start_line(line): break
+            if Entry.is_start_line(line): break
+            entry_body.append(lines.next())
+
+        # Parse entry head
+        try:
+            log.debug("%s:%d: log header: %s %s-%s", lines.fname, entry_lineno, date, start, end)
+            entry_date = self.parse_date(date)
+            if entry_date is None:
+                log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, entry_lineno, date, self.lang)
+                entry_date = self.default
+            entry_date = entry_date.date()
+            entry_begin = datetime.datetime.combine(entry_date, parsetime(start))
+            if end:
+                entry_until = datetime.datetime.combine(entry_date, parsetime(end))
+                if entry_until < entry_begin:
+                    # Deal with intervals across midnight
+                    entry_until += datetime.timedelta(days=1)
+            else:
+                entry_until = None
+        except ValueError as e:
+            log.error("%s:%d: %s", lines.fname, entry_lineno, str(e))
             return None
-        mo = self.re_event_range.search(s)
-        if mo:
-            # print "R"
-            # Parse range
-            since = s[:mo.start()]
-            until = s[mo.end():]
-            since = self.parse(since)
-            until = self.parse(until, set_default=False)
-            return dict(
-                start=since,
-                end=until,
-                allDay=False,
-            )
-        elif s[0].isdigit():
-            # print "D"
-            return self._to_event(self.parse(s))
-        elif s.startswith("d:"):
-            # print "P"
-            return self._to_event(self.parse(s[2:]))
-        return None
 
-
-class LogParser(object):
-    def __init__(self, dest, lang=None):
-        self.ep = EventParser(lang=lang)
-        self.ep.default = datetime.datetime(datetime.date.today().year, 1, 1)
-        self.begin = None
-        self.until = None
-        self.loghead = None
-        self.logbody = []
-        self.dest = dest
-
-    def flush(self):
-        res = Entry(self.begin, self.until, self.loghead, "\n".join(self.logbody))
-        self.begin = None
-        self.end = None
-        self.loghead = None
-        self.logbody = []
-        return res
+        return Entry(entry_begin, entry_until, entry_head, entry_body)
 
     def parse(self, lines):
         while True:
-            line = lines.next()
+            line = lines.peek()
             if not line: break
 
             # Look for a date context
-            mo = Log.re_log_date.match(line)
+            mo = Timebase.is_start_line(line)
             if mo:
-                if self.begin is not None:
-                    self.dest.append(self.flush())
-                val = mo.group("date") or mo.group("year")
-                log.debug("%s:%d: stand-alone date: %s", lines.fname, lines.lineno, val)
-                # Just parse the next line, storing it nowhere, but updating
-                # the 'default' datetime context
-                self.ep.parse(val)
+                el = self.parse_timebase(lines, **mo.groupdict())
+                if el is not None: yield el
                 continue
 
             # Look for a log head
-            mo = Log.re_log_head.match(line)
+            mo = Entry.is_start_line(line)
             if mo:
-                try:
-                    if self.begin is not None:
-                        self.dest.append(self.flush())
-                    self.loghead = line
-                    log.debug("%s:%d: log header: %s %s-%s", lines.fname, lines.lineno, mo.group("date"), mo.group("start"), mo.group("end"))
-                    date = self.ep.parse(mo.group("date"))
-                    if date is None:
-                        log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, lines.lineno, mo.group("date"), self.ep.lang)
-                        date = self.ep.default
-                    date = date.date()
-                    self.begin = datetime.datetime.combine(date, parsetime(mo.group("start")))
-                    if mo.group("end"):
-                        self.until = datetime.datetime.combine(date, parsetime(mo.group("end")))
-                        if self.until < self.begin:
-                            # Deal with intervals across midnight
-                            self.until += datetime.timedelta(days=1)
-                    else:
-                        self.until = None
-                    continue
-                except ValueError as e:
-                    log.error("%s:%d: %s", lines.fname, lines.lineno, str(e))
+                el = self.parse_entry(lines, **mo.groupdict())
+                if el is not None: yield el
+                continue
 
-            # Else append to the previous log body
-            self.logbody.append(line)
-
-        if self.begin is not None:
-            self.dest.append(self.flush())
+            log.warn("%s:%d: log parse stops at unrecognised line %r", lines.fname, lines.lineno, line)
+            break
 
 
 class Log(list):
-    re_log_date = re.compile("^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
-    re_log_head = re.compile(r"^(?P<date>(?:\S| \d)[^:]*?):\s+(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?")
-
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         # Line number in the project file where the log starts
@@ -184,8 +179,9 @@ class Log(list):
 
     def parse(self, lines, **kw):
         self._lineno = lines.lineno
-        lp = LogParser(self, **kw)
-        lp.parse(lines)
+        lp = LogParser(**kw)
+        for el in lp.parse(lines):
+            self.append(el)
 
     def print(self, file):
         """
@@ -197,7 +193,6 @@ class Log(list):
         if not self:
             print(datetime.date.today().year, file=file)
         else:
-            print(self[0].begin.year, file=file)
             for entry in self:
                 entry.print(file)
         return True
@@ -207,4 +202,4 @@ class Log(list):
         """
         Check if the next line looks like the start of a log block
         """
-        return cls.re_log_date.match(line) or cls.re_log_head.match(line)
+        return Timebase.is_start_line(line) or Entry.is_start_line(line)
