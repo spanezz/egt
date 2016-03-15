@@ -419,19 +419,6 @@ class Backup(Command):
 
 
 @Command.register
-class Serve(Command):
-    """
-    Start a web server for reports
-    """
-    def main(self):
-        from egtlib import web
-        print("Server starting at localhost:5000")
-        web.app.make_egt = self.make_egt
-        web.app.debug = True
-        web.app.run()
-
-
-@Command.register
 class Completion(Command):
     """
     Tab completion support
