@@ -10,6 +10,7 @@ class Meta:
 
     This is the first section of the project file, and can be omitted.
     """
+    re_meta_head = re.compile(r"^\w.*:")
 
     def __init__(self):
         # Original lines
@@ -71,3 +72,7 @@ class Meta:
         for line in self._lines:
             print(line, file=out)
         return True
+
+    @classmethod
+    def is_start_line(cls, line):
+        return cls.re_meta_head.match(line)

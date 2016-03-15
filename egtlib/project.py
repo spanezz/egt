@@ -120,7 +120,7 @@ class Project(object):
         # If the first line doesn't look like a header, stop
         first = lines.peek()
         if first is None: return
-        if not Log.is_start_line(first) and Regexps.meta_head.match(first):
+        if not Log.is_start_line(first) and Meta.is_start_line(first):
             log.debug("%s:%d: parsing metadata", lines.fname, lines.lineno)
             self.meta.parse(lines)
 

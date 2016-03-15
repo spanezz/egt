@@ -6,7 +6,6 @@ class Regexps:
     Repository of precompiled regexps
     """
     event_range = re.compile(r"\s*--\s*")
-    meta_head = re.compile(r"^\w.*:")
 
 
 class Lines:
