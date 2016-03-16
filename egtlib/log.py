@@ -52,6 +52,16 @@ class Entry(object):
         self.fullday = fullday
 
     @property
+    def is_open(self):
+        """
+        Check if this log entry is still been edited
+        """
+        if self.fullday:
+            return self.begin.date() == datetime.date.today()
+        else:
+            return self.until is None
+
+    @property
     def duration(self):
         """
         Return the duration in minutes
@@ -225,6 +235,16 @@ class Log(list):
             for entry in self:
                 entry.print(file)
         return True
+
+    def get_open_entry(self):
+        """
+        Return the last open entry if one is present, else None
+        """
+        for entry in self[::-1]:
+            if not isinstance(entry, Entry): continue
+            if not entry.is_open: return None
+            return entry
+        return None
 
     @classmethod
     def is_start_line(cls, line):
