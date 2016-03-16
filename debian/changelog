@@ -1,3 +1,9 @@
+egt (0.2) UNRELEASED; urgency=medium
+
+  * New upstream version
+
+ -- Enrico Zini <enrico@debian.org>  Wed, 16 Mar 2016 11:21:39 +0100
+
 egt (0.1) experimental; urgency=low
 
   * Initial release.

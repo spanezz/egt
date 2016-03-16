@@ -18,7 +18,7 @@ I currently use egt to:
 ## Dependencies
 
 ```sh
-apt install python3-dateutul python3-taskw python3-xdg
+apt install python3-dateutil python3-taskw python3-xdg
 ```
 
 ## Quickstart
