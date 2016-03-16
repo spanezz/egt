@@ -79,6 +79,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             "15 march: 9:00-12:00",
             " - tested things",
             "8:00",
+            " - new entry",
             "+",
         ])
         proj = Project(self.projectfile, statedir=self.workdir.name)
@@ -103,7 +104,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(proj.log[2].begin, new_entry_dt2)
         self.assertEqual(proj.log[2].until, None)
         self.assertEqual(proj.log[2].head, new_entry_dt2.strftime("%d %B: %H:%M-"))
-        self.assertEqual(proj.log[2].body, [])
+        self.assertEqual(proj.log[2].body, [" - new entry"])
         self.assertEqual(proj.log[2].fullday, False)
 
         new_entry_dt3 = datetime.datetime.combine(datetime.datetime.today(), datetime.time(0))
@@ -117,9 +118,10 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             proj.log.print(out)
             body_lines = out.getvalue().splitlines()
 
-        self.assertEqual(len(body_lines), 5)
+        self.assertEqual(len(body_lines), 6)
         self.assertEqual(body_lines[0], "2015")
         self.assertEqual(body_lines[1], "15 March: 09:00-12:00 3h")
         self.assertEqual(body_lines[2], " - tested things")
         self.assertEqual(body_lines[3], new_entry_dt2.strftime("%d %B: %H:%M-"))
-        self.assertEqual(body_lines[4], new_entry_dt3.strftime("%d %B:"))
+        self.assertEqual(body_lines[4], " - new entry")
+        self.assertEqual(body_lines[5], new_entry_dt3.strftime("%d %B:"))

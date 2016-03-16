@@ -36,6 +36,8 @@ class Timebase:
 
 class Entry(object):
     re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*):\s*(?:(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?|$)")
+    re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})\s*$")
+    re_new_day = re.compile(r"^\+\s*$")
 
     def __init__(self, begin, until, head, body, fullday):
         # Datetime of beginning of log entry timespan
@@ -91,12 +93,10 @@ class Entry(object):
         """
         Check if the next line looks like the start of a log block
         """
-        return cls.re_entry.match(line)
+        return cls.re_entry.match(line) or cls.re_new_time.match(line) or cls.re_new_day.match(line)
 
 
 class LogParser(object):
-    re_new_entry = re.compile(r"^(?P<time>\d{1,2}:\d{2})\s*$")
-
     def __init__(self, lang=None):
         self.lang = lang
         # Defaults for missing parsedate values
@@ -125,7 +125,7 @@ class LogParser(object):
         if dt is None: return None
         return Timebase(line, dt)
 
-    def parse_entry(self, lines, date, start, end):
+    def parse_entry(self, lines, date=None, start=None, end=None):
         # Read entry head
         entry_lineno = lines.lineno
         entry_head = lines.next()
@@ -137,17 +137,29 @@ class LogParser(object):
             if not line: break
             if Timebase.is_start_line(line): break
             if Entry.is_start_line(line): break
-            if self.re_new_entry.match(line): break
             entry_body.append(lines.next())
 
-        # Parse entry head
-        try:
+        if date is None:
+            # Request for creation of a new log entry
+            if start is None:
+                entry_begin = datetime.datetime.combine(datetime.date.today(), datetime.time(0))
+                entry_until = entry_begin + datetime.timedelta(days=1)
+                entry_head = entry_begin.strftime("%d %B:")
+                entry_fullday = True
+            else:
+                entry_begin = datetime.datetime.combine(datetime.date.today(), parsetime(start))
+                entry_until = None
+                entry_head = entry_begin.strftime("%d %B: %H:%M-")
+                entry_fullday = False
+        else:
+            # Parse entry head
             log.debug("%s:%d: log header: %s %s-%s", lines.fname, entry_lineno, date, start, end)
             entry_date = self.parse_date(date)
             if entry_date is None:
                 log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, entry_lineno, date, self.lang)
                 entry_date = self.default
             entry_date = entry_date.date()
+
             if start:
                 entry_begin = datetime.datetime.combine(entry_date, parsetime(start))
                 if end:
@@ -162,26 +174,12 @@ class LogParser(object):
                 entry_begin = datetime.datetime.combine(entry_date, datetime.time(0))
                 entry_until = entry_begin + datetime.timedelta(days=1)
                 entry_fullday = True
-        except ValueError as e:
-            log.error("%s:%d: %s", lines.fname, entry_lineno, str(e))
-            return None
 
         return Entry(entry_begin, entry_until, entry_head, entry_body, entry_fullday)
 
-    def parse_new_time(self, lines, time):
-        lines.next()
-        entry_begin = dateutil.parser.parse(time, default=datetime.datetime.now().replace(second=0, microsecond=0), parserinfo=self.parserinfo)
-        return Entry(entry_begin, None, entry_begin.strftime("%d %B: %H:%M-"), [], False)
-
-    def parse_new_day(self, lines):
-        lines.next()
-        entry_begin = datetime.datetime.combine(datetime.date.today(), datetime.time(0))
-        entry_until = entry_begin + datetime.timedelta(days=1)
-        return Entry(entry_begin, entry_until, entry_begin.strftime("%d %B:"), [], True)
-
     def parse(self, lines):
         while True:
-            line = lines.peek().strip()
+            line = lines.peek()
             if not line: break
 
             # Look for a date context
@@ -195,17 +193,6 @@ class LogParser(object):
             mo = Entry.is_start_line(line)
             if mo:
                 el = self.parse_entry(lines, **mo.groupdict())
-                if el is not None: yield el
-                continue
-
-            mo = self.re_new_entry.match(line)
-            if mo:
-                el = self.parse_new_time(lines, **mo.groupdict())
-                if el is not None: yield el
-                continue
-
-            if line == "+":
-                el = self.parse_new_day(lines)
                 if el is not None: yield el
                 continue
 
