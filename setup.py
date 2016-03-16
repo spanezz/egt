@@ -19,7 +19,7 @@ setup(
     author_email=['enrico@enricozini.org'],
     url='https://github.com/spanezz/egt',
     requires=["pyxdg", "taskw", "dateutil"],
-    license = "http://www.gnu.org/licenses/gpl-3.0.html",
+    license="http://www.gnu.org/licenses/gpl-3.0.html",
     packages=['egtlib'],
     scripts=['egt'],
 )
