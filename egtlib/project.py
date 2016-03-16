@@ -95,11 +95,11 @@ class Project(object):
         return self.default_tags | self.meta.tags
 
     @classmethod
-    def from_file(self, abspath):
+    def from_file(self, abspath, fd=None):
         # Default values, can be overridden by file metadata
         p = Project(abspath)
         # Load the actual data
-        p.load()
+        p.load(fd=fd)
         return p
 
     @classmethod
@@ -110,9 +110,9 @@ class Project(object):
         if tags is not None: p.default_tags = tags
         return p
 
-    def load(self):
+    def load(self, fd=None):
         from .parse import Lines
-        lines = Lines(self.abspath)
+        lines = Lines(self.abspath, fd=fd)
 
         # Parse optionalmetadata
 

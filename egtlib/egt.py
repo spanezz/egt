@@ -96,7 +96,7 @@ class Egt:
         # It is built lazily when needed, and is None when not yet built.
         self._projects = None
 
-    def load_project(self, fname):
+    def load_project(self, fname, project_fd=None):
         """
         Return a Project object given its file name.
 
@@ -107,7 +107,7 @@ class Egt:
         if not Project.has_project(fname):
             log.warning("project %s has disappeared from %s: please rerun scan", name, fname)
             return None
-        proj = Project.from_file(fname)
+        proj = Project.from_file(fname, fd=project_fd)
         if not self.show_archived and proj.archived: return None
         proj.default_tags.update(self._default_tags(fname))
         if not self.filter.matches(proj): return None
@@ -148,7 +148,7 @@ class Egt:
             res.update(p.tags)
         return sorted(res)
 
-    def project(self, name):
+    def project(self, name, project_fd=None):
         """
         Return a Project by its name
         """
@@ -159,7 +159,7 @@ class Egt:
         # Otherwise, look it up on state and load it on the fly
         info = self.state.projects.get(name, None)
         if info is None: return None
-        return self.load_project(info["fname"])
+        return self.load_project(info["fname"], project_fd=project_fd)
 
     def weekrpt(self, tags=None, end=None, days=7, projs=None):
         rep = WeeklyReport()

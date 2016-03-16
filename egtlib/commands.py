@@ -322,9 +322,15 @@ class Annotate(Command):
         egt = egtlib.Egt(config=self.config)
         abspath = os.path.abspath(self.args.project)
         if os.path.exists(abspath):
-            proj = egt.load_project(abspath)
+            if self.args.stdin:
+                proj = egt.load_project(abspath, project_fd=sys.stdin)
+            else:
+                proj = egt.load_project(abspath)
         else:
-            proj = egt.project(self.args.project)
+            if self.args.stdin:
+                proj = egt.project(self.args.project, project_fd=sys.stdin)
+            else:
+                proj = egt.project(self.args.project)
         if proj is None:
             return
 
@@ -345,6 +351,7 @@ class Annotate(Command):
     def add_args(cls, subparser):
         super().add_args(subparser)
         subparser.add_argument("project", help="project to work on")
+        subparser.add_argument("--stdin", action="store_true", help="read project file data from stdin")
 
 
 @Command.register
