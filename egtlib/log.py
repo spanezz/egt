@@ -35,9 +35,9 @@ class Timebase:
 
 
 class Entry(object):
-    re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*?):\s+(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?")
+    re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*):\s*(?:(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?|$)")
 
-    def __init__(self, begin, until, head, body):
+    def __init__(self, begin, until, head, body, fullday):
         # Datetime of beginning of log entry timespan
         self.begin = begin
         # Datetime of end of log entry timespan, None if open
@@ -46,12 +46,16 @@ class Entry(object):
         self.head = head
         # List of lines with the body of the log entry
         self.body = body
+        # If true, the entry spans the whole day
+        self.fullday = fullday
 
     @property
     def duration(self):
         """
         Return the duration in minutes
         """
+        if self.fullday: return 24 * 60
+
         if not self.until:
             until = datetime.datetime.now()
         else:
@@ -65,16 +69,20 @@ class Entry(object):
         return format_duration(self.duration)
 
     def print(self, file, project=None):
-        # FIXME: alternative possibility: check by regexp (\d+:\d+ \d+\w+$) if
-        # head has duration, and if not just concat to it, so we preserve
-        # original head
-        head = [self.begin.strftime("%d %B: %H:%M-")]
-        if self.until:
-            head.append(self.until.strftime("%H:%M "))
-            head.append(format_duration(self.duration))
-        if project is not None:
-            head.append(" [%s]" % project)
-        print("".join(head), file=file)
+        if self.fullday:
+            print(self.begin.strftime("%d %B:"), file=file)
+        else:
+            # FIXME: alternative possibility: check by regexp (\d+:\d+ \d+\w+$) if
+            # head has duration, and if not just concat to it, so we preserve
+            # original head
+            head = [self.begin.strftime("%d %B: %H:%M-")]
+            if self.until:
+                head.append(self.until.strftime("%H:%M "))
+                head.append(format_duration(self.duration))
+            if project is not None:
+                head.append(" [%s]" % project)
+            print("".join(head), file=file)
+
         for line in self.body:
             print(line, file=file)
 
@@ -140,28 +148,40 @@ class LogParser(object):
                 log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, entry_lineno, date, self.lang)
                 entry_date = self.default
             entry_date = entry_date.date()
-            entry_begin = datetime.datetime.combine(entry_date, parsetime(start))
-            if end:
-                entry_until = datetime.datetime.combine(entry_date, parsetime(end))
-                if entry_until < entry_begin:
-                    # Deal with intervals across midnight
-                    entry_until += datetime.timedelta(days=1)
+            if start:
+                entry_begin = datetime.datetime.combine(entry_date, parsetime(start))
+                if end:
+                    entry_until = datetime.datetime.combine(entry_date, parsetime(end))
+                    if entry_until < entry_begin:
+                        # Deal with intervals across midnight
+                        entry_until += datetime.timedelta(days=1)
+                else:
+                    entry_until = None
+                entry_fullday = False
             else:
-                entry_until = None
+                entry_begin = datetime.datetime.combine(entry_date, datetime.time(0))
+                entry_until = entry_begin + datetime.timedelta(days=1)
+                entry_fullday = True
         except ValueError as e:
             log.error("%s:%d: %s", lines.fname, entry_lineno, str(e))
             return None
 
-        return Entry(entry_begin, entry_until, entry_head, entry_body)
+        return Entry(entry_begin, entry_until, entry_head, entry_body, entry_fullday)
 
     def parse_new_time(self, lines, time):
         lines.next()
         entry_begin = dateutil.parser.parse(time, default=datetime.datetime.now().replace(second=0, microsecond=0), parserinfo=self.parserinfo)
-        return Entry(entry_begin, None, entry_begin.strftime("%d %B: %H:%M-"), [])
+        return Entry(entry_begin, None, entry_begin.strftime("%d %B: %H:%M-"), [], False)
+
+    def parse_new_day(self, lines):
+        lines.next()
+        entry_begin = datetime.datetime.combine(datetime.date.today(), datetime.time(0))
+        entry_until = entry_begin + datetime.timedelta(days=1)
+        return Entry(entry_begin, entry_until, entry_begin.strftime("%d %B:"), [], True)
 
     def parse(self, lines):
         while True:
-            line = lines.peek()
+            line = lines.peek().strip()
             if not line: break
 
             # Look for a date context
@@ -181,6 +201,11 @@ class LogParser(object):
             mo = self.re_new_entry.match(line)
             if mo:
                 el = self.parse_new_time(lines, **mo.groupdict())
+                if el is not None: yield el
+                continue
+
+            if line == "+":
+                el = self.parse_new_day(lines)
                 if el is not None: yield el
                 continue
 
