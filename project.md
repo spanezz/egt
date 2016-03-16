@@ -133,29 +133,59 @@ fri: 15:45-16:30
 - done something different
 ```
 
-## Next Actions
+If you use `egt annotate`, you can conveniently create a new log entry by just
+typing the start time on a new line at the end of the log. If you type this and
+then run it throuh `egt annotate`:
 
-This section is separated by the project log with a whiteline.
+``
+2016
+15 January: 14:00-17:00
+ - done something
+10:00
+```
 
-Each next action begins with optional indentation, 't', one or more spaces,
-and any text.
+then it becomes (assuming that today is the 16th of March):
 
-A next action linked to taskwarrior is the same, but has the taskwarrior ID
-attached to the `t`, like `t12`.
+``
+2016
+15 January: 14:00-17:00
+ - done something
+16 March: 10:00-
+```
 
-In `egt annotate`, next actions are synced with TaskWarrior:
+## Project text
+
+After the log you can type anything you like: planning, notes, useful
+information, anything.
+
+I normally do planning in the form of bulleted lists, and set vim's indent
+level to 3 to quickly indent/deindent items:
+
+```
+ - document how project text works
+    - document project text intention
+    - document taskwarrior integration
+```
+
+When an item is done, I cut it from the text and paste it at the end of the
+log.
+
+A line starting with `t` or `t<number>` where `<number>` is a number, is
+interpreted as a TaskWarrior task, and `egt annotate` takes care of syncing
+with Taskwarrior. This is how it works:
 
  * If a line with only `t` is found, a new task is added to TaskWarrior, as
    if the rest of the line had been passed to `task add proj:projectname`.
  * If a line with `t<number>` is found, its content is updated with the task
    status in TaskWarrior.
  * If a line with `t<number>` has been deleted or completed in TaskWarrior,
-   `t<number` is replaced with `-` and the line is moved at the bottom of the
-   next actions list.
+   `t<number>` is replaced with `- [status]`.
+ * `egt` stores the task UUID for each task ID that is in the file, so that
+   when TaskWarrior renumberse its tasks, `egt` can still keep the sync.
 
-Any empty line ends the next actions list.
+I use this to handle [next actions](http://zenhabits.net/why-whats-the-next-action-is-the-most-important-question/):
+when I replace a ` - ` at the beginning of an item in my plans with a ` t `,
+and save the file, then they become next actions tracked by TaskWarrior.
 
-## Project text
-
-The rest of the file is freeform text where anything goes: planning, notes,
-useful information, anything you need.
+When I mark them as done in TaskWarrior, then they are rewritten as starting
+with ` - ` again, and I can move them to the project log.
