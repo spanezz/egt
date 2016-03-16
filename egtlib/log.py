@@ -211,10 +211,23 @@ class LogParser(object):
 
 
 class Log(list):
-    def __init__(self, *args, **kw):
+    def __init__(self, project, *args, **kw):
         super().__init__(*args, **kw)
+        self.project = project
         # Line number in the project file where the log starts
         self._lineno = None
+
+    def sync(self):
+        """
+        Sync log contents with git or any other activity data sources
+        """
+        open_entry = self.get_open_entry()
+        if open_entry is None: return
+        if not open_entry.body: return
+        if open_entry.body[-1].strip() != "+": return
+        open_entry.body.pop()
+        from .git import collect_achievements
+        collect_achievements(self.project, open_entry)
 
     def parse(self, lines, **kw):
         self._lineno = lines.lineno

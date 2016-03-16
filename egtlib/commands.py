@@ -337,10 +337,7 @@ class Annotate(Command):
         if proj is None:
             return
 
-        open_entry = proj.log.get_open_entry()
-        if open_entry is not None:
-            from .git import collect_achievements
-            collect_achievements(proj, open_entry)
+        proj.log.sync()
         proj.body.sync_tasks()
 
         lang = proj.meta.get("lang")

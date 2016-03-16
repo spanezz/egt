@@ -64,7 +64,7 @@ class Project(object):
         self._state = None
 
         self.meta = Meta()
-        self.log = Log()
+        self.log = Log(self)
         self.body = Body(self)
 
     @property
