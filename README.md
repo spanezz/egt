@@ -86,8 +86,8 @@ set expandtab
 set si
 function! EgtAnnotate()
     let l:cur_pos = getpos(".")
-    :%!egt annotate %:p
+    :%!egt annotate --stdin %:p
     call setpos(".", l:cur_pos)
 endfunction
-autocmd BufWritePost,FileWritePost <buffer> :silent call EgtAnnotate()
+autocmd BufWritePre,FileWritePre <buffer> :silent call EgtAnnotate()
 ```
