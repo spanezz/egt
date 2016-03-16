@@ -6,6 +6,9 @@ import datetime
 import calendar
 import sys
 import io
+import logging
+
+log = logging.getLogger(__name__)
 
 
 class CommandError(Exception):

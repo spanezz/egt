@@ -7,7 +7,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-re_gitsha = re.compile("^ - \[git:(?P<sha>[a-f0-9]{4,})\]\s+")
+re_gitsha = re.compile("^\s+- \[git:(?P<sha>[a-f0-9]{4,})\]\s+")
 
 
 def collect_achievements(proj, entry):
@@ -27,7 +27,9 @@ def collect_achievements(proj, entry):
     for c in repo.iter_commits():
         if c.author.email != my_email: continue
         if c.authored_date < cutoff: break
-        if any(c.hexsha.startswith(x) for x in seen): continue
+        # Break at the point where things are already known in the log, to
+        # avoid readding old entries that have been manually deleted
+        if any(c.hexsha.startswith(x) for x in seen): break
 
         entry.body.append(" - [git:{sha}] {desc}".format(
             sha=c.hexsha[:abbrev_size],
