@@ -10,7 +10,7 @@ you save the file.
 The trasformations that it performs are:
 
  * it computes and appends log durations to log entries
- * it runs [annotate commands](project.md#annotate_commands) inside log entries
- * it runs [annotate commands](project.md#annotate_commands) at the end of the log
+ * it runs [annotate commands](project.md#log_annotate) inside log entries
+ * it runs [annotate commands](project.md#log_annotate) at the end of the log
  * it synchronizes the [taskwarrior lines](project.md#body_taskwarrior) with
    TaskWarrior.
