@@ -58,6 +58,9 @@ can use:
 See [Format of project files](project.md) for documentation of the format of
 egt project files.
 
+See [egt annotate](annotate.md) for details on the transformation done on
+project files by egt annotate.
+
 
 ## vim integration
 
@@ -91,3 +94,6 @@ function! EgtAnnotate()
 endfunction
 autocmd BufWritePre,FileWritePre <buffer> :silent call EgtAnnotate()
 ```
+
+See [egt annotate](annotate.md) for details on the transformation done by egt
+annotate.

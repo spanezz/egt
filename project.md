@@ -5,7 +5,6 @@
 * `project_name/.egt`.
 * `project_name.egt`: to have multiple project files in the same directory.
 * `project_name/ore`: legacy, deprecated.
-* `project_name/egt`: legacy, deprecated.
 
 
 ## Metadata
@@ -72,25 +71,72 @@ The log lists all work that has been done on the project.
 The log starts with the first non-metadata line, and ends at the first empty
 line.
 
-Since the log contains no empty lines, in vim it can be skipped simply with
+Since the log cannot contain empty lines, in vim it can be skipped simply with
 `}`.
 
+The log can contain log *entries*, *time references*, and *annotate commands*.
 
-Each log entry starts with a header line stating start and end time of the
-entry, followed by freeform text lines.
+### Log entries
 
-The header line is in the form: `<date>: <start time>-<end-time> [duration]`.
-You do not need to write the duration by hand: it is computed and added by `egt
-annotate`.
+A log entry represents something you have done, and is usually filled by
+cutting and pasting done items from the rest of the project file.
+
+Each log entry starts with a header line that gives the start and end time of
+your work on the project, followed by freeform text lines indented by at least
+one space.
+
+The header line can be one of:
+
+* `<date>:` the day in which work has been done. I use this for personal
+  projects or projects where I do not need to bill by the hour.
+* `<date>: <start time>-`, the date and time when I started to work on the
+  project. There is no end time, so it means I'm still working on the project.
+* `<date>: <start time>-<end-time>[ duration]`, the beginning and end times
+  when I've been working on the project.
+
+  Do not worry about `duration`: it is ignored by `egt`, and filled
+  automatically by `egt annotate` for your convenience. Billing hours are
+  computed exclusively based on start and end time.
+
+The date can be anything you like, according to http://labix.org/python-dateutil/.
+Use the "Lang" field in the project metadata to choose the language, if you want
+to use day/month names that are not in English.
 
 The times are in the format "hh:mm". The end time can be omitted for the entry
 you are currently working on, and it will default to the current time.
 
-The date can be anything you like, according to http://labix.org/python-dateutil/.
-Use the "Lang" metadata to choose the language if you want to use day/month names.
-
 If you use a partial date (like "june 28"), the missing bits (like the year)
-are taken from the previous entry.
+are taken from the previous entry. You can use *time references* (see below) to
+avoid repeating the same information like the year over and over again.
+
+Examples:
+
+```
+june 28: 10:00-11:00
+ - done something
+ - done something else
+june 29: 15:45-16:30
+ - done something different
+```
+
+```
+june 28:
+ - done something
+ - done something else
+june 29:
+ - done something different
+```
+
+```
+june 28: 10:00-11:00
+ - done something
+ - done something else
+june 29: 15:45-
+ - done something different
+ - still working on it
+```
+
+### Time references
 
 You can provide a date on a line by itself, introduced by one or more dashes,
 to serve as a default for the following log entries. A 4-digit year, without
@@ -99,19 +145,11 @@ dashes, also works.
 Examples:
 
 ```
-june 28, 2012: 10:00-11:00
- - done something
- - done something else
-june 29, 2012: 15:45-16:30
- - done something different
-```
-
-```
 2012
-june 28: 10:00-11:00
+june 28:
  - done something
  - done something else
-june 29: 15:45-16:30
+june 29:
  - done something different
 ```
 
@@ -133,9 +171,16 @@ fri: 15:45-16:30
 - done something different
 ```
 
-If you use `egt annotate`, you can conveniently create a new log entry by just
-typing the start time on a new line at the end of the log. If you type this and
-then run it throuh `egt annotate`:
+<a name="log_annotate"></a>
+### Annotate commands
+
+If you use [`egt annotate`](annotate.md), you can conveniently create new log
+entries by writing a special header line at the end of the log:
+
+* `hh:mm` starts a new log entry for today, starting at the given time.
+* `+` starts a new log entry for today, whole day, with no start and end times.
+
+For example, if you run this through `egt annotate`:
 
 ``
 2016
@@ -148,9 +193,45 @@ then it becomes (assuming that today is the 16th of March):
 
 ``
 2016
-15 January: 14:00-17:00
+15 January: 14:00-17:00 3h
  - done something
 16 March: 10:00-
+```
+
+And if you run this through `egt annotate`:
+``
+2016
+15 January:
+ - done something
++
+```
+
+then it becomes (assuming that today is the 16th of March):
+
+``
+2016
+15 January:
+ - done something
+16 March:
+```
+
+Also, at the end of a log entry you can add a `+` to have `egt` fill it with
+git commits performed by you in that project during the time span of the log
+entry. For example, if I run this through `egt annotate`:
+
+```
+16 March:
+ - "+" on a line by itself creates a new day-only task entry
+ +
+```
+
+then it becomes:
+
+```
+16 March:
+ - "+" on a line by itself creates a new day-only task entry
+ - [git:5a443bf] Look for git commits to add to log entries
+ - [git:dfe5da2] Only add git entries when there is a + at the end of the open log entry
 ```
 
 ## Project text
@@ -169,6 +250,10 @@ level to 3 to quickly indent/deindent items:
 
 When an item is done, I cut it from the text and paste it at the end of the
 log.
+
+
+<a name="body_taskwarrior"></a>
+### TaskWarrior next actions
 
 A line starting with `t` or `t<number>` where `<number>` is a number, is
 interpreted as a TaskWarrior task, and `egt annotate` takes care of syncing
