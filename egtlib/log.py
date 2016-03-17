@@ -36,6 +36,7 @@ class Timebase:
 
 class Entry(object):
     re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*):\s*(?:(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?|$)")
+    re_tail = re.compile(r"(?P<head>:\s*\d+:\d+-\s*\d+:\d+).*")
     re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})\s*$")
     re_new_day = re.compile(r"^\+\s*$")
 
@@ -82,18 +83,15 @@ class Entry(object):
 
     def print(self, file, project=None):
         if self.fullday:
-            print(self.begin.strftime("%d %B:"), file=file)
+            print(self.head, file=file)
         else:
-            # FIXME: alternative possibility: check by regexp (\d+:\d+ \d+\w+$) if
-            # head has duration, and if not just concat to it, so we preserve
-            # original head
-            head = [self.begin.strftime("%d %B: %H:%M-")]
+            # If there is a tail after the duration, remove it
+            head = [re.sub(self.re_tail, r"\g<head>", self.head, count=1)]
             if self.until:
-                head.append(self.until.strftime("%H:%M "))
                 head.append(format_duration(self.duration))
             if project is not None:
-                head.append(" [%s]" % project)
-            print("".join(head), file=file)
+                head.append("[%s]" % project)
+            print(" ".join(head), file=file)
 
         for line in self.body:
             print(line, file=file)
