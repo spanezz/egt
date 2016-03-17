@@ -65,9 +65,9 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
 
         self.assertEqual(len(body_lines), 5)
         self.assertEqual(body_lines[0], "2015")
-        self.assertEqual(body_lines[1], "15 March: 09:00-12:00 3h")
+        self.assertEqual(body_lines[1], "15 march: 9:00-12:00 3h")
         self.assertEqual(body_lines[2], " - tested things")
-        self.assertEqual(body_lines[3], "16 March:")
+        self.assertEqual(body_lines[3], "16 march:")
         self.assertEqual(body_lines[4], " - implemented day logs")
 
     def testParseNewRequest(self):
@@ -120,7 +120,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
 
         self.assertEqual(len(body_lines), 6)
         self.assertEqual(body_lines[0], "2015")
-        self.assertEqual(body_lines[1], "15 March: 09:00-12:00 3h")
+        self.assertEqual(body_lines[1], "15 march: 9:00-12:00 3h")
         self.assertEqual(body_lines[2], " - tested things")
         self.assertEqual(body_lines[3], new_entry_dt2.strftime("%d %B: %H:%M-"))
         self.assertEqual(body_lines[4], " - new entry")
