@@ -337,7 +337,6 @@ class Annotate(Command):
         if proj is None:
             return
 
-        proj.log.sync()
         proj.body.sync_tasks()
 
         lang = proj.meta.get("lang")
@@ -349,6 +348,8 @@ class Annotate(Command):
             except locale.Error as e:
                 log.warn("Cannot set locale %s: %s", locname, e)
 
+        # Sync logs after setting locale, so we get the right day/month names
+        proj.log.sync()
         proj.print(sys.stdout)
 
     @classmethod
