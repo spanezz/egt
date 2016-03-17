@@ -24,6 +24,7 @@ def collect_achievements(proj, entry):
     my_email = gitconfig.get_value("user", "email", "NOPE")
     abbrev_size = int(gitconfig.get_value("core", "abbrev", "7"))
     cutoff = entry.begin.timestamp()
+    new_lines = []
     for c in repo.iter_commits():
         if c.author.email != my_email: continue
         if c.authored_date < cutoff: break
@@ -31,6 +32,7 @@ def collect_achievements(proj, entry):
         # avoid readding old entries that have been manually deleted
         if any(c.hexsha.startswith(x) for x in seen): break
 
-        entry.body.append(" - [git:{sha}] {desc}".format(
+        new_lines.append(" - [git:{sha}] {desc}".format(
             sha=c.hexsha[:abbrev_size],
             desc=c.summary))
+    entry.body.extend(new_lines[::-1])
