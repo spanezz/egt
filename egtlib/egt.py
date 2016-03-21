@@ -30,8 +30,9 @@ class WeeklyReport(object):
         log = []
         count = 0
         mins = 0
+        from .log import Entry
         for p in self.projs:
-            for l in p.log:
+            for l in p.log.entries:
                 if intervals_intersect(l.begin.date(), l.until.date() if l.until else datetime.date.today(), d_begin, d_until):
                     log.append((l, p))
                     count += 1

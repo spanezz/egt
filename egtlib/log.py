@@ -246,7 +246,7 @@ class Command(EntryBase):
 
 # TODO: turn into something like MonotonousDateParser and move parse method to
 #       Log.
-class LogParser(object):
+class LogParser:
     def __init__(self, lang=None):
         self.lang = lang
         # Defaults for missing parsedate values
@@ -283,27 +283,56 @@ class LogParser(object):
                 break
 
 
-class Log(list):
-    def __init__(self, project, *args, **kw):
-        super().__init__(*args, **kw)
+class Log:
+    def __init__(self, project):
         self.project = project
         # Line number in the project file where the log starts
         self._lineno = None
+        self._entries = []
+
+    @property
+    def entries(self):
+        """
+        Generate all the Entry entries of this log
+        """
+        for e in self._entries:
+            if not isinstance(e, Entry): continue
+            yield e
+
+    @property
+    def first_entry(self):
+        """
+        Return the first Entry of the log
+        """
+        for e in self._entries:
+            if not isinstance(e, Entry): continue
+            return e
+        return None
+
+    @property
+    def last_entry(self):
+        """
+        Return the last Entry of the log
+        """
+        for e in self._entries[::-1]:
+            if not isinstance(e, Entry): continue
+            return e
+        return None
 
     def sync(self):
         """
         Sync log contents with git or any other activity data sources
         """
         new_entries = []
-        for e in self:
+        for e in self._entries:
             new_entries.append(e.sync(self.project))
-        self[::] = new_entries
+        self._entries = new_entries
 
     def parse(self, lines, **kw):
         self._lineno = lines.lineno
         lp = LogParser(**kw)
         for el in lp.parse(lines):
-            self.append(el)
+            self._entries.append(el)
 
     def print(self, file):
         """
@@ -312,22 +341,12 @@ class Log(list):
         Returns True if the log section was printed, False if there was
         nothing to print.
         """
-        if not self:
+        if not self._entries:
             print(datetime.date.today().year, file=file)
         else:
-            for entry in self:
+            for entry in self._entries:
                 entry.print(file)
         return True
-
-    def get_open_entry(self):
-        """
-        Return the last open entry if one is present, else None
-        """
-        for entry in self[::-1]:
-            if not isinstance(entry, Entry): continue
-            if not entry.is_open: return None
-            return entry
-        return None
 
     @classmethod
     def is_start_line(cls, line):

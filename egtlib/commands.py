@@ -110,7 +110,7 @@ class Summary(Command):
             table.add_row((
                 p.name,
                 " ".join(sorted(p.tags)),
-                len(p.log),
+                len(list(p.log.entries)),
                 format_duration(p.elapsed, tabular=True) if p.last_updated else "--",
                 "%s ago" % format_td(now - p.last_updated, tabular=True) if p.last_updated else "--",
             ))
@@ -189,7 +189,7 @@ class Grep(Command):
     """
     def main(self):
         e = self.make_egt(self.args.projects)
-        for name, proj in e.projects.items():
+        for proj in e.projects:
             proj.run_grep([self.args.pattern])
 
     @classmethod
@@ -297,7 +297,7 @@ class PrintLog(Command):
         log = []
         projs = set()
         for p in e.projects:
-            for l in p.log:
+            for l in p.log.entries:
                 log.append((l, p))
             projs.add(p)
 
@@ -389,27 +389,32 @@ class Archive(Command):
         return pathname
 
     def main(self):
+        # TODO: move to Project and unit test it
         cutoff = datetime.datetime.strptime(self.args.month, "%Y-%m").date()
         cutoff = cutoff.replace(day=calendar.monthrange(cutoff.year, cutoff.month)[1])
         e = self.make_egt(self.args.projects)
         archive_results = {}
         for p in e.projects:
+            # TODO: copy timebase and entry, ignore commands
+            # TODO: generate initial timebase in archived log
             entries = list(l for l in p.log if l.begin.date() <= cutoff)
             if not entries: continue
             archive_results[p.name] = self.write_archive(p, entries, cutoff)
             duration = sum(e.duration for e in entries)
+            # TODO: use Meta.print
             if "name" not in p.meta:
                 print("Name:", p.name)
             for k, v in p.meta.items():
                 print("{}: {}".format(k.capitalize(), v))
             print("{}: {}".format("Total", format_duration(duration)))
             print()
+            # TODO: use Log.print or entry.print
             for l in entries:
                 print(l.head)
                 print(l.body)
             print()
         for name, res in sorted(archive_results.items()):
-            print("Archiving {}: {}".format(name, res))
+            print("Archived {}: {}".format(name, res))
 
     @classmethod
     def add_args(cls, subparser):

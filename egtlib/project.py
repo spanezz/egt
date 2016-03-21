@@ -164,15 +164,15 @@ class Project(object):
         """
         Datetime when this project was last updated
         """
-        if not self.log: return None
-        last = self.log[-1]
+        last = self.log.last_entry
+        if last is None: return None
         if last.until: return last.until
         return datetime.datetime.now()
 
     @property
     def elapsed(self):
         mins = 0
-        for l in self.log:
+        for l in self.log.entries:
             mins += l.duration
         return mins
 
@@ -211,12 +211,16 @@ class Project(object):
         """
         since = self.meta.get("start-date", None)
         until = self.meta.get("end-date", None)
-        if since is None and self.log:
-            since = self.log[0].begin.date()
+        if since is None:
+            e = self.log.first_entry
+            if e is not None:
+                since = e.begin.date()
         elif since is not None:
             since = datetime.datetime.strptime(since, "%Y-%m-%d").date()
-        if until is None and self.log:
-            until = self.log[-1].until
+        if until is None:
+            e = self.log.last_entry
+            if e is not None:
+                until = e.until
             if until is None:
                 # Deal with entries that are still open
                 until = datetime.date.today()
