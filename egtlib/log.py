@@ -19,8 +19,8 @@ def parsetime(s):
 class EntryBase:
     re_timebase = re.compile("^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
     re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*):\s*(?:(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?|$)")
-    re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})-?\s*$")
-    re_new_day = re.compile(r"^\+\s*$")
+    re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})-?\s*\+?\s*$")
+    re_new_day = re.compile(r"^\+\+?\s*$")
 
     def __init__(self, body=None):
         # List of lines with the body of the log entry
@@ -204,10 +204,14 @@ class Command(EntryBase):
             until = begin + datetime.timedelta(days=1)
             head = begin.strftime("%d %B:")
             res = Entry(begin, until, head, self.body, True)
+            if self.head == "++":
+                self.body.append(" +")
         else:
             begin = datetime.datetime.combine(datetime.date.today(), self.start)
             head = begin.strftime("%d %B: %H:%M-")
             res = Entry(begin, None, head, self.body, False)
+            if self.head.endswith("+"):
+                self.body.append(" +")
 
         res._sync_body(project)
         return res
@@ -221,7 +225,7 @@ class Command(EntryBase):
     def parse(cls, logparser, lines, start=None):
         # Read entry head
         lineno = lines.lineno
-        head = lines.next()
+        head = lines.next().rstrip()
 
         # Read entry body
         body = cls._read_body(lines)

@@ -204,6 +204,7 @@ And if you run this through `egt annotate`:
 15 January:
  - done something
 +
+ - done something new
 ```
 
 then it becomes (assuming that today is the 16th of March):
@@ -213,6 +214,7 @@ then it becomes (assuming that today is the 16th of March):
 15 January:
  - done something
 16 March:
+ - done something new
 ```
 
 Also, at the end of a log entry you can add a `+` to have `egt` fill it with
@@ -232,6 +234,24 @@ then it becomes:
  - "+" on a line by itself creates a new day-only task entry
  - [git:5a443bf] Look for git commits to add to log entries
  - [git:dfe5da2] Only add git entries when there is a + at the end of the open log entry
+```
+
+To create a new entry prefilled with git logs, you can either add a `+` line at
+the end of the body, or as a shortcut add a `+` at the end of the command, like
+`10:00+` or `++`. For example:
+
+```
+10:00
+ +
++
+ +
+```
+
+can be written more shortly as:
+
+```
+10:00+
+++
 ```
 
 ## Project text
