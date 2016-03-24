@@ -30,6 +30,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         """
         self.write_project([
             "body line1",
+            "t new parent task",
             "  t new taskwarrior task +tag",
             "body line3",
         ])
@@ -37,10 +38,11 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        self.assertEqual(len(proj.body.content), 3)
-        self.assertEqual(len(proj.body.tasks), 1)
+        self.assertEqual(len(proj.body.content), 4)
+        self.assertEqual(len(proj.body.tasks), 2)
         self.assertEqual(proj.body.tasks[0], proj.body.content[1])
-        task = proj.body.tasks[0]
+        self.assertEqual(proj.body.tasks[1], proj.body.content[2])
+        task = proj.body.tasks[1]
         self.assertEqual(task.indent, "  ")
         self.assertIsNone(task.task)
         self.assertTrue(task.is_new)
@@ -62,16 +64,17 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
             proj.body.print(out)
             body_lines = out.getvalue().splitlines()
 
-        self.assertEqual(len(body_lines), 3)
+        self.assertEqual(len(body_lines), 4)
         self.assertEqual(body_lines[0], "body line1")
-        self.assertRegex(body_lines[1], r"^  t\d+ \[[^]]+\] new taskwarrior task \+tag$")
-        self.assertEqual(body_lines[2], "body line3")
+        self.assertRegex(body_lines[1], r"^t\d+ \[[^]]+\] new parent task$")
+        self.assertRegex(body_lines[2], r"^  t\d+ \[[^]]+\] new taskwarrior task \+tag$")
+        self.assertEqual(body_lines[3], "body line3")
 
         with open(os.path.join(self.workdir.name, "project-testprj.json"), "rt") as fd:
             state = json.load(fd)
         tasks = state["tasks"]
         ids = tasks["ids"]
-        self.assertEqual(len(ids), 1)
+        self.assertEqual(len(ids), 2)
         self.assertEqual(ids[str(task.task["id"])], str(task.task["uuid"]))
 
     def testCreateFromTW(self):
