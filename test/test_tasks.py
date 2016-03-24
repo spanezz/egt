@@ -112,7 +112,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
             body_lines = out.getvalue().splitlines()
 
         self.assertEqual(len(body_lines), 4)
-        self.assertRegex(body_lines[0], r"^ t\d+ \[[^]]+\] new task \+tag$")
+        self.assertRegex(body_lines[0], r"^t\d+ \[[^]]+\] new task \+tag$")
         self.assertEqual(body_lines[1], "")
         self.assertEqual(body_lines[2], "body line1")
         self.assertEqual(body_lines[3], "body line2")

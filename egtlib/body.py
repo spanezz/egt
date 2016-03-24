@@ -21,10 +21,10 @@ class Task:
     """
     A TaskWarrior task
     """
-    def __init__(self, body, indent, id, text=None, task=None):
+    def __init__(self, body, id, indent="", text=None, task=None):
         # Body object owning this Task
         self.body = body
-        # Indentation spaces at the beginning of the lines
+        # Indentation at the beginning of the lines
         self.indent = indent
         # Taskwarrior task dict (None means no mapping attempted yet)
         self.task = task
@@ -196,7 +196,7 @@ class Body:
         new = []
         for task in self.tw.filter_tasks({"project": self.project.name}):
             if task["id"] == 0 or str(task["uuid"]) in known_uuids: continue
-            task = Task(self, " ", task["id"], task=task)
+            task = Task(self, task["id"], task=task)
             new.append(task)
 
         # If we created new content, prepend it to self.tasks and self.content
