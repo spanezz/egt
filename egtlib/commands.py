@@ -62,6 +62,9 @@ class List(Command):
     """
     def main(self):
         e = self.make_egt(filter=self.args.projects)
+        if not e.projects:
+            print("No projects found. Run 'egt scan' first.", file=sys.stderr)
+            return
         name_len = max((len(x.name) for x in e.projects))
         homedir = os.path.expanduser("~")
         for p in e.projects:
