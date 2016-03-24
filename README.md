@@ -97,3 +97,6 @@ autocmd BufWritePre,FileWritePre <buffer> :silent call EgtAnnotate()
 
 See [egt annotate](annotate.md) for details on the transformation done by egt
 annotate.
+
+Note: you can do :au! in vim to deactivate save hooks if you don't want them
+triggered.
