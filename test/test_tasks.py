@@ -84,6 +84,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         import taskw
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("new task", ["tag", "testtag1"], project="testprj")
+        new_task2 = tw.task_add("new parent task", project="testprj")
         tw = None
 
         self.write_project([
@@ -99,8 +100,8 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
 
         proj.body.sync_tasks()
 
-        self.assertEqual(len(proj.body.content), 4)
-        self.assertEqual(len(proj.body.tasks), 1)
+        self.assertEqual(len(proj.body.content), 5)
+        self.assertEqual(len(proj.body.tasks), 2)
 
         task = proj.body.tasks[0]
         self.assertIsNotNone(task.task)
@@ -114,17 +115,19 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
             proj.body.print(out)
             body_lines = out.getvalue().splitlines()
 
-        self.assertEqual(len(body_lines), 4)
+        self.assertEqual(len(body_lines), 5)
+
         self.assertRegex(body_lines[0], r"^t\d+ \[[^]]+\] new task \+tag$")
-        self.assertEqual(body_lines[1], "")
-        self.assertEqual(body_lines[2], "body line1")
-        self.assertEqual(body_lines[3], "body line2")
+        self.assertRegex(body_lines[1], r"^t\d+ \[[^]]+\] new parent task$")
+        self.assertEqual(body_lines[2], "")
+        self.assertEqual(body_lines[3], "body line1")
+        self.assertEqual(body_lines[4], "body line2")
 
         with open(os.path.join(self.workdir.name, "project-testprj.json"), "rt") as fd:
             state = json.load(fd)
         tasks = state["tasks"]
         ids = tasks["ids"]
-        self.assertEqual(len(ids), 1)
+        self.assertEqual(len(ids), 2)
         self.assertEqual(ids[str(task.task["id"])], str(task.task["uuid"]))
 
     def testSyncExisting(self):
