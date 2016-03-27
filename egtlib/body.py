@@ -27,7 +27,7 @@ class Task:
         # Indentation at the beginning of the lines
         self.indent = indent
         # Taskwarrior task dict (None means no mapping attempted yet)
-        self.task = task
+        self.set_twtask(task)
         if isinstance(id, int):
             # Whether the task is new and needs to be created in TaskWarrior
             self.is_new = False
@@ -40,11 +40,6 @@ class Task:
         if task is not None:
             self.desc = task["description"]
             self.tags = set(task["tags"]) if "tags" in task else set()
-            if "depends" in task:
-                self.depends_uuids = set(task["depends"])
-                self.depends = [self.body.tw.get_task(uuid=t)[0] for t in self.depends_uuids]
-            else:
-                self.depends = set()
         elif text is not None:
             # Parse the text
             desc = []
@@ -75,7 +70,7 @@ class Task:
         """
         if not self.is_new: return
         tags = self.body.project.tags | self.tags
-        self.task = self.body.tw.task_add(self.desc, project=self.body.project.name, tags=sorted(tags))
+        self.set_twtask(self.body.tw.task_add(self.desc, project=self.body.project.name, tags=sorted(tags)))
         self.id = self.task["id"]
         self.is_new = None
 
@@ -97,7 +92,7 @@ class Task:
             if uuid is not None:
                 id, task = self.body.tw.get_task(uuid=uuid)
                 if task:
-                    self.task = task
+                    self.set_twtask(task)
                     self.id = task["id"] if task["id"] != 0 else None
                     self.desc = task["description"]
                     bl = self.body.project.tags
@@ -107,12 +102,21 @@ class Task:
         # Looking up by uuid failed, try looking up by description
         id, task = self.body.tw.get_task(description=self.desc)
         if task:
-            self.task = task
+            self.set_twtask(task)
             return
 
         # Mapping to taskwarrior failed: mark this task as orphan, so
         # it can be indicated when serializing
         self.is_orphan = True
+
+    def set_twtask(self, task):
+        self.task = task
+        self.depends = set()
+        if task:
+            if "depends" in task:
+                depends_uuids = set(task["depends"])
+                self.depends = set(self.body.tw.get_task(uuid=t)[0] for t in depends_uuids)
+        return
 
     def print(self, file):
         res = []
