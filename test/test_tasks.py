@@ -84,7 +84,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         import taskw
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("new task", ["tag", "testtag1"], project="testprj")
-        new_task2 = tw.task_add("new parent task", project="testprj")
+        new_task2 = tw.task_add("new parent task", project="testprj", depends=[new_task["uuid"]])
         tw = None
 
         self.write_project([
@@ -118,7 +118,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(len(body_lines), 5)
 
         self.assertRegex(body_lines[0], r"^t\d+ \[[^]]+\] new task \+tag$")
-        self.assertRegex(body_lines[1], r"^t\d+ \[[^]]+\] new parent task$")
+        self.assertRegex(body_lines[1], r"^t\d+ \[[^]]+\] new parent task depends:1$")
         self.assertEqual(body_lines[2], "")
         self.assertEqual(body_lines[3], "body line1")
         self.assertEqual(body_lines[4], "body line2")

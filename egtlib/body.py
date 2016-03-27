@@ -40,6 +40,11 @@ class Task:
         if task is not None:
             self.desc = task["description"]
             self.tags = set(task["tags"]) if "tags" in task else set()
+            if "depends" in task:
+                self.depends_uuids = set(task["depends"])
+                self.depends = [self.body.tw.get_task(uuid=t)[0] for t in self.depends_uuids]
+            else:
+                self.depends = set()
         elif text is not None:
             # Parse the text
             desc = []
@@ -55,6 +60,9 @@ class Task:
 
             # Tags
             self.tags = tags
+
+            # TODO Not handling dependencies from egt yet
+            self.depends = set()
         else:
             raise ValueError("One of text or task must be provided")
 
@@ -119,6 +127,8 @@ class Task:
         res.append(self.desc)
         bl = self.body.project.tags
         res.extend("+" + t for t in sorted(self.tags) if t not in bl)
+        if self.depends:
+            res.append("depends:" + ",".join(str(t) for t in sorted(self.depends)))
         print(self.indent + " ".join(res), file=file)
 
 
