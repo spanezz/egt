@@ -378,17 +378,14 @@ class Archive(Command):
             return "not archived: {} already exists".format(pathname)
         duration = sum(e.duration for e in entries)
         with io.open(pathname, "wt") as fd:
-            if "name" not in project.meta:
+            if "name" not in project.meta._raw:
                 print("Name:", project.name, file=fd)
-            print("Archived: yes", file=fd)
+            project.meta.set("archived", "yes")
+            project.meta.print(file=fd)
             print("{}: {}".format("Total", format_duration(duration)), file=fd)
-            for k, v in project.meta.items():
-                if k == "archived": continue
-                print("{}: {}".format(k.capitalize(), v), file=fd)
             print(file=fd)
             for l in entries:
-                print(l.head, file=fd)
-                print(l.body, file=fd)
+                l.print(file=fd)
         return pathname
 
     def main(self):
@@ -400,21 +397,19 @@ class Archive(Command):
         for p in e.projects:
             # TODO: copy timebase and entry, ignore commands
             # TODO: generate initial timebase in archived log
-            entries = list(l for l in p.log if l.begin.date() <= cutoff)
+            entries = list(l for l in p.log.entries if l.begin.date() <= cutoff)
             if not entries: continue
             archive_results[p.name] = self.write_archive(p, entries, cutoff)
             duration = sum(e.duration for e in entries)
             # TODO: use Meta.print
-            if "name" not in p.meta:
+            if "name" not in p.meta._raw:
                 print("Name:", p.name)
-            for k, v in p.meta.items():
-                print("{}: {}".format(k.capitalize(), v))
+            p.meta.print()
             print("{}: {}".format("Total", format_duration(duration)))
             print()
             # TODO: use Log.print or entry.print
             for l in entries:
-                print(l.head)
-                print(l.body)
+                l.print()
             print()
         for name, res in sorted(archive_results.items()):
             print("Archived {}: {}".format(name, res))

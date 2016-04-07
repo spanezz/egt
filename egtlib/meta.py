@@ -2,6 +2,7 @@
 
 from collections import OrderedDict
 import re
+import sys
 
 
 class Meta:
@@ -33,6 +34,12 @@ class Meta:
             return getattr(self, name)
         return self._raw.get(name, *args)
 
+    def set(self, name, value):
+        """
+        Set the value of a metadata element
+        """
+        self._raw[name.lower()] = value
+
     def parse(self, lines):
         """
         Parse a metadata section from a Lines object
@@ -59,7 +66,7 @@ class Meta:
         if f is not None:
             self.tags.update(re.split("[ ,\t]+", f))
 
-    def print(self, out):
+    def print(self, file=sys.stdout):
         """
         Write the metadata as a project metadata section to the given output
         file.
@@ -70,7 +77,7 @@ class Meta:
         # So far, Meta is read only, so we only need to print self._lines
         if not self._lines: return False
         for line in self._lines:
-            print(line, file=out)
+            print(line, file=file)
         return True
 
     @classmethod

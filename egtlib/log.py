@@ -66,7 +66,7 @@ class Timebase(EntryBase):
         self.line = line
         self.dt = dt
 
-    def print(self, file):
+    def print(self, file=sys.stdout):
         print(self.line, file=file)
 
     @classmethod
@@ -135,7 +135,7 @@ class Entry(EntryBase):
     def formatted_duration(self):
         return format_duration(self.duration)
 
-    def print(self, file, project=None):
+    def print(self, file=sys.stdout, project=None):
         if self.fullday:
             print(self.head, file=file)
         else:
@@ -216,7 +216,7 @@ class Command(EntryBase):
         res._sync_body(project)
         return res
 
-    def print(self, file):
+    def print(self, file=sys.stdout):
         print(self.head, file=file)
         for line in self.body:
             print(line, file=file)
@@ -334,7 +334,7 @@ class Log:
         for el in lp.parse(lines):
             self._entries.append(el)
 
-    def print(self, file):
+    def print(self, file=sys.stdout):
         """
         Write the log as a project log section to the given output file.
 
