@@ -106,7 +106,7 @@ class Egt:
         """
         from .project import Project
         if not Project.has_project(fname):
-            log.warning("project %s has disappeared from %s: please rerun scan", name, fname)
+            log.warning("project %s has disappeared: please rerun scan", fname)
             return None
         proj = Project.from_file(fname, fd=project_fd)
         if not self.show_archived and proj.archived: return None
