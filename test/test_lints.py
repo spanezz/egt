@@ -60,4 +60,4 @@ class TestPep8Clean(unittest.TestCase):
     """ ensure that the tree is pep8 clean """
 
     def test_pep8_clean(self):
-        self.assertEqual(run_check("pep8", basedir), 0)
+        self.assertEqual(run_check("pycodestyle", basedir), 0)
