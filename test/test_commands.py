@@ -39,7 +39,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertIn("test", state.projects)
         self.assertIn("p1", state.projects)
         self.assertIn("p2", state.projects)
-        self.assertEquals(len(state.projects), 3)
+        self.assertEqual(len(state.projects), 3)
 
     def test_list(self):
         State.rescan([self.workdir.name], statedir=self.workdir.name)
@@ -48,7 +48,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertIn("test", names)
         self.assertIn("p1", names)
         self.assertIn("p2", names)
-        self.assertEquals(len(names), 3)
+        self.assertEqual(len(names), 3)
 
     # TODO: test_summary
     # TODO: test_term
@@ -81,4 +81,4 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertIn(os.path.join(wd, ".egt"), names)
         self.assertIn(os.path.join(wd, "p1.egt"), names)
         self.assertIn(os.path.join(wd, "p2.egt"), names)
-        self.assertEquals(len(names), 3)
+        self.assertEqual(len(names), 3)
