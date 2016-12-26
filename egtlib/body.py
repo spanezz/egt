@@ -175,16 +175,16 @@ class Body:
 
         # Get everything until we reach the end of file
         while True:
-            l = lines.next()
+            line = lines.next()
             # Stop at an empty line or at EOF
-            if l is None: break
-            mo = self.re_task.match(l)
+            if line is None: break
+            mo = self.re_task.match(line)
             if mo is not None:
                 task = Task(self, **mo.groupdict())
                 self.content.append(task)
                 self.tasks.append(task)
             else:
-                self.content.append(Line(l))
+                self.content.append(Line(line))
 
     def sync_tasks(self):
         """

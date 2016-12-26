@@ -45,7 +45,7 @@ class Lines:
 
     def skip_empty_lines(self):
         while True:
-            l = self.peek()
-            if l is None: break
-            if l: break
+            line = self.peek()
+            if line is None: break
+            if line: break
             self.discard()
