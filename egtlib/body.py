@@ -18,6 +18,8 @@ class Line:
 
 
 class Task:
+    task_attributes = ["start", "end", "due", "until",
+                       "wait", "scheduled", "priority"]
     """
     A TaskWarrior task
     """
@@ -44,9 +46,16 @@ class Task:
             # Parse the text
             desc = []
             tags = set()
+            attributes = {}
             for word in shlex.split(text):
                 if word.startswith("+"):
                     tags.add(word[1:])
+                elif word.count(":") == 1:
+                    key, val = word.split(":")
+                    if key in self.task_attributes:
+                        attributes[key] = val
+                    else:
+                        desc.append(word)
                 else:
                     desc.append(word)
 
@@ -55,6 +64,7 @@ class Task:
 
             # Tags
             self.tags = tags
+            self.attributes = attributes
 
             # TODO Not handling dependencies from egt yet
             self.depends = set()
@@ -70,7 +80,12 @@ class Task:
         """
         if not self.is_new: return
         tags = self.body.project.tags | self.tags
-        self.set_twtask(self.body.tw.task_add(self.desc, project=self.body.project.name, tags=sorted(tags)))
+        # the following lines are a workaround for https://github.com/ralphbean/taskw/issues/111
+        self.body.tw._marshal = False
+        newtask = self.body.tw.task_add(self.desc, project=self.body.project.name, tags=sorted(tags), **self.attributes)
+        self.body.tw._marshal = True
+        id, task = self.body.tw.get_task(uuid=newtask["id"])
+        self.set_twtask(task)
         self.id = self.task["id"]
         self.is_new = None
 
