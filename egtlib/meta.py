@@ -49,10 +49,10 @@ class Meta:
 
         # Get everything until we reach an empty line
         while True:
-            l = lines.next()
+            line = lines.next()
             # Stop at an empty line or at EOF
-            if not l: break
-            self._lines.append(l)
+            if not line: break
+            self._lines.append(line)
 
         # Parse fields in the same way as email headers
         import email

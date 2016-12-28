@@ -5,6 +5,8 @@ from egtlib import Project
 import io
 import os
 import json
+import datetime
+from dateutil.tz import tzlocal
 
 
 class TestTasks(ProjectTestMixin, unittest.TestCase):
@@ -76,6 +78,47 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         ids = tasks["ids"]
         self.assertEqual(len(ids), 2)
         self.assertEqual(ids[str(task.task["id"])], str(task.task["uuid"]))
+
+    def testCreateFromEgtWithAttributes(self):
+        """
+        Test creation of new taskwarrior tasks with attributes from a project file
+        """
+        datedata = datetime.datetime(2031, 1, 2, 0, 0, tzinfo=tzlocal())
+        test_attributes = [("due", "2031-01-02", datedata),
+                           ("wait", "2031-01-02", datedata),
+                           ("start", "2031-01-02", datedata),
+                           ("end", "2031-01-02", datedata),
+                           ("until", "2031-01-02", datedata),
+                           ("scheduled", "2031-01-02", datedata),
+                           ("priority", "H", "H"),
+                           ("due", "2030-12-26+week", datedata),
+                           ]
+        for key, value, data in test_attributes:
+            attr = "{}:{}".format(key, value)
+            with self.subTest(config=attr):
+                self.write_project([
+                    "body line1",
+                    "t new test task "+attr,
+                    "body line3",
+                ])
+                proj = Project(self.projectfile, statedir=self.workdir.name)
+                proj.body.force_load_tw(config_filename=self.taskrc)
+                proj.load()
+
+                task = proj.body.tasks[0]
+                self.assertIsNone(task.task)
+                self.assertTrue(task.is_new)
+                self.assertIsNone(task.id)
+                self.assertEqual(task.desc, "new test task")
+                self.assertEqual(task.attributes, {key: value})
+
+                proj.body.sync_tasks()
+
+                self.assertIsNotNone(task.task)
+                self.assertFalse(task.is_new)
+                self.assertIsNotNone(task.id)
+                self.assertEqual(task.task["description"], "new test task")
+                self.assertEqual(task.task[key], data)
 
     def testCreateFromTW(self):
         """
