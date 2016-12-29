@@ -18,6 +18,7 @@ class Line:
 
 
 class Task:
+    re_attribute = re.compile(r"^(?P<key>[^:]+):(?P<val>[^:]+)$")
     task_attributes = ["start", "end", "due", "until",
                        "wait", "scheduled", "priority"]
     """
@@ -50,14 +51,16 @@ class Task:
             for word in shlex.split(text):
                 if word.startswith("+"):
                     tags.add(word[1:])
-                elif word.count(":") == 1:
-                    key, val = word.split(":")
-                    if key in self.task_attributes:
-                        attributes[key] = val
+                else:
+                    attr = self.re_attribute.match(word)
+                    if attr is not None:
+                        key, val = attr.groups()
+                        if key in self.task_attributes:
+                            attributes[key] = val
+                        else:
+                            desc.append(word)
                     else:
                         desc.append(word)
-                else:
-                    desc.append(word)
 
             # Rebuild the description
             self.desc = " ".join(shlex.quote(x) for x in desc)
