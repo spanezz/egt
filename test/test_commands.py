@@ -1,9 +1,12 @@
 # coding: utf8
 import unittest
+from unittest.mock import Mock, patch
+from io import StringIO
 from .utils import ProjectTestMixin
 from configparser import ConfigParser
 import os
 from egtlib.state import State
+from egtlib.commands import Completion
 import egtlib
 
 body_p = """Name: test
@@ -52,6 +55,17 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertIn("p1", names)
         self.assertIn("p2", names)
         self.assertEqual(len(names), 3)
+
+    def test_complete_projects(self):
+        State.rescan([self.workdir.name], statedir=self.workdir.name)
+        egt = egtlib.Egt(config=ConfigParser(), statedir=self.workdir.name)
+        mock_arg = Mock(subcommand='projects')
+        completion = Completion(mock_arg)
+        with patch.object(completion, 'make_egt', return_value=egt):
+            with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                completion.main()
+        names = mock_stdout.getvalue().split("\n")[:-1]
+        self.assertEqual(names, ["p1", "p2", "test"])
 
     # TODO: test_summary
     # TODO: test_term
