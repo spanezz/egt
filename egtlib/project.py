@@ -290,9 +290,13 @@ class Project(object):
                         yield gd
 
     def backup(self, tarout):
+        backup_paths = [x.strip() for x in self.meta.get("backup", "").split("\n")]
+
         # Backup the main todo/log file
         tarout.add(self.abspath)
-        if not self.meta.get("abstract", False):
+
+        # Backup .git/config and .git/hooks
+        if ".git" not in backup_paths and not self.meta.get("abstract", False):
             for gd in self.gitdirs():
                 tarout.add(os.path.join(gd, "config"))
                 hookdir = os.path.join(gd, "hooks")
@@ -300,14 +304,12 @@ class Project(object):
                     if fn.startswith("."): continue
                     if fn.endswith(".sample"): continue
                     tarout.add(os.path.join(hookdir, fn))
-        # TODO: a shellscript with command to clone the .git again
-        # TODO: a diff with uncommitted changes
-        # TODO: the content of directories optionally listed in metadata
-        #       (documentation, archives)
-        # (if you don't push, you don't back up, and it's fair enough)
+            # TODO: a shellscript with command to clone the .git again
+            # TODO: a diff with uncommitted changes
+            # (if you don't push, you don't back up, and it's fair enough)
 
         # Add all paths listed in the 'backup' metadata, one per line
-        for p in [x.strip() for x in self.meta.get("backup", "").split("\n")]:
+        for p in backup_paths:
             if not p: continue
             path = os.path.join(self.path, p)
             if not os.path.exists(path): continue
