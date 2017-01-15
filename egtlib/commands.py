@@ -325,7 +325,7 @@ class Annotate(Command):
     useful that can be computed.
     """
     def main(self):
-        egt = egtlib.Egt(config=self.config)
+        egt = egtlib.Egt(config=self.config, show_archived=True)
         abspath = os.path.abspath(self.args.project)
         if os.path.exists(abspath):
             if self.args.stdin:
