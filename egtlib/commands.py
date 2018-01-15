@@ -68,7 +68,9 @@ class List(Command):
         name_len = max((len(x.name) for x in e.projects))
         homedir = os.path.expanduser("~")
         for p in e.projects:
-            if p.path.startswith(homedir):
+            if self.args.files:
+                print(p.abspath)
+            elif p.path.startswith(homedir):
                 print(p.name.ljust(name_len), "~%s" % p.path[len(homedir):])
             else:
                 print(p.name.ljust(name_len), p.path)
@@ -77,6 +79,7 @@ class List(Command):
     def add_args(cls, subparser):
         super().add_args(subparser)
         subparser.add_argument("projects", nargs="*", help="projects list or filter (default: all)")
+        subparser.add_argument("--files", action="store_true", help="list paths to .egt files")
 
 
 @Command.register
