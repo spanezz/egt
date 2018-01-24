@@ -15,7 +15,7 @@ def connect_to_buffy():
     try:
         buffy_obj = session_bus.get_object("org.enricozini.buffy", "/buffy")
         return dbus.Interface(buffy_obj, dbus_interface="org.enricozini.buffy")
-    except:
+    except Exception:
         return None
 
 
