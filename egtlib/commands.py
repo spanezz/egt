@@ -129,8 +129,10 @@ class Summary(Command):
 #        #format_td(datetime.datetime.now() - self.last_updated)),
 #        print "%s\t%s" % (self.name, ", ".join(stats))
 
-        for p in blanks: add_summary(p)
-        for p in worked: add_summary(p)
+        for p in blanks:
+            add_summary(p)
+        for p in worked:
+            add_summary(p)
 
         print(table.draw())
 
@@ -275,7 +277,8 @@ class Weekrpt(Command):
         table.add_row(("Project", "Entries", "Hours", "h/day", "h/wday"))
         for p in e.projects:
             rep = e.weekrpt(end=end, projs=[p])
-            if not rep["count"]: continue
+            if not rep["count"]:
+                continue
             table.add_row((p.name, rep["count"], rep["hours"], rep["hours_per_day"], rep["hours_per_workday"]))
 
         print(table.draw())
@@ -372,7 +375,8 @@ class Archive(Command):
     """
     def write_archive(self, project, entries, cutoff):
         pathname = project.meta.get("archive-dir", None)
-        if pathname is None: return "not archived: archive-dir not found in header"
+        if pathname is None:
+            return "not archived: archive-dir not found in header"
         if "%" in pathname:
             pathname = cutoff.strftime(pathname)
         pathname = os.path.expanduser(pathname)
@@ -401,7 +405,8 @@ class Archive(Command):
             # TODO: copy timebase and entry, ignore commands
             # TODO: generate initial timebase in archived log
             entries = list(l for l in p.log.entries if l.begin.date() <= cutoff)
-            if not entries: continue
+            if not entries:
+                continue
             archive_results[p.name] = self.write_archive(p, entries, cutoff)
             duration = sum(e.duration for e in entries)
             # TODO: use Meta.print
@@ -422,7 +427,9 @@ class Archive(Command):
         super().add_args(subparser)
         subparser.add_argument("projects", nargs="*", help="project(s) to work on")
         last_month = datetime.date.today().replace(day=1) - datetime.timedelta(days=1)
-        subparser.add_argument("--month", "-m", action="store", default=last_month.strftime("%Y-%m"), help="print log until the given month (default: %(default)s)")
+        subparser.add_argument(
+                "--month", "-m", action="store", default=last_month.strftime("%Y-%m"),
+                help="print log until the given month (default: %(default)s)")
 
 
 @Command.register

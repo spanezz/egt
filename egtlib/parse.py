@@ -1,7 +1,7 @@
-import re
-
-
 class Lines:
+    """
+    Access a text file line by line, with line numbers
+    """
     def __init__(self, pathname, fd=None):
         # File name being parsed
         self.fname = pathname
@@ -46,6 +46,8 @@ class Lines:
     def skip_empty_lines(self):
         while True:
             line = self.peek()
-            if line is None: break
-            if line: break
+            if line is None:
+                break
+            if line:
+                break
             self.discard()

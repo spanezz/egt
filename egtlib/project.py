@@ -1,10 +1,8 @@
 import os.path
 import subprocess
 import datetime
-import re
 import sys
 import json
-from collections import OrderedDict
 from .utils import format_duration, intervals_intersect
 from .meta import Meta
 from .log import Log
@@ -25,11 +23,13 @@ class ProjectState(object):
         self._state = None
 
     def get(self, name):
-        if self._state is None: self._load()
+        if self._state is None:
+            self._load()
         return self._state.get(name, None)
 
     def set(self, name, val):
-        if self._state is None: self._load()
+        if self._state is None:
+            self._load()
         self._state[name] = val
         self._save()
 
@@ -76,7 +76,8 @@ class Project(object):
     @property
     def name(self):
         name = self.meta.get("name", self.default_name)
-        if not self.archived: return name
+        if not self.archived:
+            return name
 
         since, until = self.formal_period
         if until:
@@ -105,9 +106,12 @@ class Project(object):
     @classmethod
     def mock(self, abspath, name=None, path=None, tags=None):
         p = Project(abspath)
-        if path is not None: p.default_path = path
-        if name is not None: p.default_name = name
-        if tags is not None: p.default_tags = tags
+        if path is not None:
+            p.default_path = path
+        if name is not None:
+            p.default_name = name
+        if tags is not None:
+            p.default_tags = tags
         return p
 
     def load(self, fd=None):
@@ -119,7 +123,8 @@ class Project(object):
         # If it starts with a log, there is no metadata: stop
         # If the first line doesn't look like a header, stop
         first = lines.peek()
-        if first is None: return
+        if first is None:
+            return
         if not Log.is_start_line(first) and Meta.is_start_line(first):
             log.debug("%s:%d: parsing metadata", lines.fname, lines.lineno)
             self.meta.parse(lines)
@@ -127,7 +132,8 @@ class Project(object):
         lines.skip_empty_lines()
 
         # Parse log entries
-        if lines.peek() is None: return
+        if lines.peek() is None:
+            return
         if self.log.is_start_line(lines.peek()):
             log.debug("%s:%d: parsing log", lines.fname, lines.lineno)
             self.log.parse(lines, lang=self.meta.get("lang", None))
@@ -165,8 +171,10 @@ class Project(object):
         Datetime when this project was last updated
         """
         last = self.log.last_entry
-        if last is None: return None
-        if last.until: return last.until
+        if last is None:
+            return None
+        if last.until:
+            return last.until
         return datetime.datetime.now()
 
     @property
@@ -187,7 +195,8 @@ class Project(object):
     @property
     def next_actions(self):
         for el in self.body:
-            if el.TAG != "next-actions": continue
+            if el.TAG != "next-actions":
+                continue
             yield el
 
     @property
@@ -197,7 +206,8 @@ class Project(object):
         """
         res = set()
         for el in self.body:
-            if el.TAG != "next-actions": continue
+            if el.TAG != "next-actions":
+                continue
             res |= el.contexts
         return res
 
@@ -235,15 +245,18 @@ class Project(object):
         Return the next events within the given date range
         """
         for na in self.next_actions:
-            if na.event is None: continue
+            if na.event is None:
+                continue
             d_since = na.event.get("start", None)
-            if d_since is not None: d_since = d_since.date()
+            if d_since is not None:
+                d_since = d_since.date()
             d_until = na.event.get("end", None)
             if d_until is not None:
                 d_until = d_until.date()
             else:
                 d_until = d_since
-            if not intervals_intersect(d_since, d_until, since, until): continue
+            if not intervals_intersect(d_since, d_until, since, until):
+                continue
             yield na
 
     def spawn_terminal(self, with_editor=False):
@@ -283,7 +296,8 @@ class Project(object):
         # Recurse into subdirs if we still have some way to go
         if depth > 1:
             for fn in os.listdir(root):
-                if fn.startswith("."): continue
+                if fn.startswith("."):
+                    continue
                 d = os.path.join(root, fn)
                 if os.path.isdir(d):
                     for gd in self.gitdirs(depth - 1, d):
@@ -301,8 +315,10 @@ class Project(object):
                 tarout.add(os.path.join(gd, "config"))
                 hookdir = os.path.join(gd, "hooks")
                 for fn in os.listdir(hookdir):
-                    if fn.startswith("."): continue
-                    if fn.endswith(".sample"): continue
+                    if fn.startswith("."):
+                        continue
+                    if fn.endswith(".sample"):
+                        continue
                     tarout.add(os.path.join(hookdir, fn))
             # TODO: a shellscript with command to clone the .git again
             # TODO: a diff with uncommitted changes
@@ -310,9 +326,11 @@ class Project(object):
 
         # Add all paths listed in the 'backup' metadata, one per line
         for p in backup_paths:
-            if not p: continue
+            if not p:
+                continue
             path = os.path.join(self.path, p)
-            if not os.path.exists(path): continue
+            if not os.path.exists(path):
+                continue
             tarout.add(path)
 
     @classmethod

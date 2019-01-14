@@ -1,5 +1,3 @@
-# coding: utf8
-
 from collections import OrderedDict
 import re
 import sys
@@ -51,7 +49,8 @@ class Meta:
         while True:
             line = lines.next()
             # Stop at an empty line or at EOF
-            if not line: break
+            if not line:
+                break
             self._lines.append(line)
 
         # Parse fields in the same way as email headers
@@ -64,7 +63,7 @@ class Meta:
         # Tags
         f = self._raw.get("tags", None)
         if f is not None:
-            self.tags.update(re.split("[ ,\t]+", f))
+            self.tags.update(re.split(r"[ ,\t]+", f))
 
     def print(self, file=sys.stdout):
         """
@@ -75,7 +74,8 @@ class Meta:
         nothing to print.
         """
         # So far, Meta is read only, so we only need to print self._lines
-        if not self._lines: return False
+        if not self._lines:
+            return False
         for line in self._lines:
             print(line, file=file)
         return True

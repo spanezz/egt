@@ -17,7 +17,7 @@ def parsetime(s):
 
 
 class EntryBase:
-    re_timebase = re.compile("^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
+    re_timebase = re.compile(r"^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
     re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*):\s*(?:(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?|$)")
     re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})-?\s*\+?\s*$")
     re_new_day = re.compile(r"^\+\+?\s*$")
@@ -41,8 +41,10 @@ class EntryBase:
         """
         Sync log body with git or any other activity data sources
         """
-        if not self.body: return
-        if self.body[-1].strip() != "+": return
+        if not self.body:
+            return
+        if self.body[-1].strip() != "+":
+            return
         self.body.pop()
         from .git import collect_achievements
         collect_achievements(project, self)
@@ -53,9 +55,12 @@ class EntryBase:
         body = []
         while True:
             line = lines.peek()
-            if not line: break
-            if not line[0].isspace(): break
-            if Entry.is_start_line(line): break
+            if not line:
+                break
+            if not line[0].isspace():
+                break
+            if Entry.is_start_line(line):
+                break
             body.append(lines.next())
         return body
 
@@ -77,7 +82,8 @@ class Timebase(EntryBase):
         # the 'default' datetime context
         dt = logparser.parse_date(val)
         line = lines.next()
-        if dt is None: return None
+        if dt is None:
+            return None
         return cls(line, dt)
 
     @classmethod
@@ -121,7 +127,8 @@ class Entry(EntryBase):
         """
         Return the duration in minutes
         """
-        if self.fullday: return 24 * 60
+        if self.fullday:
+            return 24 * 60
 
         if not self.until:
             until = datetime.datetime.now()
@@ -270,13 +277,15 @@ class LogParser:
 
         while True:
             line = lines.peek()
-            if not line: break
+            if not line:
+                break
 
             for c in components:
                 mo = c.is_start_line(line)
                 if mo:
                     el = c.parse(self, lines, **mo.groupdict())
-                    if el is not None: yield el
+                    if el is not None:
+                        yield el
                     break
             else:
                 log.warn("%s:%d: log parse stops at unrecognised line %r", lines.fname, lines.lineno, line)
@@ -296,7 +305,8 @@ class Log:
         Generate all the Entry entries of this log
         """
         for e in self._entries:
-            if not isinstance(e, Entry): continue
+            if not isinstance(e, Entry):
+                continue
             yield e
 
     @property
@@ -305,7 +315,8 @@ class Log:
         Return the first Entry of the log
         """
         for e in self._entries:
-            if not isinstance(e, Entry): continue
+            if not isinstance(e, Entry):
+                continue
             return e
         return None
 
@@ -315,7 +326,8 @@ class Log:
         Return the last Entry of the log
         """
         for e in self._entries[::-1]:
-            if not isinstance(e, Entry): continue
+            if not isinstance(e, Entry):
+                continue
             return e
         return None
 
