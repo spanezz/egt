@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import re
 import sys
+import inspect
 
 
 class Meta:
@@ -12,14 +13,11 @@ class Meta:
     re_meta_head = re.compile(r"^\w.*:")
 
     def __init__(self):
-        # Original lines
-        self._lines = []
-
         # Line number in the project file where the metadata start
         self._lineno = None
 
         # Dict mapping lowercase field names to their string values
-        self._raw = {}
+        self._raw = OrderedDict()
 
         # Set of tags for the project
         self.tags = set()
@@ -46,17 +44,18 @@ class Meta:
         self._lineno = lines.lineno
 
         # Get everything until we reach an empty line
+        meta_lines = []
         while True:
             line = lines.next()
             # Stop at an empty line or at EOF
             if not line:
                 break
-            self._lines.append(line)
+            meta_lines.append(line)
 
         # Parse fields in the same way as email headers
         import email
-        for k, v in email.message_from_string("\n".join(self._lines)).items():
-            self._raw[k.lower()] = v.strip()
+        for k, v in email.message_from_string("\n".join(meta_lines)).items():
+            self._raw[k.lower()] = inspect.cleandoc(v)
 
         # Extract well known values
 
@@ -73,12 +72,16 @@ class Meta:
         Returns True if the metadata section was printed, False if there was
         nothing to print.
         """
-        # So far, Meta is read only, so we only need to print self._lines
-        if not self._lines:
-            return False
-        for line in self._lines:
-            print(line, file=file)
-        return True
+        res = False
+        for name, value in self._raw.items():
+            res = True
+            if "\n" in value:
+                print("{}:".format(name.title()), file=file)
+                for line in value.splitlines():
+                    print(" " + line, file=file)
+            else:
+                print("{}: {}".format(name.title(), value.strip()), file=file)
+        return res
 
     @classmethod
     def is_start_line(cls, line):

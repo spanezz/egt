@@ -384,12 +384,12 @@ class Archive(Command):
         if os.path.exists(pathname):
             return "not archived: {} already exists".format(pathname)
         duration = sum(e.duration for e in entries)
+        project.meta.set("archived", "yes")
+        project.meta.set("total", format_duration(duration))
         with io.open(pathname, "wt") as fd:
             if "name" not in project.meta._raw:
                 print("Name:", project.name, file=fd)
-            project.meta.set("archived", "yes")
             project.meta.print(file=fd)
-            print("{}: {}".format("Total", format_duration(duration)), file=fd)
             print(file=fd)
             for l in entries:
                 l.print(file=fd)
