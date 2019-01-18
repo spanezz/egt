@@ -4,6 +4,7 @@ import subprocess
 import datetime
 import sys
 import json
+from .lang import set_locale
 from .utils import format_duration, intervals_intersect, today, atomic_writer, stream_output
 from .meta import Meta
 from .log import Log
@@ -65,6 +66,12 @@ class Project(object):
         self.meta = Meta()
         self.log = Log(self)
         self.body = Body(self)
+
+    def set_locale(self) -> None:
+        """
+        Set the current locale to the one specified in the project header
+        """
+        set_locale(self.meta.get("lang"))
 
     @property
     def state(self):

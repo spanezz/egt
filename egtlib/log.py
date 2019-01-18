@@ -30,7 +30,7 @@ class EntryBase:
         else:
             self.body = body
 
-    def sync(self, project: "project.Project"):
+    def sync(self, project: "project.Project", today: datetime.date):
         """
         When syncing logs, return the transformed version of this entry.
 
@@ -163,7 +163,7 @@ class Entry(EntryBase):
         from .git import collect_achievements
         collect_achievements(project, self)
 
-    def sync(self, project: "project.Project"):
+    def sync(self, project: "project.Project", today: datetime.date):
         self._sync_body(project)
         return self
 
@@ -266,16 +266,16 @@ class Command(EntryBase):
     def reference_time(self) -> Optional[datetime.datetime]:
         return None
 
-    def sync(self, project: "project.Project"):
+    def sync(self, project: "project.Project", today: datetime.date):
         if self.start is None:
-            begin = datetime.datetime.combine(utils.today(), datetime.time(0))
+            begin = datetime.datetime.combine(today, datetime.time(0))
             until = begin + datetime.timedelta(days=1)
             head = begin.strftime("%d %B:")
             res = Entry(begin, until, head, self.body, True)
             if self.head == "++":
                 self.body.append(" +")
         else:
-            begin = datetime.datetime.combine(utils.today(), self.start)
+            begin = datetime.datetime.combine(today, self.start)
             head = begin.strftime("%d %B: %H:%M-")
             res = Entry(begin, None, head, self.body, False)
             if self.head.endswith("+"):
@@ -418,13 +418,16 @@ class Log:
             return e
         return None
 
-    def sync(self):
+    def sync(self, today=None):
         """
         Sync log contents with git or any other activity data sources
         """
+        if today is None:
+            today = utils.today()
+        self.project.set_locale()
         new_entries = []
         for e in self._entries:
-            new_entries.append(e.sync(self.project))
+            new_entries.append(e.sync(self.project, today=today))
         self._entries = new_entries
 
     def parse(self, lines: Lines, **kw):
@@ -440,6 +443,7 @@ class Log:
         Returns True if the log section was printed, False if there was
         nothing to print.
         """
+        # self.project.set_locale()
         printer = LogPrinter(file, today=today)
         for entry in self._entries:
             printer.print(entry)

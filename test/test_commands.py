@@ -26,11 +26,14 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     def setUp(self):
         super().setUp()
         self.p = os.path.join(self.workdir.name, ".egt")
-        with open(self.p, "wt") as fd: fd.write(body_p)
+        with open(self.p, "wt") as fd:
+            fd.write(body_p)
         self.p1 = os.path.join(self.workdir.name, "p1.egt")
-        with open(self.p1, "wt") as fd: fd.write(body_p1)
+        with open(self.p1, "wt") as fd:
+            fd.write(body_p1)
         self.p2 = os.path.join(self.workdir.name, "p2.egt")
-        with open(self.p2, "wt") as fd: fd.write(body_p2)
+        with open(self.p2, "wt") as fd:
+            fd.write(body_p2)
 
     def test_scan(self):
         State.rescan([self.workdir.name], statedir=self.workdir.name)
