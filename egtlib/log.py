@@ -1,5 +1,6 @@
-from typing import List, Optional, Type
+from typing import List, Optional, Type, TextIO
 from .utils import format_duration
+from . import utils
 from .lang import get_parserinfo
 from . import project
 from .parse import Lines
@@ -37,8 +38,22 @@ class EntryBase:
         """
         return self
 
+    def reference_time(self) -> Optional[datetime.datetime]:
+        """
+        Return the reference time for this log entry
+        """
+        raise NotImplementedError("reference_time called on EntryBase")
+
+    def print_lead_timeref(self, file):
+        """
+        Assuming this is the first entry of the log being printed, print a time
+        reference before the entry if it is needed to be able to reparse the
+        entry correctly
+        """
+        raise NotImplementedError("print_lead_timeref called on EntryBase")
+
     @classmethod
-    def _read_body(cls, lines: Lines):
+    def _read_body(cls, lines: Lines) -> List[str]:
         # Read entry body
         body = []
         while True:
@@ -51,6 +66,9 @@ class EntryBase:
                 break
             body.append(lines.next())
         return body
+
+    def print(self, file=sys.stdout) -> None:
+        raise RuntimeError("print called on EntryBase instead of the real class")
 
     @classmethod
     def parse(cls, logparser: "LogParser", lines: Lines, **kw):
@@ -72,8 +90,15 @@ class Timebase(EntryBase):
         self.line = line
         self.dt = dt
 
+    def reference_time(self) -> Optional[datetime.datetime]:
+        return self.dt
+
     def print(self, file=sys.stdout):
         print(self.line, file=file)
+
+    def print_lead_timeref(self, file):
+        # Nothing to do, since a timebase is a full time reference
+        pass
 
     @classmethod
     def parse(cls, logparser: "LogParser", lines: Lines, **kw):
@@ -113,13 +138,16 @@ class Entry(EntryBase):
         # If true, the entry spans the whole day
         self.fullday = fullday
 
+    def reference_time(self) -> Optional[datetime.datetime]:
+        return self.begin
+
     @property
     def is_open(self):
         """
         Check if this log entry is still been edited
         """
         if self.fullday:
-            return self.begin.date() == datetime.date.today()
+            return self.begin.date() == utils.today()
         else:
             return self.until is None
 
@@ -158,6 +186,9 @@ class Entry(EntryBase):
     @property
     def formatted_duration(self):
         return format_duration(self.duration)
+
+    def print_lead_timeref(self, file):
+        print(self.begin.year, file=file)
 
     def print(self, file=sys.stdout, project: "project.Project" = None):
         if self.fullday:
@@ -227,21 +258,24 @@ class Command(EntryBase):
     re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})-?\s*\+?\s*$")
     re_new_day = re.compile(r"^\+\+?\s*$")
 
-    def __init__(self, head, body, start=None):
+    def __init__(self, head: str, body: List[str], start: Optional[datetime.time] = None):
         super().__init__(body)
         self.head = head
         self.start = start
 
+    def reference_time(self) -> Optional[datetime.datetime]:
+        return None
+
     def sync(self, project: "project.Project"):
         if self.start is None:
-            begin = datetime.datetime.combine(datetime.date.today(), datetime.time(0))
+            begin = datetime.datetime.combine(utils.today(), datetime.time(0))
             until = begin + datetime.timedelta(days=1)
             head = begin.strftime("%d %B:")
             res = Entry(begin, until, head, self.body, True)
             if self.head == "++":
                 self.body.append(" +")
         else:
-            begin = datetime.datetime.combine(datetime.date.today(), self.start)
+            begin = datetime.datetime.combine(utils.today(), self.start)
             head = begin.strftime("%d %B: %H:%M-")
             res = Entry(begin, None, head, self.body, False)
             if self.head.endswith("+"):
@@ -249,6 +283,9 @@ class Command(EntryBase):
 
         res._sync_body(project)
         return res
+
+    def print_lead_timeref(self, file):
+        raise RuntimeError("Cannot output a log with a Command as the very first element, without a previous time reference")
 
     def print(self, file=sys.stdout):
         print(self.head, file=file)
@@ -284,7 +321,7 @@ class LogParser:
     def __init__(self, lang=None):
         self.lang = lang
         # Defaults for missing parsedate values
-        self.default = datetime.datetime(datetime.date.today().year, 1, 1)
+        self.default = datetime.datetime(utils.today().year, 1, 1)
         # Last datetime parsed
         self.last_dt = None
         self.parserinfo = get_parserinfo(lang)
@@ -317,6 +354,28 @@ class LogParser:
             else:
                 log.warn("%s:%d: log parse stops at unrecognised line %r", lines.fname, lines.lineno, line)
                 break
+
+
+class LogPrinter:
+    def __init__(self, file: TextIO, today: Optional[datetime.date] = None):
+        self.today: datetime.date = today if today is not None else utils.today()
+        self.file = file
+        self.has_time_ref = False
+        self.last_reference_time: Optional[datetime.datetime] = None
+
+    def print(self, entry: EntryBase):
+        if not self.has_time_ref:
+            entry.print_lead_timeref(self.file)
+            self.has_time_ref = True
+        entry.print(self.file)
+        reftime = entry.reference_time()
+        if reftime is not None:
+            self.last_reference_time = reftime
+
+    def done(self):
+        this_year = self.today.year
+        if self.last_reference_time is None or self.last_reference_time.year != this_year:
+            print(this_year, file=self.file)
 
 
 class Log:
@@ -374,18 +433,17 @@ class Log:
         for el in lp.parse(lines):
             self._entries.append(el)
 
-    def print(self, file=sys.stdout):
+    def print(self, file=sys.stdout, today=None):
         """
         Write the log as a project log section to the given output file.
 
         Returns True if the log section was printed, False if there was
         nothing to print.
         """
-        if not self._entries:
-            print(datetime.date.today().year, file=file)
-        else:
-            for entry in self._entries:
-                entry.print(file)
+        printer = LogPrinter(file, today=today)
+        for entry in self._entries:
+            printer.print(entry)
+        printer.done()
         return True
 
     @classmethod

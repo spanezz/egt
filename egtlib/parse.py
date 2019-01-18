@@ -1,4 +1,4 @@
-from typing import List, Optional, TextIO
+from typing import List, Optional, TextIO, Generator
 
 
 class Lines:
@@ -39,7 +39,7 @@ class Lines:
         self.lineno += 1
         return res
 
-    def rest(self):
+    def rest(self) -> Generator[str, None, None]:
         """
         Generate all remaining lines
         """

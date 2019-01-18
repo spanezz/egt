@@ -1,10 +1,10 @@
-from typing import Optional, TextIO
+from typing import Optional, TextIO, Any
 import os.path
 import subprocess
 import datetime
 import sys
 import json
-from .utils import format_duration, intervals_intersect
+from .utils import format_duration, intervals_intersect, today, atomic_writer, stream_output
 from .meta import Meta
 from .log import Log
 from .body import Body
@@ -14,35 +14,33 @@ log = logging.getLogger(__name__)
 
 
 class ProjectState(object):
-    def __init__(self, project):
+    def __init__(self, project: "Project"):
         statedir = project.statedir
         if statedir is None:
             from .state import State
             statedir = State.get_state_dir()
         # TODO: ensure name does not contain '/'
         self.abspath = os.path.join(statedir, "project-{}.json".format(project.name))
-        self._state = None
+        self._state: Optional[dict] = None
 
-    def get(self, name):
+    def get(self, name: str) -> Any:
         if self._state is None:
-            self._load()
+            self._state = self._load()
         return self._state.get(name, None)
 
-    def set(self, name, val):
+    def set(self, name: str, val: Any) -> None:
         if self._state is None:
-            self._load()
+            self._state = self._load()
         self._state[name] = val
         self._save()
 
-    def _load(self):
+    def _load(self) -> dict:
         if not os.path.exists(self.abspath):
-            self._state = {}
-            return
+            return {}
         with open(self.abspath, "rt") as fd:
-            self._state = json.load(fd)
+            return json.load(fd)
 
-    def _save(self):
-        from .utils import atomic_writer
+    def _save(self) -> None:
         with atomic_writer(self.abspath, "wt") as fd:
             json.dump(self._state, fd, indent=1)
 
@@ -234,7 +232,7 @@ class Project(object):
                 until = e.until
             if until is None:
                 # Deal with entries that are still open
-                until = datetime.date.today()
+                until = today()
             else:
                 until = until.date()
         elif until is not None:
@@ -269,7 +267,6 @@ class Project(object):
         run_editor(self)
 
     def run_grep(self, args):
-        from .utils import stream_output
         for gd in self.gitdirs():
             cwd = os.path.abspath(os.path.join(gd, ".."))
             cmd = ["git", "grep"] + args

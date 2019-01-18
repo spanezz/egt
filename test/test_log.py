@@ -1,4 +1,3 @@
-# coding: utf8
 import unittest
 from .utils import ProjectTestMixin
 from egtlib import Project
@@ -21,6 +20,63 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 print(l, file=fd)
             print(file=fd)
             print("hypothetic plans", file=fd)
+
+    def testEmpty(self):
+        with open(self.projectfile, "wt") as fd:
+            print("Name: testprj", file=fd)
+            print("", file=fd)
+        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj.load()
+        self.assertEqual(len(proj.log._entries), 0)
+
+        out = io.StringIO()
+        proj.log.print(file=out, today=datetime.date(2018, 6, 1))
+        self.assertEqual(out.getvalue(), "2018\n")
+
+    def testWritePartial(self):
+        self.write_project([
+            "2015",
+            "15 march: 9:00-12:00",
+            " - tested things",
+            "16 march:",
+            " - implemented day logs",
+        ])
+        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj.load()
+        proj.log._entries.pop(0)
+        self.assertEqual(len(proj.log._entries), 2)
+
+        out = io.StringIO()
+        proj.log.print(file=out, today=datetime.date(2015, 6, 1))
+        self.assertEqual(
+            out.getvalue(),
+            "2015\n"
+            "15 march: 9:00-12:00 3h\n"
+            " - tested things\n"
+            "16 march:\n"
+            " - implemented day logs\n"
+        )
+
+    def testWriteNewYear(self):
+        # TODO: mock year as 2016
+        self.write_project([
+            "2015",
+            "15 march: 9:00-12:00",
+            " - tested things",
+        ])
+        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj.load()
+        self.assertEqual(len(proj.log._entries), 2)
+
+        out = io.StringIO()
+        proj.log.print(file=out, today=datetime.date(2016, 6, 1))
+        self.assertEqual(
+            out.getvalue(),
+            "2015\n"
+            "15 march: 9:00-12:00 3h\n"
+            " - tested things\n"
+            "2016\n"
+        )
 
     def testParse(self):
         """
@@ -60,7 +116,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(entry.fullday, True)
 
         with io.StringIO() as out:
-            proj.log.print(out)
+            proj.log.print(out, today=datetime.date(2015, 6, 1))
             body_lines = out.getvalue().splitlines()
 
         self.assertEqual(len(body_lines), 5)

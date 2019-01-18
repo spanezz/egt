@@ -1,5 +1,4 @@
 from typing import Generator, Optional
-import datetime
 
 
 class Author:
