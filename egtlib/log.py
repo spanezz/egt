@@ -8,9 +8,6 @@ import dateutil.parser
 import datetime
 import sys
 import re
-import logging
-
-log = logging.getLogger(__name__)
 
 
 def parsetime(s: str) -> datetime.time:
@@ -103,7 +100,6 @@ class Timebase(EntryBase):
     @classmethod
     def parse(cls, logparser: "LogParser", lines: Lines, **kw):
         val: str = kw["date"] or kw["year"]
-        log.debug("%s:%d: timebase: %s", lines.fname, lines.lineno, val)
         # Just parse the next line, storing it nowhere, but updating
         # the 'default' datetime context
         dt = logparser.parse_date(val)
@@ -215,10 +211,9 @@ class Entry(EntryBase):
         entry_body = cls._read_body(lines)
 
         # Parse entry head
-        log.debug("%s:%d: log header: %s %s-%s", lines.fname, entry_lineno, kw["date"], kw["start"], kw["end"])
         entry_date = logparser.parse_date(kw["date"])
         if entry_date is None:
-            log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, entry_lineno, kw["date"], logparser.lang)
+            logparser.log_parse_error(entry_lineno, "cannot parse log header date: {} (lang={})".format(repr(kw["date"]), logparser.lang))
             entry_date = logparser.default
         entry_date = entry_date.date()
 
@@ -325,6 +320,11 @@ class LogParser:
         # Last datetime parsed
         self.last_dt = None
         self.parserinfo = get_parserinfo(lang)
+        # Log of parse errors
+        self.errors: List[str] = []
+
+    def log_parse_error(self, lineno, msg):
+        self.errors.append("line {}: {}".format(lineno + 1, msg))
 
     def parse_date(self, s: str, set_default=True):
         try:
@@ -352,7 +352,7 @@ class LogParser:
                         yield el
                     break
             else:
-                log.warn("%s:%d: log parse stops at unrecognised line %r", lines.fname, lines.lineno, line)
+                self.log_parse_error(lines.lineno, "log parse stops at unrecognised line " + repr(line))
                 break
 
 
@@ -435,6 +435,10 @@ class Log:
         lp = LogParser(**kw)
         for el in lp.parse(lines):
             self._entries.append(el)
+        if lp.errors:
+            self.project.meta.set("parse-errors", "\n".join(lp.errors))
+        else:
+            self.project.meta.unset("parse-errors")
 
     def print(self, file=sys.stdout, today=None):
         """

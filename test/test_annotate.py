@@ -16,6 +16,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
             fd.write(text)
 
         proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         proj.body.sync_tasks()
@@ -34,3 +35,26 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
 
     def test_meta_only(self):
         self.assertEqual(self.annotate("Lang: it\n"), "Lang: it\n\n2019\n\n")
+
+    def test_parse_error(self):
+        res = self.annotate("Lang: it\n\n01 pippo:\n - error\n")
+        self.assertEqual(res.splitlines(), [
+            "Lang: it",
+            "Parse-Errors: line 3: cannot parse log header date: '01 pippo' (lang=it)",
+            "",
+            "2019",
+            "01 pippo:",
+            " - error",
+            "",
+        ])
+
+    def test_parse_errors_fixed(self):
+        res = self.annotate("Lang: it\nParse-Errors: foo\n\n01 marzo:\n - fixed\n")
+        self.assertEqual(res.splitlines(), [
+            "Lang: it",
+            "",
+            "2019",
+            "01 marzo:",
+            " - fixed",
+            "",
+        ])

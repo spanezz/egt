@@ -38,6 +38,13 @@ class Meta:
         """
         self._raw[name.lower()] = value
 
+    def unset(self, name: str) -> None:
+        """
+        Unset the value of a metadata element, if it exists, otherwise does
+        nothing
+        """
+        self._raw.pop(name.lower(), None)
+
     def parse(self, lines: Lines) -> None:
         """
         Parse a metadata section from a Lines object
