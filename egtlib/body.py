@@ -13,6 +13,9 @@ class Line:
     def print(self, file):
         print(self.line, file=file)
 
+    def __repr__(self):
+        return "Line({})".format(repr(self.line))
+
 
 class Task:
     re_attribute = re.compile(r"^(?P<key>[^:]+):(?P<val>[^:]+)$")

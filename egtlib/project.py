@@ -158,15 +158,19 @@ class Project(object):
         if self.meta.get("archived", "false").lower() in ("true", "yes"):
             self.archived = True
 
-    def print(self, out):
+    def print(self, out, today=None):
         """
         Serialize the whole project as a project file to the given file
         descriptor.
         """
+        from . import utils
+        if today is None:
+            today = utils.today()
+
         if self.meta.print(out):
             print(file=out)
 
-        if self.log.print(out):
+        if self.log.print(out, today=today):
             print(file=out)
 
         self.body.print(out)
