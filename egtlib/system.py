@@ -1,41 +1,14 @@
 import os
 import sys
 import subprocess
-try:
-    import dbus
-    HAVE_DBUS = True
-except ImportError:
-    HAVE_DBUS = False
-
-
-def connect_to_buffy():
-    if not HAVE_DBUS:
-        return None
-
-    session_bus = dbus.SessionBus()
-    try:
-        buffy_obj = session_bus.get_object("org.enricozini.buffy", "/buffy")
-        return dbus.Interface(buffy_obj, dbus_interface="org.enricozini.buffy")
-    except Exception:
-        return None
 
 
 def run_editor(proj):
-    buffy = connect_to_buffy()
-    if buffy:
-        buffy.set_active_inbox(".egt.{}".format(proj.name).encode("utf-8"), True)
-
     editor = proj.meta.get("editor", None)
     if editor is None:
         editor = os.environ.get("EDITOR", "vim")
     p = subprocess.Popen([editor, proj.abspath], cwd=proj.path, close_fds=True)
     p.wait()
-
-    # Reconnect, in case buffy was restarted while we were working
-    # (it's quite useful, for example, when doing 'egt work buffy')
-    buffy = connect_to_buffy()
-    if buffy:
-        buffy.set_active_inbox(".egt.{}".format(proj.name), False)
 
 
 def run_work_session(proj, with_editor=True):
