@@ -3,6 +3,9 @@
 ## New in version 0.4
 
  - basic taskwarrior integration
+    - start a line with ' t ' to turn it into a taskwarrior task
+    - tasks are tracked by uuid, using ~/.local/share/egt/ accessory files
+    - taskwarrior changes are reflected in task line when `egt annotate` is run
  - more robust annotate behaviour
     - parse errors go in header instead of breaking the file syntax
     - tested various cases of opening an empty file or a file with notes in it,
@@ -13,6 +16,7 @@
    log entry
  - metadata fields cleaned up, better support for multiline fields, support for
    adding fields from code, fixing archive losing "Archived: yes" header
+ - dropped unused dbus buffy integration
 
 ## New in version 0.3
 
