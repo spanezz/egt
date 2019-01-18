@@ -2,6 +2,8 @@
 
 VERSION=$(shell debian/vercheck)
 RELEASE_PACKAGE=egt
+# Skip running mypy during build
+export SKIP_MYPY
 
 %:
 	dh $@ --with python3 --buildsystem=pybuild
