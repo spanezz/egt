@@ -15,8 +15,8 @@ setup(
     version=version,
     description="Enrico's Getting Things Done",
     # long_description=''
-    author=['Enrico Zini'],
-    author_email=['enrico@enricozini.org'],
+    author='Enrico Zini',
+    author_email='enrico@enricozini.org',
     url='https://github.com/spanezz/egt',
     requires=["pyxdg", "taskw", "dateutil"],
     license="http://www.gnu.org/licenses/gpl-3.0.html",

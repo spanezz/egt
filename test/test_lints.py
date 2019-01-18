@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import os
 import subprocess
 import unittest
@@ -25,39 +23,50 @@ def should_ignore(line):
 
 
 basedir = os.path.dirname(__file__)
-if not basedir: basedir = os.getcwd()
+if not basedir:
+    basedir = os.getcwd()
 basedir = os.path.abspath(os.path.join(basedir, ".."))
 
 
-def run_check(*args):
-    p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def run_check(*args, **kw):
+    kw["stdout"] = subprocess.PIPE
+    kw["stderr"] = subprocess.PIPE
+
+    extra_env = kw.pop("extra_env", None)
+    if extra_env is not None:
+        if "env" not in kw:
+            kw["env"] = dict(os.environ)
+        kw["env"].update(extra_env)
+
+    p = subprocess.Popen(args, **kw)
     stdout, stderr = p.communicate()
     stdout = stdout.decode("utf-8")
     stderr = stderr.decode("utf-8")
     count = 0
     for l in stdout.split("\n"):
-        if not l: continue
-        if should_ignore(l): continue
+        if not l:
+            continue
+        if should_ignore(l):
+            continue
         print("I:{}:{}".format(args[0], l))
         count += 1
     for l in stderr.split("\n"):
-        if not l: continue
-        if should_ignore(l): continue
+        if not l:
+            continue
+        if should_ignore(l):
+            continue
         print("W:{}:{}".format(args[0], l))
         count += 1
     p.wait()
     return count
 
 
-#class TestPyflakesClean(unittest.TestCase):
-#    """ ensure that the tree is pyflakes clean """
-#
-#    def test_pyflakes_clean(self):
-#        self.assertEqual(run_check("pyflakes", basedir), 0)
-
-
-class TestPep8Clean(unittest.TestCase):
+class TestLinters(unittest.TestCase):
     """ ensure that the tree is pep8 clean """
 
-    def test_pep8_clean(self):
-        self.assertEqual(run_check("pycodestyle", basedir), 0)
+    def test_flake8_clean(self):
+        self.assertEqual(run_check("flake8", basedir), 0)
+
+    def test_mypy_clean(self):
+        stubs_dir = os.path.join(basedir, "stubs")
+        self.assertEqual(run_check("mypy", basedir, extra_env={"MYPYPATH": stubs_dir}), 0)

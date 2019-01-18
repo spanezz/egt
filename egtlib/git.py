@@ -1,5 +1,5 @@
-# coding: utf8
-
+from . import project
+from .log import Entry
 import git
 import os
 import re
@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 re_gitsha = re.compile(r"^\s+- \[git:(?P<sha>[a-f0-9]{4,})\]\s+")
 
 
-def collect_achievements(proj, entry):
+def collect_achievements(proj: "project.Project", entry: Entry):
     if not os.path.exists(os.path.join(proj.path, ".git")):
         return
 

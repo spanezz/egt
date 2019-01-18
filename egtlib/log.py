@@ -1,7 +1,8 @@
-# coding: utf8
-from __future__ import absolute_import
+from typing import List, Optional, Type
 from .utils import format_duration
 from .lang import get_parserinfo
+from . import project
+from .parse import Lines
 import dateutil.parser
 import datetime
 import sys
@@ -11,25 +12,24 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def parsetime(s):
+def parsetime(s: str) -> datetime.time:
     h, m = s.split(":")
     return datetime.time(int(h), int(m), 0)
 
 
 class EntryBase:
-    re_timebase = re.compile(r"^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
-    re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*):\s*(?:(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?|$)")
-    re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})-?\s*\+?\s*$")
-    re_new_day = re.compile(r"^\+\+?\s*$")
-
-    def __init__(self, body=None):
+    """
+    Base class for log entries
+    """
+    def __init__(self, body: List[str] = None):
         # List of lines with the body of the log entry
+        self.body: List[str]
         if body is None:
             self.body = []
         else:
             self.body = body
 
-    def sync(self, project):
+    def sync(self, project: "project.Project"):
         """
         When syncing logs, return the transformed version of this entry.
 
@@ -37,20 +37,8 @@ class EntryBase:
         """
         return self
 
-    def _sync_body(self, project):
-        """
-        Sync log body with git or any other activity data sources
-        """
-        if not self.body:
-            return
-        if self.body[-1].strip() != "+":
-            return
-        self.body.pop()
-        from .git import collect_achievements
-        collect_achievements(project, self)
-
     @classmethod
-    def _read_body(cls, lines):
+    def _read_body(cls, lines: Lines):
         # Read entry body
         body = []
         while True:
@@ -64,9 +52,22 @@ class EntryBase:
             body.append(lines.next())
         return body
 
+    @classmethod
+    def parse(cls, logparser: "LogParser", lines: Lines, **kw):
+        raise RuntimeError("parse called on EntryBase instead of the real class")
+
+    @classmethod
+    def is_start_line(cls, line: str):
+        return False
+
 
 class Timebase(EntryBase):
-    def __init__(self, line, dt):
+    """
+    Log entry providing a time reference for the next log entries
+    """
+    re_timebase = re.compile(r"^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
+
+    def __init__(self, line: str, dt: datetime.datetime):
         super().__init__()
         self.line = line
         self.dt = dt
@@ -75,8 +76,8 @@ class Timebase(EntryBase):
         print(self.line, file=file)
 
     @classmethod
-    def parse(cls, logparser, lines, year, date):
-        val = date or year
+    def parse(cls, logparser: "LogParser", lines: Lines, **kw):
+        val: str = kw["date"] or kw["year"]
         log.debug("%s:%d: timebase: %s", lines.fname, lines.lineno, val)
         # Just parse the next line, storing it nowhere, but updating
         # the 'default' datetime context
@@ -87,7 +88,7 @@ class Timebase(EntryBase):
         return cls(line, dt)
 
     @classmethod
-    def is_start_line(cls, line):
+    def is_start_line(cls, line: str):
         """
         Check if the next line looks like the start of a log block
         """
@@ -95,9 +96,13 @@ class Timebase(EntryBase):
 
 
 class Entry(EntryBase):
+    """
+    Free text log entry with a time header
+    """
+    re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*):\s*(?:(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?|$)")
     re_tail = re.compile(r"(?P<head>:\s*\d+:\d+-\s*\d+:\d+).*")
 
-    def __init__(self, begin, until, head, body, fullday):
+    def __init__(self, begin: datetime.datetime, until: Optional[datetime.datetime], head: str, body: List[str], fullday: bool):
         super().__init__(body)
         # Datetime of beginning of log entry timespan
         self.begin = begin
@@ -118,7 +123,19 @@ class Entry(EntryBase):
         else:
             return self.until is None
 
-    def sync(self, project):
+    def _sync_body(self, project: "project.Project"):
+        """
+        Sync log body with git or any other activity data sources
+        """
+        if not self.body:
+            return
+        if self.body[-1].strip() != "+":
+            return
+        self.body.pop()
+        from .git import collect_achievements
+        collect_achievements(project, self)
+
+    def sync(self, project: "project.Project"):
         self._sync_body(project)
         return self
 
@@ -142,7 +159,7 @@ class Entry(EntryBase):
     def formatted_duration(self):
         return format_duration(self.duration)
 
-    def print(self, file=sys.stdout, project=None):
+    def print(self, file=sys.stdout, project: "project.Project" = None):
         if self.fullday:
             print(self.head, file=file)
         else:
@@ -158,7 +175,7 @@ class Entry(EntryBase):
             print(line, file=file)
 
     @classmethod
-    def parse(cls, logparser, lines, date=None, start=None, end=None):
+    def parse(cls, logparser: "LogParser", lines: Lines, **kw):
         # Read entry head
         entry_lineno = lines.lineno
         entry_head = lines.next()
@@ -167,13 +184,17 @@ class Entry(EntryBase):
         entry_body = cls._read_body(lines)
 
         # Parse entry head
-        log.debug("%s:%d: log header: %s %s-%s", lines.fname, entry_lineno, date, start, end)
-        entry_date = logparser.parse_date(date)
+        log.debug("%s:%d: log header: %s %s-%s", lines.fname, entry_lineno, kw["date"], kw["start"], kw["end"])
+        entry_date = logparser.parse_date(kw["date"])
         if entry_date is None:
-            log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, entry_lineno, date, logparser.lang)
+            log.warning("%s:%d: cannot parse log header date: '%s' (lang=%s)", lines.fname, entry_lineno, kw["date"], logparser.lang)
             entry_date = logparser.default
         entry_date = entry_date.date()
 
+        entry_until: Optional[datetime.datetime]
+
+        start = kw.get("start")
+        end = kw.get("end")
         if start:
             entry_begin = datetime.datetime.combine(entry_date, parsetime(start))
             if end:
@@ -192,7 +213,7 @@ class Entry(EntryBase):
         return cls(entry_begin, entry_until, entry_head, entry_body, entry_fullday)
 
     @classmethod
-    def is_start_line(cls, line):
+    def is_start_line(cls, line: str):
         """
         Check if the next line looks like the start of a log block
         """
@@ -200,12 +221,18 @@ class Entry(EntryBase):
 
 
 class Command(EntryBase):
+    """
+    Log entry with a user query, to be expanded with the query result
+    """
+    re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})-?\s*\+?\s*$")
+    re_new_day = re.compile(r"^\+\+?\s*$")
+
     def __init__(self, head, body, start=None):
         super().__init__(body)
         self.head = head
         self.start = start
 
-    def sync(self, project):
+    def sync(self, project: "project.Project"):
         if self.start is None:
             begin = datetime.datetime.combine(datetime.date.today(), datetime.time(0))
             until = begin + datetime.timedelta(days=1)
@@ -229,22 +256,22 @@ class Command(EntryBase):
             print(line, file=file)
 
     @classmethod
-    def parse(cls, logparser, lines, start=None):
+    def parse(cls, logparser: "LogParser", lines: Lines, **kw):
         # Read entry head
-        lineno = lines.lineno
         head = lines.next().rstrip()
 
         # Read entry body
         body = cls._read_body(lines)
 
         # Request for creation of a new log entry
+        start = kw.get("start")
         if start is not None:
             start = parsetime(start)
 
         return cls(head, body, start)
 
     @classmethod
-    def is_start_line(cls, line):
+    def is_start_line(cls, line: str):
         """
         Check if the next line looks like the start of a log block
         """
@@ -262,7 +289,7 @@ class LogParser:
         self.last_dt = None
         self.parserinfo = get_parserinfo(lang)
 
-    def parse_date(self, s, set_default=True):
+    def parse_date(self, s: str, set_default=True):
         try:
             d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
             if set_default:
@@ -272,8 +299,8 @@ class LogParser:
         except (TypeError, ValueError):
             return None
 
-    def parse(self, lines):
-        components = [Timebase, Entry, Command]
+    def parse(self, lines: Lines):
+        components: List[Type[EntryBase]] = [Timebase, Entry, Command]
 
         while True:
             line = lines.peek()
@@ -293,11 +320,12 @@ class LogParser:
 
 
 class Log:
-    def __init__(self, project):
+    def __init__(self, project: "project.Project"):
         self.project = project
         # Line number in the project file where the log starts
-        self._lineno = None
-        self._entries = []
+        self._lineno: Optional[int] = None
+        # Array of Entry
+        self._entries: List[EntryBase] = []
 
     @property
     def entries(self):
@@ -340,7 +368,7 @@ class Log:
             new_entries.append(e.sync(self.project))
         self._entries = new_entries
 
-    def parse(self, lines, **kw):
+    def parse(self, lines: Lines, **kw):
         self._lineno = lines.lineno
         lp = LogParser(**kw)
         for el in lp.parse(lines):
@@ -361,7 +389,7 @@ class Log:
         return True
 
     @classmethod
-    def is_start_line(cls, line):
+    def is_start_line(cls, line: str):
         """
         Check if the next line looks like the start of a log block
         """

@@ -1,3 +1,4 @@
+from typing import Optional, TextIO
 import os.path
 import subprocess
 import datetime
@@ -114,7 +115,7 @@ class Project(object):
             p.default_tags = tags
         return p
 
-    def load(self, fd=None):
+    def load(self, fd: Optional[TextIO] = None):
         from .parse import Lines
         lines = Lines(self.abspath, fd=fd)
 

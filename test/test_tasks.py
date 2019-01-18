@@ -127,7 +127,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         import taskw
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("new task", ["tag", "testtag1"], project="testprj")
-        new_task2 = tw.task_add("new parent task", project="testprj", depends=[new_task["uuid"]])
+        tw.task_add("new parent task", project="testprj", depends=[new_task["uuid"]])
         tw = None
 
         self.write_project([

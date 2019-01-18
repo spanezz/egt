@@ -1,7 +1,4 @@
-# coding: utf8
-
 import re
-import sys
 import shlex
 import taskw
 
@@ -10,7 +7,7 @@ class Line:
     """
     One line of text
     """
-    def __init__(self, line):
+    def __init__(self, line: str):
         self.line = line
 
     def print(self, file):
@@ -81,7 +78,8 @@ class Task:
         """
         Create the task in TaskWarrior
         """
-        if not self.is_new: return
+        if not self.is_new:
+            return
         tags = self.body.project.tags | self.tags
         # the following lines are a workaround for https://github.com/ralphbean/taskw/issues/111
         self.body.tw._marshal = False
@@ -99,7 +97,8 @@ class Task:
         Returns None if no mapping has been found.
         """
         # If it is new, nothing to do
-        if self.is_new: return
+        if self.is_new:
+            return
 
         # Try to resolve id into UUID
         tasks = self.body.project.state.get("tasks")
@@ -192,10 +191,7 @@ class Body:
         self._lineno = lines.lineno
 
         # Get everything until we reach the end of file
-        while True:
-            line = lines.next()
-            # Stop at an empty line or at EOF
-            if line is None: break
+        for line in lines.rest():
             mo = self.re_task.match(line)
             if mo is not None:
                 task = Task(self, **mo.groupdict())
@@ -221,13 +217,15 @@ class Body:
         # Collect known task UUIDs
         known_uuids = set()
         for t in self.tasks:
-            if t.task is None: continue
+            if t.task is None:
+                continue
             known_uuids.add(str(t.task["uuid"]))
 
         # Add all the Taskwarrior tasks not present in self.tasks
         new = []
         for task in self.tw.filter_tasks({"project": self.project.name}):
-            if task["id"] == 0 or str(task["uuid"]) in known_uuids: continue
+            if task["id"] == 0 or str(task["uuid"]) in known_uuids:
+                continue
             task = Task(self, task["id"], task=task)
             new.append(task)
 
@@ -240,8 +238,10 @@ class Body:
         # Rebuild state and save it
         ids = {}
         for t in self.tasks:
-            if t.is_orphan: continue
-            if t.id is None: continue
+            if t.is_orphan:
+                continue
+            if t.id is None:
+                continue
             ids[t.id] = str(t.task["uuid"])
         self.project.state.set("tasks", {"ids": ids})
 

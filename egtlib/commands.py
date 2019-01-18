@@ -1,3 +1,5 @@
+import typing
+from typing import Type
 import egtlib
 from .utils import format_duration
 from configparser import RawConfigParser
@@ -16,7 +18,7 @@ class CommandError(Exception):
 
 
 class Command:
-    COMMANDS = []
+    COMMANDS: typing.List[Type["Command"]] = []
 
     def __init__(self, args):
         self.args = args
@@ -31,7 +33,7 @@ class Command:
         pass
 
     @classmethod
-    def register(cls, c):
+    def register(cls, c: Type["Command"]):
         cls.COMMANDS.append(c)
 
 
@@ -88,7 +90,7 @@ class Summary(Command):
     Print a summary of the activity on all projects
     """
     def main(self):
-        from egtlib.texttable import Texttable
+        from texttable import Texttable
         from egtlib.utils import format_duration, format_td
         import shutil
         termsize = shutil.get_terminal_size((80, 25))
@@ -232,7 +234,7 @@ class Weekrpt(Command):
     Compute weekly reports
     """
     def main(self):
-        from egtlib.texttable import Texttable
+        from texttable import Texttable
         import shutil
         # egt weekrpt also showing stats by project, and by tags
         e = self.make_egt(self.args.projects)

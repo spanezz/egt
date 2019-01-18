@@ -2,7 +2,6 @@ from .utils import atomic_writer
 from .project import Project
 from .scan import scan
 from xdg import BaseDirectory
-from collections import namedtuple
 import os.path
 import json
 import logging
@@ -72,18 +71,18 @@ class State:
                     projects[p.name] = {"fname": p.abspath}
 
         # Log the difference with the old info
-        #old_projects = set(self.projects.keys())
-        #for name, p in new_projects.items():
-        #    old_projects.discard(name)
-        #    op = self.projects.get(name, None)
-        #    if op is None:
-        #        log.info("add %s: %s", name, p["fname"])
-        #    elif op["fname"] != p["fname"]:
-        #        log.info("mv %s: %s -> %s", name, p["fname"], p["fname"])
-        #    else:
-        #        log.info("hit %s: %s", name, p["fname"])
-        #for name in old_projects:
-        #    log.info("rm %s", name)
+        # old_projects = set(self.projects.keys())
+        # for name, p in new_projects.items():
+        #     old_projects.discard(name)
+        #     op = self.projects.get(name, None)
+        #     if op is None:
+        #         log.info("add %s: %s", name, p["fname"])
+        #     elif op["fname"] != p["fname"]:
+        #         log.info("mv %s: %s -> %s", name, p["fname"], p["fname"])
+        #     else:
+        #         log.info("hit %s: %s", name, p["fname"])
+        # for name in old_projects:
+        #     log.info("rm %s", name)
 
         # Commit the new project set
         statefile = os.path.join(statedir, "state.json")

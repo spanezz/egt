@@ -1,15 +1,16 @@
-# coding: utf-8
 import os
 import sys
 import subprocess
 try:
     import dbus
+    HAVE_DBUS = True
 except ImportError:
-    dbus = None
+    HAVE_DBUS = False
 
 
 def connect_to_buffy():
-    if not dbus: return None
+    if not HAVE_DBUS:
+        return None
 
     session_bus = dbus.SessionBus()
     try:
@@ -39,7 +40,8 @@ def run_editor(proj):
 
 def run_work_session(proj, with_editor=True):
     pid = os.fork()
-    if pid > 0: return
+    if pid > 0:
+        return
 
     argv0 = os.path.abspath(sys.argv[0])
 
