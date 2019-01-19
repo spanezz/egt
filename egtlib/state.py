@@ -1,3 +1,4 @@
+from typing import List, Dict
 from .utils import atomic_writer
 from .project import Project
 from .scan import scan
@@ -18,7 +19,7 @@ class State:
         # Map project names to ProjectInfo objects
         self.projects = {}
 
-    def load(self, statedir=None):
+    def load(self, statedir: str = None) -> None:
         if statedir is None:
             statedir = self.get_state_dir()
 
@@ -45,7 +46,7 @@ class State:
             return
 
     @classmethod
-    def rescan(cls, dirs, statedir=None):
+    def rescan(cls, dirs: List[str], statedir: str = None) -> None:
         """
         Rebuild the state looking for files in the given directories.
 
@@ -57,7 +58,7 @@ class State:
             statedir = cls.get_state_dir()
 
         # Read and detect duplicates
-        projects = {}
+        projects: Dict[str, dict] = {}
         for dirname in dirs:
             for fname in scan(dirname):
                 try:
@@ -103,5 +104,5 @@ class State:
         log.debug("%s: new state written", statefile)
 
     @classmethod
-    def get_state_dir(cls):
+    def get_state_dir(cls) -> str:
         return BaseDirectory.save_data_path('egt')
