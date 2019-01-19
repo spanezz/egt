@@ -4,7 +4,8 @@ import os.path
 from egtlib import scan
 
 basedir = os.path.dirname(__file__)
-if not basedir: basedir = os.getcwd()
+if not basedir:
+    basedir = os.getcwd()
 basedir = os.path.abspath(os.path.join(basedir, ".."))
 testdir = os.path.join(basedir, "test")
 

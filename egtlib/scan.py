@@ -1,3 +1,4 @@
+from typing import Generator, Set
 import os
 import os.path
 import logging
@@ -11,7 +12,7 @@ LEAF_FILE_MARKERS = frozenset((
 ))
 
 
-def is_script(fname):
+def is_script(fname: str) -> bool:
     """
     Check if a file looks like a script
     """
@@ -21,11 +22,12 @@ def is_script(fname):
     return False
 
 
-def scan(top):
+def scan(top: str) -> Generator[str, None, None]:
     """
     Generate the pathnames of all project files inside the given directory
     """
-    seen = set()
+    # inodes already visited
+    seen: Set[int] = set()
     for root, dirs, files in os.walk(top, followlinks=True):
         # Since we follow links, prevent loops by remembering which inodes we
         # visited
