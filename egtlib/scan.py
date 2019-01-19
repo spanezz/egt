@@ -51,9 +51,6 @@ def scan(top: str) -> Generator[str, None, None]:
                 yield os.path.join(top, root, f)
                 if f == ".egt":
                     has_dot_egt = True
-            elif f == "ore":
-                # Legacy 'ore' files (TODO: remove once everyone migrated)
-                yield os.path.join(top, root, f)
             elif f == "egt":
                 has_egt = True
             elif f in LEAF_FILE_MARKERS:

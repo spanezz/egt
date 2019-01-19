@@ -18,7 +18,6 @@ class TestScan(unittest.TestCase):
     def test_scan(self):
         res = sorted([x[len(testdir) + 10:] for x in scan(os.path.join(testdir, "testdata"))])
         self.assertEqual(res, [
-            "bar/ore",
             "baz/egt",
             "foo/.egt",
             "gnu/.egt",
