@@ -11,6 +11,9 @@ import re
 
 
 def parsetime(s: str) -> datetime.time:
+    """
+    Parse a time in the form hh:mm, and return the corresponding datetime.time
+    """
     h, m = s.split(":")
     return datetime.time(int(h), int(m), 0)
 

@@ -1,29 +1,41 @@
+from typing import TextIO, Optional, List
+from . import project
+from .parse import Lines
 import re
 import shlex
 import taskw
 
 
-class Line:
+class BodyEntry:
+    """
+    Base class for elements that compose a project body
+    """
+    def print(self, file: TextIO) -> None:
+        raise NotImplementedError("print has been called on raw BodyEntry object")
+
+
+class Line(BodyEntry):
     """
     One line of text
     """
     def __init__(self, line: str):
         self.line = line
 
-    def print(self, file):
+    def print(self, file: TextIO) -> None:
         print(self.line, file=file)
 
     def __repr__(self):
         return "Line({})".format(repr(self.line))
 
 
-class Task:
-    re_attribute = re.compile(r"^(?P<key>[^:]+):(?P<val>[^:]+)$")
-    task_attributes = ["start", "end", "due", "until",
-                       "wait", "scheduled", "priority"]
+class Task(BodyEntry):
     """
     A TaskWarrior task
     """
+    re_attribute = re.compile(r"^(?P<key>[^:]+):(?P<val>[^:]+)$")
+    task_attributes = ["start", "end", "due", "until",
+                       "wait", "scheduled", "priority"]
+
     def __init__(self, body, id, indent="", text=None, task=None):
         # Body object owning this Task
         self.body = body
@@ -157,22 +169,26 @@ class Task:
 
 
 class Body:
+    """
+    The text body of a Project file, as anything that follows the metadata and
+    the log
+    """
     re_task = re.compile(r"^(?P<indent>\s*)t(?P<id>\d*)\s+(?P<text>.+)$")
 
-    def __init__(self, project):
+    def __init__(self, project: "project.Project"):
         self.project = project
 
         # Line number in the project file where the body starts
-        self._lineno = None
+        self._lineno: Optional[int] = None
 
         # Text lines for the project body
-        self.content = []
+        self.content: List[BodyEntry] = []
 
         # Just the Task entries, for easy access
-        self.tasks = []
+        self.tasks: List[Task] = []
 
         # Taskwarrior interface, loaded lazily
-        self._tw = None
+        self._tw: Optional[taskw.TaskWarrior] = None
 
     def force_load_tw(self, **kw):
         """
@@ -185,12 +201,12 @@ class Body:
         self._tw = taskw.TaskWarrior(marshal=True, **kw)
 
     @property
-    def tw(self):
+    def tw(self) -> taskw.TaskWarrior:
         if self._tw is None:
             self._tw = taskw.TaskWarrior(marshal=True)
         return self._tw
 
-    def parse(self, lines):
+    def parse(self, lines: Lines) -> None:
         self._lineno = lines.lineno
 
         # Get everything until we reach the end of file
@@ -203,7 +219,7 @@ class Body:
             else:
                 self.content.append(Line(line))
 
-    def sync_tasks(self):
+    def sync_tasks(self) -> None:
         """
         Sync the tasks in the body with TaskWarrior
         """
@@ -248,7 +264,7 @@ class Body:
             ids[t.id] = str(t.task["uuid"])
         self.project.state.set("tasks", {"ids": ids})
 
-    def print(self, file):
+    def print(self, file: TextIO) -> bool:
         """
         Write the body as a project body section to the given output file.
 
