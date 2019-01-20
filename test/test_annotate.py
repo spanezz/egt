@@ -23,8 +23,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        proj.body.sync_tasks()
-        proj.log.sync(today=today)
+        proj.annotate(today=today)
         with io.StringIO() as fd:
             proj.print(fd, today=today)
             return fd.getvalue()
@@ -69,6 +68,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
         res = self.annotate([
             "Lang: it",
             "Total:",
+            "",
             "2019",
             "01 marzo: 10:00-12:00",
             " - fixed",
@@ -80,7 +80,9 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
             "Total: 3h",
             "",
             "2019",
-            "01 marzo:",
+            "01 marzo: 10:00-12:00 2h",
+            " - fixed",
+            "02 marzo: 10:00-11:00 1h",
             " - fixed",
             "",
         ])
@@ -88,6 +90,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
         res = self.annotate([
             "Lang: it",
             "Total: 3h",
+            "",
             "2019",
             "01 marzo: 10:00-12:00",
             " - fixed",
@@ -97,11 +100,13 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(res.splitlines(), [
             "Lang: it",
             "Total:",
-            " (all): 3h",
+            " *: 3h",
             " tag: 1h",
             "",
             "2019",
-            "01 marzo:",
+            "01 marzo: 10:00-12:00 2h",
+            " - fixed",
+            "02 marzo: 10:00-11:00 1h +tag",
             " - fixed",
             "",
         ])

@@ -364,8 +364,7 @@ class Project(object):
         archived.meta = self.meta.copy()
         archived.log._entries = entries
         archived.meta.set("archived", "yes")
-        duration = sum(e.duration for e in entries)
-        archived.meta.set("total", format_duration(duration))
+        archived.meta.set_durations(archived.log.durations())
         archived.archived = True
         with open(pathname, "wt") as out:
             archived.print(out)
@@ -394,6 +393,16 @@ class Project(object):
             date = (date + datetime.timedelta(days=40)).replace(day=1)
 
         return archived
+
+    def annotate(self, today: Optional[datetime.date] = None):
+        """
+        Fill in fields, resolve commands, and perform all pending actions
+        embedded in the project
+        """
+        self.body.sync_tasks()
+        self.log.sync(today=today)
+        if self.meta.has("total"):
+            self.meta.set_durations(self.log.durations())
 
     @classmethod
     def has_project(cls, abspath):

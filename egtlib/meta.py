@@ -1,6 +1,7 @@
-from typing import Optional, TextIO, List
+from typing import Optional, TextIO, List, Dict
 from collections import OrderedDict
 from .parse import Lines
+from .utils import format_duration
 import re
 import sys
 import inspect
@@ -33,10 +34,17 @@ class Meta:
         res.tags = self.tags.copy()
         return res
 
+    def has(self, name: str) -> bool:
+        """
+        Check if the given field is set in the metadata
+        """
+        return name.lower() in self._raw
+
     def get(self, name: str, *args) -> str:
         """
         Get a metadata element by name, optionally with a default.
         """
+        name = name.lower()
         if hasattr(self, name):
             return getattr(self, name)
         return self._raw.get(name, *args)
@@ -53,6 +61,20 @@ class Meta:
         nothing
         """
         self._raw.pop(name.lower(), None)
+
+    def set_durations(self, durations: Dict[str, int]) -> None:
+        """
+        Set the Total: header from the given computed durations
+        """
+        if len(durations) == 1:
+            self.set("total", format_duration(durations[""]))
+        else:
+            lines = []
+            for tag, duration in sorted(durations.items()):
+                if not tag:
+                    tag = "*"
+                lines.append("{}: {}".format(tag, format_duration(duration)))
+            self.set("total", "\n".join(lines))
 
     def parse(self, lines: Lines) -> None:
         """

@@ -345,8 +345,7 @@ class Annotate(Command):
         if proj is None:
             return
 
-        proj.body.sync_tasks()
-        proj.log.sync()
+        proj.annotate()
         proj.print(sys.stdout)
 
     @classmethod

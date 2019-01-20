@@ -4,6 +4,7 @@ from . import utils
 from .lang import get_parserinfo
 from . import project
 from .parse import Lines
+from collections import Counter
 import dateutil.parser
 import datetime
 import sys
@@ -393,11 +394,12 @@ class Command(EntryBase):
 
 
 class LogPrinter:
-    def __init__(self, file: TextIO, today: Optional[datetime.date] = None):
+    def __init__(self, file: TextIO, today: Optional[datetime.date] = None, archived: bool = False):
         self.today: datetime.date = today if today is not None else utils.today()
         self.file = file
         self.has_time_ref = False
         self.last_reference_time: Optional[datetime.datetime] = None
+        self.archived = archived
 
     def print(self, entry: EntryBase):
         if not self.has_time_ref:
@@ -409,6 +411,8 @@ class LogPrinter:
             self.last_reference_time = reftime
 
     def done(self):
+        if self.archived:
+            return
         this_year = self.today.year
         if self.last_reference_time is None or self.last_reference_time.year != this_year:
             print(this_year, file=self.file)
@@ -474,8 +478,24 @@ class Log:
         if first is None:
             return []
 
+        # If we removed Entry entries making two Timebase entries consecutive,
+        # remove the first of the two
         res = self._entries[first:last + 1]
         del self._entries[first:last + 1]
+        if first > 0 and first < len(self._entries) and isinstance(self._entries[first - 1], Timebase) and isinstance(self._entries[first], Timebase):
+            self._entries.pop(first - 1)
+        return res
+
+    def durations(self) -> Counter:
+        """
+        Compute durations, total and by tag
+        """
+        res: Counter = Counter()
+        for e in self.entries:
+            duration = e.duration
+            res[""] += duration
+            for tag in e.tags:
+                res[tag] += duration
         return res
 
     def sync(self, today=None):
@@ -510,7 +530,7 @@ class Log:
         nothing to print.
         """
         # self.project.set_locale()
-        printer = LogPrinter(file, today=today)
+        printer = LogPrinter(file, today=today, archived=self.project.archived)
         for entry in self._entries:
             printer.print(entry)
         printer.done()
