@@ -357,7 +357,7 @@ class Project(object):
         archive_dir = os.path.expanduser(archive_dir)
         pathname = os.path.join(archive_dir, month.strftime("%Y%m-") + self.name + ".egt")
         if os.path.exists(pathname):
-            log.info("%s not archived for %04d-%02d: %s already exists", self.name, month.year, month.month, pathname)
+            log.warn("%s not archived for %04d-%02d: %s already exists", self.name, month.year, month.month, pathname)
             return None
 
         # Select the log entries
