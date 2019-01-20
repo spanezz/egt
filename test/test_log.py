@@ -376,3 +376,44 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 "15 mars:",
                 " - localized",
             ])
+
+    def testTags(self):
+        """
+        Test creation of new taskwarrior tasks from a project file
+        """
+        self.write_project([
+            "2015",
+            "15 march: 9:00-12:00 3h +tag1 +tag2",
+            " - tested things",
+            "16 march: +tag2",
+            " - implemented day logs",
+        ])
+        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj.load()
+
+        self.assertEqual(proj.log._entries[1].tags, ["tag1", "tag2"])
+        self.assertEqual(proj.log._entries[2].tags, ["tag2"])
+
+        with io.StringIO() as out:
+            proj.log.print(out, today=datetime.date(2015, 6, 1))
+            body_lines = out.getvalue().splitlines()
+
+        self.assertEqual(len(body_lines), 5)
+        self.assertEqual(body_lines[0], "2015")
+        self.assertEqual(body_lines[1], "15 march: 9:00-12:00 3h +tag1 +tag2")
+        self.assertEqual(body_lines[2], " - tested things")
+        self.assertEqual(body_lines[3], "16 march: +tag2")
+        self.assertEqual(body_lines[4], " - implemented day logs")
+
+        proj.log._entries[1].tags.append("tag3")
+
+        with io.StringIO() as out:
+            proj.log.print(out, today=datetime.date(2015, 6, 1))
+            body_lines = out.getvalue().splitlines()
+
+        self.assertEqual(len(body_lines), 5)
+        self.assertEqual(body_lines[0], "2015")
+        self.assertEqual(body_lines[1], "15 march: 9:00-12:00 3h +tag1 +tag2 +tag3")
+        self.assertEqual(body_lines[2], " - tested things")
+        self.assertEqual(body_lines[3], "16 march: +tag2")
+        self.assertEqual(body_lines[4], " - implemented day logs")

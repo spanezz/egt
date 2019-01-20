@@ -171,10 +171,18 @@ class Entry(EntryBase):
     """
     Free text log entry with a time header
     """
-    re_entry = re.compile(r"^(?P<date>(?:\S| \d)[^:]*):\s*(?:(?P<start>\d+:\d+)-\s*(?P<end>\d+:\d+)?|$)")
-    re_tail = re.compile(r"(?P<head>:\s*\d+:\d+-\s*\d+:\d+).*")
+    re_entry = re.compile(
+        r"^"
+        r"(?P<date>(?:\S| \d)[^:]*):\s*"  # Date header
+        r"(?:(?P<trange>(?P<start>\d+:\d+)\s*-\s*(?P<end>\d+:\d+)?)?)\s*"  # Optional time interval
+        r"(?P<notes>(?:(?:\+\S+|\[[^]]+\]|\d+[a-z]+)\s*)*)"  # Tags and project name
+        r"$"
+    )
+    re_projname = re.compile(r"\s*\[[^]]+\]\s*$")
+    re_tag = re.compile(r"\s*\+\S+\s*$")
+    re_hours = re.compile(r"^")
 
-    def __init__(self, begin: datetime.datetime, until: Optional[datetime.datetime], head: str, body: List[str], fullday: bool):
+    def __init__(self, begin: datetime.datetime, until: Optional[datetime.datetime], head: str, body: List[str], fullday: bool, tags: List[str] = []):
         super().__init__(body)
         # Datetime of beginning of log entry timespan
         self.begin = begin
@@ -184,6 +192,8 @@ class Entry(EntryBase):
         self.head = head
         # If true, the entry spans the whole day
         self.fullday = fullday
+        # Log entry tags
+        self.tags = tags
 
     def reference_time(self) -> Optional[datetime.datetime]:
         return self.begin
@@ -238,56 +248,76 @@ class Entry(EntryBase):
         print(self.begin.year, file=file)
 
     def print(self, file=sys.stdout, project: "project.Project" = None):
-        if self.fullday:
-            print(self.head, file=file)
-        else:
-            # If there is a tail after the duration, remove it
-            head = [re.sub(self.re_tail, r"\g<head>", self.head, count=1)]
+        mo = self.re_entry.match(self.head)
+        if not mo:
+            raise RuntimeError("Header line was parsed right during parsing, and not during printing")
+        line = [mo.group("date") + ":"]
+        if not self.fullday:
+            line.append(mo.group("trange"))
             if self.until:
-                head.append(format_duration(self.duration))
-            if project is not None:
-                head.append("[%s]" % project)
-            print(" ".join(head), file=file)
+                line.append(format_duration(self.duration))
 
-        for line in self.body:
-            print(line, file=file)
+        line += ["+" + tag for tag in self.tags]
+
+        if project is not None:
+            line.append("[%s]" % project)
+
+        print(" ".join(line), file=file)
+
+        for bline in self.body:
+            print(bline, file=file)
 
     @classmethod
     def parse(cls, logparser: "LogParser", **kw):
-        # Read entry head
         entry_lineno = logparser.lines.lineno
-        entry_head = logparser.lines.next()
-
+        # Read entry head line
+        head = logparser.lines.next()
         # Read entry body
-        entry_body = cls._read_body(logparser.lines)
+        body = cls._read_body(logparser.lines)
 
         # Parse entry head
-        entry_date = logparser.parse_date(kw["date"])
-        if entry_date is None:
+        date = logparser.parse_date(kw["date"])
+        if date is None:
             logparser.log_parse_error(entry_lineno, "cannot parse log header date: {} (lang={})".format(repr(kw["date"]), logparser.lang))
-            entry_date = logparser.default
-        entry_date = entry_date.date()
+            date = logparser.default
 
-        entry_until: Optional[datetime.datetime]
-
+        # Parse start-end times
         start = kw.get("start")
         end = kw.get("end")
+        begin: datetime.datetime
+        until: Optional[datetime.datetime]
         if start:
-            entry_begin = datetime.datetime.combine(entry_date, parsetime(start))
+            begin = datetime.datetime.combine(date, parsetime(start))
             if end:
-                entry_until = datetime.datetime.combine(entry_date, parsetime(end))
-                if entry_until < entry_begin:
+                until = datetime.datetime.combine(date, parsetime(end))
+                if until < begin:
                     # Deal with intervals across midnight
-                    entry_until += datetime.timedelta(days=1)
+                    until += datetime.timedelta(days=1)
             else:
-                entry_until = None
-            entry_fullday = False
+                until = None
+            fullday = False
         else:
-            entry_begin = datetime.datetime.combine(entry_date, datetime.time(0))
-            entry_until = entry_begin + datetime.timedelta(days=1)
-            entry_fullday = True
+            begin = datetime.datetime.combine(date, datetime.time(0))
+            until = begin + datetime.timedelta(days=1)
+            fullday = True
 
-        return cls(entry_begin, entry_until, entry_head, entry_body, entry_fullday)
+        # Parse tags
+        tags: List[str] = []
+        notes = kw.get("notes")
+        if notes:
+            for note in notes.split():
+                if note[0] == "+":
+                    tags.append(note[1:])
+                elif note[0] == "[":
+                    # Ignore project name
+                    pass
+                elif note[0].isdigit():
+                    # Ignore hour count
+                    pass
+                else:
+                    logparser.log_parse_error(entry_lineno, "unrecognised annotation {}".format(repr(note)))
+
+        return cls(begin, until, head, body, fullday, tags)
 
     @classmethod
     def is_start_line(cls, line: str):
