@@ -377,7 +377,7 @@ class Project(object):
             archived.print(out)
         return archived
 
-    def archive(self, cutoff: datetime.date) -> List["Project"]:
+    def archive(self, cutoff: datetime.date, report_fd: TextIO, save=True) -> List["Project"]:
         """
         Archive contents until the given cutoff date (excluded).
 
@@ -388,19 +388,25 @@ class Project(object):
             log.info("%s not archived: archive-dir not found in header", self.name)
             return []
 
-        # Get the datetime of the first Entry in the log
         archived = []
-        date = self.log.first_entry.begin.date()
+        first_entry = self.log.first_entry
+        if first_entry is None:
+            log.info("%s not archived: log is empty", self.name)
+        else:
+            # Get the datetime of the first Entry in the log
+            date = first_entry.begin.date()
 
-        # Iterate until cutoff
-        while date < cutoff:
-            arc = self.archive_month(archive_dir, date)
-            if arc is not None:
-                archived.append(arc)
-            date = (date + datetime.timedelta(days=40)).replace(day=1)
+            # Iterate until cutoff
+            while date < cutoff:
+                arc = self.archive_month(archive_dir, date)
+                if arc is not None:
+                    archived.append(arc)
+                    arc.print(report_fd)
+                date = (date + datetime.timedelta(days=40)).replace(day=1)
 
         # Save without the archived enties
-        self.save()
+        if save:
+            self.save()
 
         return archived
 

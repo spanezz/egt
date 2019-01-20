@@ -362,11 +362,16 @@ class Archive(Command):
     """
     def main(self):
         cutoff = datetime.datetime.strptime(self.args.month, "%Y-%m").date()
-        cutoff += datetime.timedelta(days=40).replace(day=1)
+        cutoff = (cutoff + datetime.timedelta(days=40)).replace(day=1)
 
         e = self.make_egt(self.args.projects)
         for p in e.projects:
-            archives = p.archive(cutoff)
+            if self.args.output:
+                with open(self.args.output, "wt") as fd:
+                    archives = p.archive(cutoff, report_fd=fd, save=self.args.remove_old)
+            else:
+                archives = p.archive(cutoff, report_fd=sys.stdout, save=self.args.remove_old)
+
             for archive in archives:
                 print("Archived {}: {}".format(p.name, archive.abspath))
 
@@ -378,6 +383,12 @@ class Archive(Command):
         subparser.add_argument(
                 "--month", "-m", action="store", default=last_month.strftime("%Y-%m"),
                 help="print log until the given month (default: %(default)s)")
+        subparser.add_argument(
+                "--remove-old", action="store_true",
+                help="rewrite the original project file removing archived entries")
+        subparser.add_argument(
+                "--output", "-o", action="store",
+                help="output of aggregated archived logs (default: standard output)")
 
 
 @Command.register
