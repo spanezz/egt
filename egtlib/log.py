@@ -16,11 +16,9 @@ class LogParser:
     def __init__(self, lines: Lines, lang: Optional[str] = None):
         self.lines = lines
         self.lang = lang
+        self.parserinfo = get_parserinfo(lang)
         # Defaults for missing parsedate values
         self.default = datetime.datetime(utils.today().year, 1, 1)
-        # Last datetime parsed
-        self.last_dt: Optional[datetime.datetime] = None
-        self.parserinfo = get_parserinfo(lang)
         # Log of parse errors
         self.errors: List[str] = []
 
@@ -32,15 +30,13 @@ class LogParser:
     def log_parse_error(self, lineno, msg):
         self.errors.append("line {}: {}".format(lineno + 1, msg))
 
-    def parse_date(self, s: str, set_default=True):
+    def parse_date(self, s: str):
         try:
             d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
-            if set_default:
-                self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
-            self.last_dt = d
-            return d
         except (TypeError, ValueError):
             return None
+        self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
+        return d
 
     def parse_entries(self) -> Generator["EntryBase", None, None]:
         while True:
