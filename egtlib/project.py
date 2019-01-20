@@ -51,9 +51,7 @@ class Project(object):
         self.statedir = statedir
         self.abspath = abspath
         self.default_path, basename = os.path.split(abspath)
-        # TODO: "ore" is an obsolete name for egt files: get rid of them and
-        # remove support here
-        if basename in (".egt", "ore"):
+        if basename == ".egt":
             self.default_name = os.path.basename(self.default_path)
         else:
             self.default_name = os.path.splitext(basename)[0]

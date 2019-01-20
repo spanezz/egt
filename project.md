@@ -4,7 +4,6 @@
 
 * `project_name/.egt`.
 * `project_name.egt`: to have multiple project files in the same directory.
-* `project_name/ore`: legacy, deprecated.
 
 
 ## Metadata
