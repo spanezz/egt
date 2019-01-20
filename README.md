@@ -9,7 +9,7 @@ I currently use egt to:
  * quickly find project directories, to open terminals in them, and back up the
    information they contain that is not stored in git and pushed remotely
  * draft TODO lists
- * compute work hours for billing customers
+ * compute work hours to bill customers
  * brainstorm, and turn brainstorming notes into plans
  * turn plans into [TaskWarrior](http://taskwarrior.org/) tasks
  * print reports of my activity
@@ -18,7 +18,7 @@ I currently use egt to:
 ## Dependencies
 
 ```sh
-apt install python3-dateutil python3-taskw python3-xdg
+apt install python3-dateutil python3-taskw python3-xdg python3-git
 ```
 
 ## Quickstart
