@@ -17,6 +17,12 @@
  - metadata fields cleaned up, better support for multiline fields, support for
    adding fields from code, fixing archive losing "Archived: yes" header
  - dropped unused dbus buffy integration
+ - egt archive --remove-old
+ - egt archive --output
+ - tagged log entries: append `+tag1 +tag2` in the log header to tag the entry
+ - computes time with tagged log entries
+ - if Total: is present in the metadata header, it is annotated with computed
+   aggregated durations of log entries
 
 ## New in version 0.3
 
