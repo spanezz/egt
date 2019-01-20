@@ -24,6 +24,15 @@ class Meta:
         # Set of tags for the project
         self.tags = set()
 
+    def copy(self):
+        """
+        Return a copy of this metadata
+        """
+        res = Meta()
+        res._raw = self._raw.copy()
+        res.tags = self.tags.copy()
+        return res
+
     def get(self, name: str, *args) -> str:
         """
         Get a metadata element by name, optionally with a default.

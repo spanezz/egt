@@ -1,4 +1,4 @@
-from typing import Optional, TextIO, Any
+from typing import Optional, TextIO, Any, List
 import os.path
 import subprocess
 import datetime
@@ -339,6 +339,61 @@ class Project(object):
             if not os.path.exists(path):
                 continue
             tarout.add(path)
+
+    def archive_month(self, archive_dir: str, month: datetime.date) -> Optional["Project"]:
+        """
+        Write log entries for the given month to an archive file
+        """
+        # Generate the target file name
+        if "%" in archive_dir:
+            archive_dir = month.strftime(archive_dir)
+        archive_dir = os.path.expanduser(archive_dir)
+        pathname = os.path.join(archive_dir, month.strftime("%Y%m-") + self.name + ".egt")
+        if os.path.exists(pathname):
+            log.info("%s not archived for %04d-%02d: %s already exists", self.name, month.year, month.month, pathname)
+            return None
+
+        # Select the log entries
+        next_month = (month + datetime.timedelta(days=40)).replace(day=1)
+        entries = self.log.detach_entries(month, next_month)
+        if not entries:
+            return None
+
+        # Create a new project
+        archived = Project(pathname)
+        archived.meta = self.meta.copy()
+        archived.log._entries = entries
+        archived.meta.set("archived", "yes")
+        duration = sum(e.duration for e in entries)
+        archived.meta.set("total", format_duration(duration))
+        archived.archived = True
+        with open(pathname, "wt") as out:
+            archived.print(out)
+        return archived
+
+    def archive(self, cutoff: datetime.date) -> List["Project"]:
+        """
+        Archive contents until the given cutoff date (excluded).
+
+        Returns the list of archive file names written.
+        """
+        archive_dir = self.meta.get("archive-dir", None)
+        if archive_dir is None:
+            log.info("%s not archived: archive-dir not found in header", self.name)
+            return []
+
+        # Get the datetime of the first Entry in the log
+        archived = []
+        date = self.log.first_entry.begin.date()
+
+        # Iterate until cutoff
+        while date < cutoff:
+            arc = self.archive_month(archive_dir, date)
+            if arc is not None:
+                archived.append(arc)
+            date = (date + datetime.timedelta(days=40)).replace(day=1)
+
+        return archived
 
     @classmethod
     def has_project(cls, abspath):

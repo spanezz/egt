@@ -13,7 +13,11 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
 
     def annotate(self, text, today=datetime.date(2019, 2, 1)):
         with open(self.projectfile, "wt") as fd:
-            fd.write(text)
+            if isinstance(text, str):
+                fd.write(text)
+            else:
+                for line in text:
+                    print(line, file=fd)
 
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.body.force_load_tw(config_filename=self.taskrc)
@@ -52,6 +56,49 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
         res = self.annotate("Lang: it\nParse-Errors: foo\n\n01 marzo:\n - fixed\n")
         self.assertEqual(res.splitlines(), [
             "Lang: it",
+            "",
+            "2019",
+            "01 marzo:",
+            " - fixed",
+            "",
+        ])
+
+    def test_totals(self):
+        self.maxDiff = None
+
+        res = self.annotate([
+            "Lang: it",
+            "Total:",
+            "2019",
+            "01 marzo: 10:00-12:00",
+            " - fixed",
+            "02 marzo: 10:00-11:00",
+            " - fixed",
+        ])
+        self.assertEqual(res.splitlines(), [
+            "Lang: it",
+            "Total: 3h",
+            "",
+            "2019",
+            "01 marzo:",
+            " - fixed",
+            "",
+        ])
+
+        res = self.annotate([
+            "Lang: it",
+            "Total: 3h",
+            "2019",
+            "01 marzo: 10:00-12:00",
+            " - fixed",
+            "02 marzo: 10:00-11:00 +tag",
+            " - fixed",
+        ])
+        self.assertEqual(res.splitlines(), [
+            "Lang: it",
+            "Total:",
+            " (all): 3h",
+            " tag: 1h",
             "",
             "2019",
             "01 marzo:",

@@ -1,13 +1,10 @@
 import typing
 from typing import Type
 import egtlib
-from .utils import format_duration
 from configparser import RawConfigParser
 import os
 import datetime
-import calendar
 import sys
-import io
 import logging
 
 log = logging.getLogger(__name__)
@@ -364,54 +361,15 @@ class Archive(Command):
     """
     Output the log for one or more projects
     """
-    def write_archive(self, project, entries, cutoff):
-        pathname = project.meta.get("archive-dir", None)
-        if pathname is None:
-            return "not archived: archive-dir not found in header"
-        if "%" in pathname:
-            pathname = cutoff.strftime(pathname)
-        pathname = os.path.expanduser(pathname)
-        pathname = os.path.join(pathname, cutoff.strftime("%Y%m-") + project.name + ".egt")
-        if os.path.exists(pathname):
-            return "not archived: {} already exists".format(pathname)
-        duration = sum(e.duration for e in entries)
-        project.meta.set("archived", "yes")
-        project.meta.set("total", format_duration(duration))
-        with io.open(pathname, "wt") as fd:
-            if "name" not in project.meta._raw:
-                print("Name:", project.name, file=fd)
-            project.meta.print(file=fd)
-            print(file=fd)
-            for l in entries:
-                l.print(file=fd)
-        return pathname
-
     def main(self):
-        # TODO: move to Project and unit test it
         cutoff = datetime.datetime.strptime(self.args.month, "%Y-%m").date()
-        cutoff = cutoff.replace(day=calendar.monthrange(cutoff.year, cutoff.month)[1])
+        cutoff += datetime.timedelta(days=40).replace(day=1)
+
         e = self.make_egt(self.args.projects)
-        archive_results = {}
         for p in e.projects:
-            # TODO: copy timebase and entry, ignore commands
-            # TODO: generate initial timebase in archived log
-            entries = list(l for l in p.log.entries if l.begin.date() <= cutoff)
-            if not entries:
-                continue
-            archive_results[p.name] = self.write_archive(p, entries, cutoff)
-            duration = sum(e.duration for e in entries)
-            # TODO: use Meta.print
-            if "name" not in p.meta._raw:
-                print("Name:", p.name)
-            p.meta.print()
-            print("{}: {}".format("Total", format_duration(duration)))
-            print()
-            # TODO: use Log.print or entry.print
-            for l in entries:
-                l.print()
-            print()
-        for name, res in sorted(archive_results.items()):
-            print("Archived {}: {}".format(name, res))
+            archives = p.archive(cutoff)
+            for archive in archives:
+                print("Archived {}: {}".format(p.name, archive.abspath))
 
     @classmethod
     def add_args(cls, subparser):

@@ -454,6 +454,30 @@ class Log:
             return e
         return None
 
+    def detach_entries(self, since, until):
+        """
+        Remove from the log the entries that go between the first Entry within
+        the given interval and the last Entry within the given interval
+        """
+        first = None
+        last = None
+        for idx, e in enumerate(self._entries):
+            if not isinstance(e, Entry):
+                continue
+            if e.begin.date() >= since and e.begin.date() < until:
+                if first is None:
+                    first = idx
+                    last = idx
+                else:
+                    last = idx
+
+        if first is None:
+            return []
+
+        res = self._entries[first:last + 1]
+        del self._entries[first:last + 1]
+        return res
+
     def sync(self, today=None):
         """
         Sync log contents with git or any other activity data sources
