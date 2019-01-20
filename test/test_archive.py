@@ -151,10 +151,13 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             "",
         ])
 
-        self.assertEqual(self.to_text(proj).splitlines(), [
+        remainder = [
             "Name: test",
             "Archive-Dir: " + self.workdir.name,
             "",
             "2019",
             "",
-        ])
+        ]
+        self.assertEqual(self.to_text(proj).splitlines(), remainder)
+        with open(proj.abspath, "rt") as fd:
+            self.assertEqual([x.rstrip() for x in fd], remainder)

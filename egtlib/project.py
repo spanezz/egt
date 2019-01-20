@@ -173,6 +173,13 @@ class Project(object):
 
         self.body.print(out)
 
+    def save(self, today=None):
+        """
+        Save over the original source file
+        """
+        with atomic_writer(self.abspath, "wt") as fd:
+            self.print(fd, today)
+
     @property
     def last_updated(self):
         """
@@ -391,6 +398,9 @@ class Project(object):
             if arc is not None:
                 archived.append(arc)
             date = (date + datetime.timedelta(days=40)).replace(day=1)
+
+        # Save without the archived enties
+        self.save()
 
         return archived
 
