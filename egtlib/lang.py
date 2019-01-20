@@ -41,7 +41,7 @@ class Locale:
         if cur is not None:
             self.set(cur)
 
-    def get_parserinfo(self, lang: str) -> dateutil.parser.parserinfo:
+    def get_parserinfo(self, lang: Optional[str]) -> dateutil.parser.parserinfo:
         if lang is None:
             return dateutil.parser.parserinfo()
 
@@ -88,9 +88,9 @@ class Locale:
 locale = Locale()
 
 
-def get_parserinfo(lang: str) -> dateutil.parser.parserinfo:
+def get_parserinfo(lang: Optional[str]) -> dateutil.parser.parserinfo:
     return locale.get_parserinfo(lang)
 
 
-def set_locale(lang: str) -> None:
+def set_locale(lang: Optional[str]) -> None:
     return locale.set(lang)

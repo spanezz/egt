@@ -25,7 +25,7 @@ class Command:
         self.config = RawConfigParser()
         self.config.read([os.path.expanduser("~/.egt.conf")])
 
-    def make_egt(self, filter=[]):
+    def make_egt(self, filter: typing.List[str] = []):
         return egtlib.Egt(config=self.config, filter=filter, show_archived=self.args.archived)
 
     @classmethod

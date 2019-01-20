@@ -1,4 +1,4 @@
-from typing import List, Optional, Type, TextIO
+from typing import List, Optional, Type, TextIO, Generator
 from .utils import format_duration
 from . import utils
 from .lang import get_parserinfo
@@ -8,6 +8,56 @@ import dateutil.parser
 import datetime
 import sys
 import re
+
+
+class LogParser:
+    ENTRY_TYPES: List[Type["EntryBase"]] = []
+
+    def __init__(self, lines: Lines, lang: Optional[str] = None):
+        self.lines = lines
+        self.lang = lang
+        # Defaults for missing parsedate values
+        self.default = datetime.datetime(utils.today().year, 1, 1)
+        # Last datetime parsed
+        self.last_dt: Optional[datetime.datetime] = None
+        self.parserinfo = get_parserinfo(lang)
+        # Log of parse errors
+        self.errors: List[str] = []
+
+    @classmethod
+    def register_entry_type(cls, c: Type["EntryBase"]):
+        cls.ENTRY_TYPES.append(c)
+        return c
+
+    def log_parse_error(self, lineno, msg):
+        self.errors.append("line {}: {}".format(lineno + 1, msg))
+
+    def parse_date(self, s: str, set_default=True):
+        try:
+            d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
+            if set_default:
+                self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
+            self.last_dt = d
+            return d
+        except (TypeError, ValueError):
+            return None
+
+    def parse_entries(self) -> Generator["EntryBase", None, None]:
+        while True:
+            line = self.lines.peek()
+            if not line:
+                break
+
+            for c in self.ENTRY_TYPES:
+                mo = c.is_start_line(line)
+                if mo:
+                    el = c.parse(self, **mo.groupdict())
+                    if el is not None:
+                        yield el
+                    break
+            else:
+                self.log_parse_error(self.lines.lineno, "log parse stops at unrecognised line " + repr(line))
+                break
 
 
 def parsetime(s: str) -> datetime.time:
@@ -71,7 +121,7 @@ class EntryBase:
         raise RuntimeError("print called on EntryBase instead of the real class")
 
     @classmethod
-    def parse(cls, logparser: "LogParser", lines: Lines, **kw):
+    def parse(cls, logparser: "LogParser", **kw):
         raise RuntimeError("parse called on EntryBase instead of the real class")
 
     @classmethod
@@ -79,6 +129,7 @@ class EntryBase:
         return False
 
 
+@LogParser.register_entry_type
 class Timebase(EntryBase):
     """
     Log entry providing a time reference for the next log entries
@@ -101,12 +152,12 @@ class Timebase(EntryBase):
         pass
 
     @classmethod
-    def parse(cls, logparser: "LogParser", lines: Lines, **kw):
+    def parse(cls, logparser: "LogParser", **kw):
         val: str = kw["date"] or kw["year"]
         # Just parse the next line, storing it nowhere, but updating
         # the 'default' datetime context
         dt = logparser.parse_date(val)
-        line = lines.next()
+        line = logparser.lines.next()
         if dt is None:
             return None
         return cls(line, dt)
@@ -119,6 +170,7 @@ class Timebase(EntryBase):
         return cls.re_timebase.match(line)
 
 
+@LogParser.register_entry_type
 class Entry(EntryBase):
     """
     Free text log entry with a time header
@@ -205,13 +257,13 @@ class Entry(EntryBase):
             print(line, file=file)
 
     @classmethod
-    def parse(cls, logparser: "LogParser", lines: Lines, **kw):
+    def parse(cls, logparser: "LogParser", **kw):
         # Read entry head
-        entry_lineno = lines.lineno
-        entry_head = lines.next()
+        entry_lineno = logparser.lines.lineno
+        entry_head = logparser.lines.next()
 
         # Read entry body
-        entry_body = cls._read_body(lines)
+        entry_body = cls._read_body(logparser.lines)
 
         # Parse entry head
         entry_date = logparser.parse_date(kw["date"])
@@ -249,6 +301,7 @@ class Entry(EntryBase):
         return cls.re_entry.match(line)
 
 
+@LogParser.register_entry_type
 class Command(EntryBase):
     """
     Log entry with a user query, to be expanded with the query result
@@ -291,12 +344,12 @@ class Command(EntryBase):
             print(line, file=file)
 
     @classmethod
-    def parse(cls, logparser: "LogParser", lines: Lines, **kw):
+    def parse(cls, logparser: "LogParser", **kw):
         # Read entry head
-        head = lines.next().rstrip()
+        head = logparser.lines.next().rstrip()
 
         # Read entry body
-        body = cls._read_body(lines)
+        body = cls._read_body(logparser.lines)
 
         # Request for creation of a new log entry
         start = kw.get("start")
@@ -311,52 +364,6 @@ class Command(EntryBase):
         Check if the next line looks like the start of a log block
         """
         return cls.re_new_time.match(line) or cls.re_new_day.match(line)
-
-
-# TODO: turn into something like MonotonousDateParser and move parse method to
-#       Log.
-class LogParser:
-    def __init__(self, lang=None):
-        self.lang = lang
-        # Defaults for missing parsedate values
-        self.default = datetime.datetime(utils.today().year, 1, 1)
-        # Last datetime parsed
-        self.last_dt = None
-        self.parserinfo = get_parserinfo(lang)
-        # Log of parse errors
-        self.errors: List[str] = []
-
-    def log_parse_error(self, lineno, msg):
-        self.errors.append("line {}: {}".format(lineno + 1, msg))
-
-    def parse_date(self, s: str, set_default=True):
-        try:
-            d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
-            if set_default:
-                self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
-            self.last_dt = d
-            return d
-        except (TypeError, ValueError):
-            return None
-
-    def parse(self, lines: Lines):
-        components: List[Type[EntryBase]] = [Timebase, Entry, Command]
-
-        while True:
-            line = lines.peek()
-            if not line:
-                break
-
-            for c in components:
-                mo = c.is_start_line(line)
-                if mo:
-                    el = c.parse(self, lines, **mo.groupdict())
-                    if el is not None:
-                        yield el
-                    break
-            else:
-                self.log_parse_error(lines.lineno, "log parse stops at unrecognised line " + repr(line))
-                break
 
 
 class LogPrinter:
@@ -433,13 +440,15 @@ class Log:
             new_entries.append(e.sync(self.project, today=today))
         self._entries = new_entries
 
-    def parse(self, lines: Lines, **kw):
+    def parse(self, lines: Lines, lang: str = None):
         self._lineno = lines.lineno
-        lp = LogParser(**kw)
-        for el in lp.parse(lines):
+
+        log_parser = LogParser(lines, lang)
+        for el in log_parser.parse_entries():
             self._entries.append(el)
-        if lp.errors:
-            self.project.meta.set("parse-errors", "\n".join(lp.errors))
+
+        if log_parser.errors:
+            self.project.meta.set("parse-errors", "\n".join(log_parser.errors))
         else:
             self.project.meta.unset("parse-errors")
 
