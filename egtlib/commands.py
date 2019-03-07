@@ -2,6 +2,7 @@ import typing
 from typing import Type
 import egtlib
 from configparser import RawConfigParser
+from contextlib import contextmanager
 import os
 import datetime
 import sys
@@ -365,15 +366,19 @@ class Archive(Command):
         cutoff = (cutoff + datetime.timedelta(days=40)).replace(day=1)
 
         e = self.make_egt(self.args.projects)
-        for p in e.projects:
-            if self.args.output:
-                with open(self.args.output, "wt") as fd:
-                    archives = p.archive(cutoff, report_fd=fd, save=self.args.remove_old)
-            else:
-                archives = p.archive(cutoff, report_fd=sys.stdout, save=self.args.remove_old)
+        with self.report_fd() as fd:
+            for p in e.projects:
+                archives = p.archive(cutoff, report_fd=fd, save=self.args.remove_old)
+                for archive in archives:
+                    print("Archived {}: {}".format(p.name, archive.abspath))
 
-            for archive in archives:
-                print("Archived {}: {}".format(p.name, archive.abspath))
+    @contextmanager
+    def report_fd(self):
+        if self.args.output:
+            with open(self.args.output, "wt") as fd:
+                yield fd
+        else:
+            yield sys.stdout
 
     @classmethod
     def add_args(cls, subparser):

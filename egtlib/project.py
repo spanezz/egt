@@ -377,7 +377,7 @@ class Project(object):
             archived.print(out)
         return archived
 
-    def archive(self, cutoff: datetime.date, report_fd: TextIO, save=True) -> List["Project"]:
+    def archive(self, cutoff: datetime.date, report_fd: Optional[TextIO], save=True) -> List["Project"]:
         """
         Archive contents until the given cutoff date (excluded).
 
@@ -401,7 +401,8 @@ class Project(object):
                 arc = self.archive_month(archive_dir, date)
                 if arc is not None:
                     archived.append(arc)
-                    arc.print(report_fd)
+                    if report_fd is not None:
+                        arc.print(report_fd)
                 date = (date + datetime.timedelta(days=40)).replace(day=1)
 
         # Save without the archived enties
