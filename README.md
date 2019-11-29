@@ -11,7 +11,6 @@ I currently use egt to:
  * draft TODO lists
  * compute work hours to bill customers
  * brainstorm, and turn brainstorming notes into plans
- * turn plans into [TaskWarrior](http://taskwarrior.org/) tasks
  * print reports of my activity
 
 
