@@ -13,7 +13,11 @@ Section: python
 Architecture: all
 Depends: python3, python3-dateutil, ${python3:Depends}, ${misc:Depends}
 Description: Enrico's Getting Things Done backend code
+ "Enricos's Getting Things Done" manages project log-files stored in the
+ individual project folders. It has many useful features and integrates
+ well with TaskWarrior and Git.
  .
+ This package contains the backend code.
 
 Package: egt
 Architecture: all
@@ -21,4 +25,8 @@ Depends: python3, python3-egtlib, python3-flask, ${python3:Depends}, ${misc:Depe
 #Recommends: python3-vobject
 #Suggests: python-babel, gettext
 Description: Enrico's Getting Things Done command line tool
+ "Enricos's Getting Things Done" manages project log-files stored in the
+ individual project folders. It has many useful features and integrates
+ well with TaskWarrior and Git.
  .
+ This package contains the command line tool.
