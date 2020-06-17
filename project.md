@@ -51,7 +51,7 @@ Metadata fields only used in CV generation, which currently has a very
 incomplete implementation:
 
  * `Issuer: text`
-   For projects that are about obtaining some title or cerification, the
+   For projects that are about obtaining some title or certification, the
    freeform details of the issuer. Only used for 
  * `Description: text`
    Freeform description for the project.
@@ -285,7 +285,7 @@ with Taskwarrior. This is how it works:
  * If a line with `t<number>` has been deleted or completed in TaskWarrior,
    `t<number>` is replaced with `- [status]`.
  * `egt` stores the task UUID for each task ID that is in the file, so that
-   when TaskWarrior renumberse its tasks, `egt` can still keep the sync.
+   when TaskWarrior renumbers its tasks, `egt` can still keep the sync.
 
 I use this to handle [next actions](http://zenhabits.net/why-whats-the-next-action-is-the-most-important-question/):
 when I replace a ` - ` at the beginning of an item in my plans with a ` t `,
