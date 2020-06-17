@@ -77,7 +77,7 @@ augroup filetypedetect
 augroup END
 ```
 
-And I have this in `"~/.vim/after/ftplugin/egt.vim`, to make editing easier and
+And I have this in `~/.vim/after/ftplugin/egt.vim`, to make editing easier and
 to run `egt annotate` to update log durations and sync with TaskWarrior each
 time I save the file:
 
@@ -97,5 +97,5 @@ autocmd BufWritePre,FileWritePre <buffer> :silent call EgtAnnotate()
 See [egt annotate](annotate.md) for details on the transformation done by egt
 annotate.
 
-Note: you can do :au! in vim to deactivate save hooks if you don't want them
+Note: you can do `:au!` in vim to deactivate save hooks if you don't want them
 triggered.
