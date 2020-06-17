@@ -198,7 +198,8 @@ then it becomes (assuming that today is the 16th of March):
 ```
 
 And if you run this through `egt annotate`:
-``
+
+```
 2016
 15 January:
  - done something
