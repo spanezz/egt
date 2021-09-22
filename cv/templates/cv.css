@@ -14,6 +14,7 @@ body {
 table.main {
   border: 0;
   margin: 0;
+  border-collapse: collapse;
 }
 
 tr.h0 td {
