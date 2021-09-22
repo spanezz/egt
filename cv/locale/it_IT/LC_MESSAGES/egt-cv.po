@@ -1,231 +1,233 @@
 # Translations template for PROJECT.
-# Copyright (C) 2013 ORGANIZATION
+# Copyright (C) 2021 ORGANIZATION
 # This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
 #
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: enrico@enricozini.org\n"
-"POT-Creation-Date: 2013-03-12 20:51+0100\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2021-09-22 10:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 0.9.6\n"
+"Generated-By: Babel 2.8.0\n"
 
 msgid "beginner"
-msgstr "base"
+msgstr ""
 
 msgid "elementary"
-msgstr "elementare"
+msgstr ""
 
 msgid "intermediate"
-msgstr "intermedio"
+msgstr ""
 
 msgid "upper intermediate"
-msgstr "intermedio superiore"
-
-msgid "master"
-msgstr "piena padronanza"
+msgstr ""
 
 msgid "advanced"
-msgstr "avanzato"
+msgstr ""
 
-#: cv/templates/cv.html:4 cv/templates/cv.html:60
+msgid "master"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:4 cv-enrico/templates/cv.html:60
 #, python-format
 msgid "Curriculum Vitae of %(name)s"
-msgstr "Curriculum Vitae di %(name)s"
+msgstr ""
 
-#: cv/templates/cv.html:19
+#: cv-enrico/templates/cv.html:19
 #, python-format
 msgid "On %(date)s"
-msgstr "Il %(date)s"
+msgstr ""
 
-#: cv/templates/cv.html:21
+#: cv-enrico/templates/cv.html:21
 #, python-format
 msgid "From %(since)s to %(until)s"
-msgstr "Dal %(since)s al %(until)s"
+msgstr ""
 
-#: cv/templates/cv.html:24
+#: cv-enrico/templates/cv.html:24
 #, python-format
 msgid "From %(since)s, still ongoing"
-msgstr "Dal %(since)s"
+msgstr ""
 
-#: cv/templates/cv.html:30 cv/templates/cv.html:126 cv/templates/cv.html:139
-#: cv/templates/cv.html:151 cv/templates/cv.html:161
+#: cv-enrico/templates/cv.html:30 cv-enrico/templates/cv.html:126
+#: cv-enrico/templates/cv.html:139 cv-enrico/templates/cv.html:151
+#: cv-enrico/templates/cv.html:161
 msgid "Period"
-msgstr "Periodo"
+msgstr ""
 
-#: cv/templates/cv.html:61
+#: cv-enrico/templates/cv.html:61
 #, python-format
 msgid "Last updated: %(lastedit)s"
-msgstr "Ultimo aggiornamento: %(lastedit)s"
+msgstr ""
 
-#: cv/templates/cv.html:65
+#: cv-enrico/templates/cv.html:65
 msgid "Personal information"
-msgstr "Informazioni personali"
+msgstr ""
 
-#: cv/templates/cv.html:68 cv/templates/cv.html:187
+#: cv-enrico/templates/cv.html:68 cv-enrico/templates/cv.html:187
 msgid "Name"
-msgstr "Nome"
+msgstr ""
 
-#: cv/templates/cv.html:72
+#: cv-enrico/templates/cv.html:72
 msgid "Address"
-msgstr "Indirizzo"
+msgstr ""
 
-#: cv/templates/cv.html:77
+#: cv-enrico/templates/cv.html:77
 #, python-format
 msgid "%(name)s phone"
-msgstr "%(name)s"
+msgstr ""
 
-#: cv/templates/cv.html:83
+#: cv-enrico/templates/cv.html:83
 msgid "E-Mail"
-msgstr "E-Mail"
+msgstr ""
 
-#: cv/templates/cv.html:89
+#: cv-enrico/templates/cv.html:89
 msgid "Website"
-msgstr "Sito web"
+msgstr ""
 
-#: cv/templates/cv.html:94
+#: cv-enrico/templates/cv.html:94
 msgid "Nationality"
-msgstr "Nazionalità"
+msgstr ""
 
-#: cv/templates/cv.html:98
+#: cv-enrico/templates/cv.html:98
 msgid "Born"
-msgstr "Data di nascita"
+msgstr ""
 
-#: cv/templates/cv.html:103
+#: cv-enrico/templates/cv.html:103
 msgid "Other information"
-msgstr "Altre informazioni"
+msgstr ""
 
-#: cv/templates/cv.html:109
+#: cv-enrico/templates/cv.html:109
 msgid "Publications"
-msgstr "Pubblicazioni"
+msgstr ""
 
-#: cv/templates/cv.html:124
+#: cv-enrico/templates/cv.html:124
 msgid "Work experience"
-msgstr "Esperienze lavorative"
+msgstr ""
 
-#: cv/templates/cv.html:127
+#: cv-enrico/templates/cv.html:127
 msgid "Employer"
-msgstr "Presso"
+msgstr ""
 
-#: cv/templates/cv.html:128
+#: cv-enrico/templates/cv.html:128
 msgid "Job type"
-msgstr "Tipologia"
+msgstr ""
 
-#: cv/templates/cv.html:129 cv/templates/cv.html:141
+#: cv-enrico/templates/cv.html:129 cv-enrico/templates/cv.html:141
 msgid "Summary"
-msgstr "Nome"
+msgstr ""
 
-#: cv/templates/cv.html:130 cv/templates/cv.html:142 cv/templates/cv.html:153
-#: cv/templates/cv.html:163
+#: cv-enrico/templates/cv.html:130 cv-enrico/templates/cv.html:142
+#: cv-enrico/templates/cv.html:153 cv-enrico/templates/cv.html:163
 msgid "Web page"
-msgstr "Pagina web"
+msgstr ""
 
-#: cv/templates/cv.html:131 cv/templates/cv.html:143 cv/templates/cv.html:154
-#: cv/templates/cv.html:165
+#: cv-enrico/templates/cv.html:131 cv-enrico/templates/cv.html:143
+#: cv-enrico/templates/cv.html:154 cv-enrico/templates/cv.html:165
 msgid "Description"
-msgstr "Descrizione"
+msgstr ""
 
-#: cv/templates/cv.html:137
+#: cv-enrico/templates/cv.html:137
 msgid "Free Software projects"
-msgstr "Progetti di software libero"
+msgstr ""
 
-#: cv/templates/cv.html:140
+#: cv-enrico/templates/cv.html:140
 msgid "Project type"
-msgstr "Tipologia"
+msgstr ""
 
-#: cv/templates/cv.html:149
+#: cv-enrico/templates/cv.html:149
 msgid "Invited talks"
-msgstr "Lezioni pubbliche"
+msgstr ""
 
-#: cv/templates/cv.html:152
+#: cv-enrico/templates/cv.html:152
 msgid "Title"
-msgstr "Titolo"
+msgstr ""
 
-#: cv/templates/cv.html:159
+#: cv-enrico/templates/cv.html:159
 msgid "Education and training"
-msgstr "Istruzione e formazione"
+msgstr ""
 
-#: cv/templates/cv.html:162
+#: cv-enrico/templates/cv.html:162
 msgid "Type of qualification"
-msgstr "Qualifica conseguita"
+msgstr ""
 
-#: cv/templates/cv.html:164
+#: cv-enrico/templates/cv.html:164
 msgid "Issuer"
-msgstr "Istituto di istruzione o formazione"
+msgstr ""
 
-#: cv/templates/cv.html:169
+#: cv-enrico/templates/cv.html:169
 msgid "Personal skills and expertise"
-msgstr "Capacità e competenze personali"
+msgstr ""
 
-#: cv/templates/cv.html:172
+#: cv-enrico/templates/cv.html:172
 msgid "Mother tongue"
-msgstr "Madrelingua"
+msgstr ""
 
-#: cv/templates/cv.html:179
+#: cv-enrico/templates/cv.html:179
 msgid "Self assessment"
 msgstr ""
 
-#: cv/templates/cv.html:180
+#: cv-enrico/templates/cv.html:180
 msgid "European level¹"
 msgstr ""
 
-#: cv/templates/cv.html:181
+#: cv-enrico/templates/cv.html:181
 msgid "¹ Common European Framework of Reference (CEF)"
 msgstr ""
 
-#: cv/templates/cv.html:188
+#: cv-enrico/templates/cv.html:188
 msgid "Understanding"
-msgstr "Comprensione"
+msgstr ""
 
-#: cv/templates/cv.html:189
+#: cv-enrico/templates/cv.html:189
 msgid "Speaking"
-msgstr "Parlare"
+msgstr ""
 
-#: cv/templates/cv.html:190
+#: cv-enrico/templates/cv.html:190
 msgid "Writing"
-msgstr "Scrivere"
+msgstr ""
 
-#: cv/templates/cv.html:193
+#: cv-enrico/templates/cv.html:193
 msgid "Listening"
-msgstr "Ascoltare"
+msgstr ""
 
-#: cv/templates/cv.html:194
+#: cv-enrico/templates/cv.html:194
 msgid "Reading"
-msgstr "Leggere"
+msgstr ""
 
-#: cv/templates/cv.html:195
+#: cv-enrico/templates/cv.html:195
 msgid "Spoken interaction"
-msgstr "Interazione parlata"
+msgstr ""
 
-#: cv/templates/cv.html:196
+#: cv-enrico/templates/cv.html:196
 msgid "Spoken production"
-msgstr "Produzione orale"
+msgstr ""
 
-#: cv/templates/cv.html:219
+#: cv-enrico/templates/cv.html:219
 msgid "Technical skills"
-msgstr "Capacità tecniche"
+msgstr ""
 
-#: cv/templates/cv.html:229
+#: cv-enrico/templates/cv.html:229
 msgid "Social skills"
-msgstr "Capacità sociali"
+msgstr ""
 
-#: cv/templates/cv.html:241
+#: cv-enrico/templates/cv.html:240
 msgid "Dichiarazione"
 msgstr ""
 
-#: cv/templates/cv.html:243
+#: cv-enrico/templates/cv.html:242
 msgid ""
 "Dichiaro che le informazioni riportate nel presente Curriculum\n"
 "Vitae sono esatte e veritiere."
 msgstr ""
 
-#: cv/templates/cv.html:246
+#: cv-enrico/templates/cv.html:245
 msgid ""
 "Autorizzo il trattamento dei dati personali, ivi compresi quelli "
 "sensibili,\n"
@@ -234,11 +236,8 @@ msgid ""
 "al presente avviso di candidatura."
 msgstr ""
 
-#: cv/templates/cv.html:250
+#: cv-enrico/templates/cv.html:249
 #, python-format
 msgid "Data: %(lastedit)s"
 msgstr ""
-
-#~ msgid "Curriculum Vitae of %(name)s "
-#~ msgstr ""
 
