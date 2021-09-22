@@ -17,10 +17,7 @@ def main():
     from egtlib.commands import Command, CommandError
 
     for c in Command.COMMANDS:
-        name = getattr(c, "NAME", c.__name__.lower())
-        cmd = subparsers.add_parser(name, help=c.__doc__)
-        cmd.set_defaults(command=c)
-        c.add_args(cmd)
+        c.make_subparser(subparsers)
 
     args = parser.parse_args()
 
