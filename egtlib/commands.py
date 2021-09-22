@@ -1,5 +1,6 @@
+from __future__ import annotations
 import typing
-from typing import Type
+from typing import Optional, Type
 import egtlib
 from configparser import RawConfigParser
 from contextlib import contextmanager
@@ -18,6 +19,14 @@ class CommandError(Exception):
 class Command:
     COMMANDS: typing.List[Type["Command"]] = []
 
+    # Command name (as used in command line)
+    # Defaults to the lowercased class name
+    NAME: Optional[str] = None
+
+    # Command description (as used in command line help)
+    # Defaults to the strip()ped class docstring.
+    DESC: Optional[str] = None
+
     def __init__(self, args):
         self.args = args
         self.config = RawConfigParser()
@@ -33,6 +42,24 @@ class Command:
     @classmethod
     def register(cls, c: Type["Command"]):
         cls.COMMANDS.append(c)
+        return c
+
+    @classmethod
+    def get_name(cls):
+        if cls.NAME is not None:
+            return cls.NAME
+        return cls.__name__.lower()
+
+    @classmethod
+    def make_subparser(cls, subparsers):
+        desc = cls.DESC
+        if desc is None:
+            desc = cls.__doc__.strip()
+
+        parser = subparsers.add_parser(cls.get_name(), help=desc)
+        parser.set_defaults(command=cls)
+        cls.add_args(parser)
+        return parser
 
 
 @Command.register
@@ -285,8 +312,8 @@ class Weekrpt(Command):
         print()
 
         log.sort(key=lambda x: x[0].begin)
-        for l, p in log:
-            l.print(sys.stdout, project=p.name)
+        for log_entry, p in log:
+            log_entry.print(sys.stdout, project=p.name)
 
     @classmethod
     def add_args(cls, subparser):
@@ -306,17 +333,17 @@ class PrintLog(Command):
         log = []
         projs = set()
         for p in e.projects:
-            for l in p.log.entries:
-                log.append((l, p))
+            for log_entry in p.log.entries:
+                log.append((log_entry, p))
             projs.add(p)
 
         log.sort(key=lambda x: x[0].begin)
         if len(projs) == 1:
-            for l, p in log:
-                l.print(sys.stdout)
+            for log_entry, p in log:
+                log_entry.print(sys.stdout)
         else:
-            for l, p in log:
-                l.print(sys.stdout)
+            for log_entry, p in log:
+                log_entry.print(sys.stdout)
 
     @classmethod
     def add_args(cls, subparser):
