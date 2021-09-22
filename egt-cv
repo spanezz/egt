@@ -1,20 +1,26 @@
-#!/usr/bin/python
-import cliapp
-import egtlib
-import yaml
+#!/usr/bin/python3
+from __future__ import annotations
+import argparse
+import datetime
 import logging
-import sys
 import os
 import shutil
-import jinja2
 import subprocess
-import datetime
+import sys
 
-VERSION="0.1"
+import jinja2
+import yaml
 
-class ProjectGroup(object):
+import egtlib
+from egtlib.commands import Command, CommandError
+
+
+VERSION = "0.1"
+
+
+class ProjectGroup:
     def __init__(self, name):
-        self.name = name
+        self.name: str = name
         self.entries = []
 
     def add(self, project):
@@ -59,7 +65,7 @@ class ProjectGroup(object):
             for field in ("group-title", "title", "recipient", "description", "homepage", "issuer"):
                 val = p.meta.get(field, None)
                 if val is not None:
-                    info[field] = val.decode("utf8")
+                    info[field] = val
 
             # Keep only the tags of the last one
             info["tags"] = p.tags
@@ -103,7 +109,7 @@ class ProjectGroup(object):
         return info
 
 
-class CV(object):
+class CV:
     LANG_SKILLS = {
         "A1": "beginner",
         "A2": "elementary",
@@ -112,6 +118,7 @@ class CV(object):
         "C1": "advanced",
         "C2": "master",
     }
+
     def __init__(self, dirname):
         self.dirname = dirname
         self.personal = {}
@@ -128,15 +135,16 @@ class CV(object):
     def load(self):
         # Load base info from yaml files
         for fn in sorted(os.listdir(self.dirname)):
-            if not fn.endswith(".yaml"): continue
+            if not fn.endswith(".yaml"):
+                continue
             pathname = os.path.join(self.dirname, fn)
             with open(pathname) as fd:
                 info = yaml.load(fd)
                 self.acquire_structured(info)
 
         # Load historical info from egt, based on tags set in yaml files
-        for k, v in self.tags.iteritems():
-            if isinstance(v, basestring):
+        for k, v in self.tags.items():
+            if isinstance(v, str):
                 tags = frozenset((v,))
             else:
                 tags = frozenset(v)
@@ -148,18 +156,18 @@ class CV(object):
         """
         i = info.get("personal", None)
         if i is not None:
-            for k, v in i.iteritems():
+            for k, v in i.items():
                 if k == "telephone":
                     tels = self.personal.setdefault(k, [])
                     for t in v:
-                        for tk, tv in t.iteritems():
+                        for tk, tv in t.items():
                             tels.append({
                                 "name": tk,
                                 "value": tv,
                             })
                 elif k in ("email", "homepage"):
                     # Coerce to list
-                    if isinstance(v, basestring):
+                    if isinstance(v, str):
                         self.personal[k] = [v]
                     else:
                         self.personal[k] = v
@@ -168,7 +176,7 @@ class CV(object):
 
         i = info.get("shortbio", None)
         if i is not None:
-            if isinstance(i, basestring):
+            if isinstance(i, str):
                 self.shortbio.append(i)
             else:
                 self.shortbio.extend(i)
@@ -176,58 +184,57 @@ class CV(object):
         i = info.get("languages", None)
         if i is not None:
             for lang in i:
-                for k, v in lang.iteritems():
+                for k, v in lang.items():
                     if v == "main":
                         self.languages.setdefault("mothertongue", []).append(k)
                     else:
                         table = self.languages.setdefault("table", [])
                         table.append({
                             "name": k,
-                            "skills": dict((lk, self.LANG_SKILLS.get(lv.upper(), lv)) for lk, lv in v.iteritems()),
+                            "skills": dict((lk, self.LANG_SKILLS.get(lv.upper(), lv)) for lk, lv in v.items()),
                         })
 
         i = info.get("technical_skills", None)
         if i is not None:
-            if isinstance(i, basestring):
+            if isinstance(i, str):
                 self.technical_skills.append(i)
             else:
                 self.technical_skills.extend(i)
 
         i = info.get("social_skills", None)
         if i is not None:
-            if isinstance(i, basestring):
+            if isinstance(i, str):
                 self.social_skills.append(i)
             else:
                 self.social_skills.extend(i)
 
         i = info.get("tags", {})
-        for k, v in i.iteritems():
+        for k, v in i.items():
             self.tags[k] = v
 
         i = info.get("job-types", {})
-        for k, v in i.iteritems():
+        for k, v in i.items():
             self.job_types[k] = v
 
         i = info.get("job-employers", {})
-        for k, v in i.iteritems():
+        for k, v in i.items():
             self.job_employers[k] = v
 
         i = info.get("egt-blacklist", [])
-        if isinstance(i, basestring):
+        if isinstance(i, str):
             self.egt_blacklist.add(i)
         else:
             self.egt_blacklist.update(i)
-
 
     def acquire_egt(self, log_group, tags):
         """
         Acquire historical info from egt projects with the given tags
         """
-        egt = egtlib.Egt(tags=tags, show_archived=True)
+        egt = egtlib.Egt(filter=tags, show_archived=True)
 
         # Collect egt entries and group them by group name
         groups = {}
-        for p in egt.projects.itervalues():
+        for p in egt.projects:
             if p.name in self.egt_blacklist:
                 continue
             group = groups.get(p.group, None)
@@ -238,12 +245,12 @@ class CV(object):
 
         # Get the merged group info
         logs = []
-        for g in groups.itervalues():
+        for g in groups.values():
             info = g.get_merged_info()
-            for k, v in self.job_types.iteritems():
+            for k, v in self.job_types.items():
                 if k in info["tags"]:
                     info["job_type"] = v
-            for k, v in self.job_employers.iteritems():
+            for k, v in self.job_employers.items():
                 if k in info["tags"]:
                     info["employer"] = v
             if log_group == "work" and not info.get("employer"):
@@ -251,7 +258,10 @@ class CV(object):
             logs.append(info)
 
         if logs:
-            logs.sort(key=lambda x:(x["period"]["until"] or datetime.date.today(), x["period"]["since"] or datetime.date.today()), reverse=True)
+            logs.sort(key=lambda x: (
+                    x["period"]["until"] or datetime.date.today(),
+                    x["period"]["since"] or datetime.date.today()
+                ), reverse=True)
             self.logs.setdefault(log_group, []).extend(logs)
 
     def template_context(self):
@@ -292,28 +302,21 @@ class CV(object):
         for s in self.shortbio:
             yield s
 
-        for l in self.languages.get("mothertongue", []):
-            yield l
-        for l in self.languages.get("table", []):
-            yield l["name"]
+        yield from self.languages.get("mothertongue", [])
 
-        for s in self.technical_skills:
-            yield s
+        for lang in self.languages.get("table", []):
+            yield lang["name"]
 
-        for s in self.social_skills:
-            yield s
+        yield from self.technical_skills
+        yield from self.social_skills
+        yield from self.job_types.itervalues()
+        yield from self.job_employers.itervalues()
 
-        for s in self.job_types.itervalues():
-            yield s
-
-        for s in self.job_employers.itervalues():
-            yield s
-
-        for name, entries in self.logs.iteritems():
-            for l in entries:
+        for name, entries in self.logs.items():
+            for e in entries:
                 for field in ("title", "employer", "description", "issuer"):
-                    if l.get(field):
-                        yield l[field]
+                    if e.get(field):
+                        yield e[field]
 
     def extract_strings(self):
         """
@@ -338,7 +341,8 @@ class CV(object):
         # Add strings from jinja2 templates
         tpldir = os.path.join(self.dirname, "templates")
         for fn in os.listdir(tpldir):
-            if not fn.endswith(".html"): continue
+            if not fn.endswith(".html"):
+                continue
             pathname = os.path.join(tpldir, fn)
             with open(pathname) as fd:
                 for lineno, func, msg in jinja_env.extract_translations(fd.read().decode("utf8")):
@@ -359,9 +363,11 @@ class CV(object):
         """
         localedir = os.path.join(self.dirname, "locale")
         for lang in os.listdir(localedir):
-            if lang[0] == ".": continue
+            if lang[0] == ".":
+                continue
             dn = os.path.join(localedir, lang)
-            if not os.path.isdir(dn): continue
+            if not os.path.isdir(dn):
+                continue
             yield lang, dn
 
     def update_catalog(self, msgfile, catalog):
@@ -394,7 +400,7 @@ class CV(object):
             self.update_catalog(os.path.join(msgdir, "egt-cv.po"), c_tpl)
             self.update_catalog(os.path.join(msgdir, "cv.po"), c_cv)
             # Let the user know what we did
-            print lang
+            print(lang)
 
     def render(self, outdir, locales):
         """
@@ -423,13 +429,14 @@ class CV(object):
 
         # Copy everything except .html files
         for fn in os.listdir(tpldir):
-            if fn.startswith("."): continue
+            if fn.startswith("."):
+                continue
             if fn.endswith(".html"):
                 # Render .html files with jinja2
                 tpl = jinja_env.get_template(fn)
                 rendered = tpl.render(**jinja_context)
-                with open(os.path.join(outdir, fn), "w") as fd:
-                    fd.write(rendered.encode("utf8"))
+                with open(os.path.join(outdir, fn), "wt") as fd:
+                    fd.write(rendered)
             else:
                 # Copy all other files
                 shutil.copyfile(os.path.join(tpldir, fn), os.path.join(outdir, fn))
@@ -460,56 +467,83 @@ class CV(object):
             os.unlink(compiled_fname)
 
 
-class EgtCVApp(cliapp.Application):
-    def __init__(self):
-        super(EgtCVApp, self).__init__(
-            progname="egt-cv",
-            version=VERSION,
-            description="Enrico's Getting Things Done - CV generator",
-        )
+class CVCommand(Command):
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        subparser.add_argument("project", help="project directory")
 
-    def setup_logging(self):
-        if not self.settings["log"]:
-            FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-            if self.settings["debug"]:
-                logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
-            elif self.settings["verbose"]:
-                logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
-            else:
-                logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
-        else:
-            super(EgtCVApp, self).setup_logging()
-
-    def add_settings(self):
-        self.settings.boolean(['verbose', 'v'], "verbose output")
-        self.settings.boolean(['debug'], "debug output")
-
-    def cmd_dump(self, args):
-        """
-        Dump all cv information to standard output
-        """
-        cv = CV(args[0])
+    def get_cv(self):
+        cv = CV(self.args.project)
         cv.load()
-        cv.dump()
+        return cv
 
-    def cmd_update_catalogs(self, args):
-        """
-        Update the catalogs of translatable strings.
 
-        In order to start a translation, just run:
-          mkdir $cvdir/locale/$LANG
-        """
-        cv = CV(args[0])
-        cv.load()
-        cv.update_catalogs()
+class Dump(CVCommand):
+    """
+    Dump all cv information to standard output
+    """
 
-    def cmd_render(self, args):
-        """
-        Render the CV for all configured languages
-        """
-        cv = CV(args[0])
-        cv.load()
-        cv.render_all_languages()
+    def main(self):
+        self.get_cv().dump()
+
+
+class UpdateCatalog(CVCommand):
+    """
+    Update the catalogs of translatable strings.
+
+    In order to start a translation, just run:
+      mkdir $cvdir/locale/$LANG
+    """
+
+    NAME = "update_catalog"
+
+    def main(self):
+        self.get_cv().update_catalogs()
+
+
+class Render(CVCommand):
+    """
+    Render the CV for all configured languages
+    """
+    def main(self):
+        self.get_cv().render_all_languages()
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Enrico's getting CVs done")
+    parser.add_argument("--version", action="version", version="%(prog)s " + VERSION)
+    parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
+    parser.add_argument("--debug", action="store_true", help="debug output")
+    # parser.add_argument("--archived", action="store_true", help="also show archived projects")
+    subparsers = parser.add_subparsers(help="subcommands")
+
+    Dump.make_subparser(subparsers)
+    UpdateCatalog.make_subparser(subparsers)
+    Render.make_subparser(subparsers)
+
+    args = parser.parse_args()
+
+    # Setup logging
+    FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
+    elif args.verbose:
+        logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
+    else:
+        logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
+
+    if hasattr(args, "command"):
+        action = args.command(args)
+        action.main()
+    else:
+        parser.print_help(file=sys.stderr)
+        return 1
+
 
 if __name__ == '__main__':
-    EgtCVApp().run()
+    try:
+        sys.exit(main())
+    except CommandError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
