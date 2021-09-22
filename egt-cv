@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 from __future__ import annotations
+from typing import List, Dict, Optional, Set
 import argparse
+import configparser
 import datetime
 import logging
 import os
@@ -22,12 +24,14 @@ class ProjectGroup:
     def __init__(self, name):
         self.name: str = name
         self.entries = []
+        self.sources: Set[str] = set()
 
     def add(self, project):
         """
         Add a project to this group
         """
         self.entries.append(project)
+        self.sources.add(project.abspath)
 
     def _project_sort_key(self, p):
         """
@@ -97,7 +101,7 @@ class ProjectGroup:
         # If there are still active projects, unset 'until' to say that the
         # entry is still ongoing
         if not all_archived:
-            if period_until is not None and period_until >= datetime.date.today():
+            if period_until is not None:  # and period_until >= datetime.date.today():
                 period_until = None
 
         # Set the final period information
@@ -107,6 +111,37 @@ class ProjectGroup:
         }
 
         return info
+
+
+class Employer:
+    def __init__(self, name: str):
+        self.name = name
+        self.job_types: List[str] = []
+        self.since = None
+        self.until = None
+        self.current = False
+        self.sources: Set[str] = set()
+
+    def extend(self, since: Optional[datetime.datetime], until: Optional[datetime.datetime]):
+        if self.since is None or (since is not None and since < self.since):
+            self.since = since
+
+        if self.until is None or (until is not None and until > self.until):
+            self.until = until
+        if until is None:
+            self.current = True
+
+    def translatable_strings(self):
+        yield self.name
+        yield from self.job_types
+
+    def sort_key(self):
+        if self.current:
+            return datetime.date(9999, 12, 31)
+        else:
+            if self.until is None:
+                raise RuntimeError(f"Employer {self.name} (from {self.sources!r}) has no until date")
+            return self.until
 
 
 class CV:
@@ -128,7 +163,7 @@ class CV:
         self.social_skills = []
         self.tags = {}
         self.job_types = {}
-        self.job_employers = {}
+        self.job_employers: Dict[str, Employer] = {}
         self.logs = {}
         self.egt_blacklist = set()
 
@@ -183,16 +218,12 @@ class CV:
 
         i = info.get("languages", None)
         if i is not None:
-            for lang in i:
-                for k, v in lang.items():
-                    if v == "main":
-                        self.languages.setdefault("mothertongue", []).append(k)
-                    else:
-                        table = self.languages.setdefault("table", [])
-                        table.append({
-                            "name": k,
-                            "skills": dict((lk, self.LANG_SKILLS.get(lv.upper(), lv)) for lk, lv in v.items()),
-                        })
+            for name, level in i.items():
+                if level == "main":
+                    self.languages[name] = "mother tongue"
+                else:
+                    level = level.upper()
+                    self.languages[name] = f"{level} ({self.LANG_SKILLS[level]})"
 
         i = info.get("technical_skills", None)
         if i is not None:
@@ -218,7 +249,7 @@ class CV:
 
         i = info.get("job-employers", {})
         for k, v in i.items():
-            self.job_employers[k] = v
+            self.job_employers[k] = Employer(v)
 
         i = info.get("egt-blacklist", [])
         if isinstance(i, str):
@@ -230,7 +261,9 @@ class CV:
         """
         Acquire historical info from egt projects with the given tags
         """
-        egt = egtlib.Egt(filter=tags, show_archived=True)
+        config = configparser.ConfigParser()
+        config.read([os.path.expanduser("~/.egt.conf")])
+        egt = egtlib.Egt(config=config, filter=tags, show_archived=True)
 
         # Collect egt entries and group them by group name
         groups = {}
@@ -253,6 +286,7 @@ class CV:
             for k, v in self.job_employers.items():
                 if k in info["tags"]:
                     info["employer"] = v
+                    v.sources.update(g.sources)
             if log_group == "work" and not info.get("employer"):
                 continue
             logs.append(info)
@@ -263,6 +297,15 @@ class CV:
                     x["period"]["since"] or datetime.date.today()
                 ), reverse=True)
             self.logs.setdefault(log_group, []).extend(logs)
+
+            for log_entry in logs:
+                if "employer" not in log_entry:
+                    continue
+                employer = log_entry["employer"]
+                employer.extend(log_entry["period"]["since"], log_entry["period"]["until"])
+                if "job_type" in log_entry:
+                    if log_entry["job_type"] not in employer.job_types:
+                        employer.job_types.append(log_entry["job_type"])
 
     def template_context(self):
         """
@@ -277,6 +320,9 @@ class CV:
             "social_skills": self.social_skills,
             "lastedit": datetime.date.today(),
             "logs": self.logs,
+            "employers": sorted(
+                (e for e in self.job_employers.values() if e.sources),
+                key=lambda x: x.sort_key(), reverse=True),
         }
 
     def dump(self, out=sys.stdout):
@@ -309,12 +355,13 @@ class CV:
 
         yield from self.technical_skills
         yield from self.social_skills
-        yield from self.job_types.itervalues()
-        yield from self.job_employers.itervalues()
+        yield from self.job_types.values()
+        for e in self.job_employers.values():
+            yield from e.translatable_strings()
 
         for name, entries in self.logs.items():
             for e in entries:
-                for field in ("title", "employer", "description", "issuer"):
+                for field in ("title", "description", "issuer"):
                     if e.get(field):
                         yield e[field]
 
@@ -335,7 +382,7 @@ class CV:
         c_tpl = Catalog()
 
         # Add strings from our consts
-        for s in self.LANG_SKILLS.itervalues():
+        for s in self.LANG_SKILLS.values():
             c_tpl.add(s)
 
         # Add strings from jinja2 templates
@@ -344,8 +391,8 @@ class CV:
             if not fn.endswith(".html"):
                 continue
             pathname = os.path.join(tpldir, fn)
-            with open(pathname) as fd:
-                for lineno, func, msg in jinja_env.extract_translations(fd.read().decode("utf8")):
+            with open(pathname, "rt") as fd:
+                for lineno, func, msg in jinja_env.extract_translations(fd.read()):
                     c_tpl.add(msg, locations=((pathname, lineno),))
 
         # Build the personal cv catalog
@@ -382,7 +429,7 @@ class CV:
             cat = catalog
 
         # Write updated catalogs
-        with open(msgfile, "w") as fd:
+        with open(msgfile, "wb") as fd:
             write_po(fd, cat)
 
     def update_catalogs(self):

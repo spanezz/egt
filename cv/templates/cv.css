@@ -55,7 +55,8 @@ td {
 }
 
 .name {
-  font-variant: small-caps;
+  /* font-variant: small-caps; */
+  font-weight: bold;
 }
 
 table.languages {
@@ -73,4 +74,24 @@ table.languages tbody td {
 img.signature {
   max-height: 3em;
   max-width: 30em;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content auto;
+}
+dl dt {
+  grid-column-start: 1;
+  text-weight: bold;
+}
+dl dd {
+  grid-column-start: 2;
+}
+
+:link {
+    color: blue;
+}
+
+:visited {
+    color: blue;
 }

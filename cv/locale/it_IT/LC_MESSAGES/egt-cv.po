@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2021-09-22 10:30+0200\n"
+"POT-Creation-Date: 2021-09-22 12:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -55,9 +55,9 @@ msgstr ""
 msgid "From %(since)s, still ongoing"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:30 cv-enrico/templates/cv.html:126
-#: cv-enrico/templates/cv.html:139 cv-enrico/templates/cv.html:151
-#: cv-enrico/templates/cv.html:161
+#: cv-enrico/templates/cv.html:30 cv-enrico/templates/cv.html:125
+#: cv-enrico/templates/cv.html:193 cv-enrico/templates/cv.html:213
+#: cv-enrico/templates/cv.html:225
 msgid "Period"
 msgstr ""
 
@@ -70,7 +70,7 @@ msgstr ""
 msgid "Personal information"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:68 cv-enrico/templates/cv.html:187
+#: cv-enrico/templates/cv.html:68
 msgid "Name"
 msgstr ""
 
@@ -107,127 +107,103 @@ msgstr ""
 msgid "Publications"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:124
-msgid "Work experience"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:127
-msgid "Employer"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:128
-msgid "Job type"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:129 cv-enrico/templates/cv.html:141
-msgid "Summary"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:130 cv-enrico/templates/cv.html:142
-#: cv-enrico/templates/cv.html:153 cv-enrico/templates/cv.html:163
-msgid "Web page"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:131 cv-enrico/templates/cv.html:143
-#: cv-enrico/templates/cv.html:154 cv-enrico/templates/cv.html:165
-msgid "Description"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:137
-msgid "Free Software projects"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:140
-msgid "Project type"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:149
-msgid "Invited talks"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:152
-msgid "Title"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:159
+#: cv-enrico/templates/cv.html:123
 msgid "Education and training"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:162
+#: cv-enrico/templates/cv.html:126
 msgid "Type of qualification"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:164
+#: cv-enrico/templates/cv.html:127 cv-enrico/templates/cv.html:216
+#: cv-enrico/templates/cv.html:227
+msgid "Web page"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:128
 msgid "Issuer"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:169
-msgid "Personal skills and expertise"
+#: cv-enrico/templates/cv.html:129 cv-enrico/templates/cv.html:217
+#: cv-enrico/templates/cv.html:228
+msgid "Description"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:172
-msgid "Mother tongue"
+#: cv-enrico/templates/cv.html:133
+msgid "Languages"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:179
+#: cv-enrico/templates/cv.html:137
 msgid "Self assessment"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:180
+#: cv-enrico/templates/cv.html:138
 msgid "European level¹"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:181
+#: cv-enrico/templates/cv.html:139
 msgid "¹ Common European Framework of Reference (CEF)"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:188
-msgid "Understanding"
+#: cv-enrico/templates/cv.html:151
+msgid "Personal skills and expertise"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:189
-msgid "Speaking"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:190
-msgid "Writing"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:193
-msgid "Listening"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:194
-msgid "Reading"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:195
-msgid "Spoken interaction"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:196
-msgid "Spoken production"
-msgstr ""
-
-#: cv-enrico/templates/cv.html:219
+#: cv-enrico/templates/cv.html:156
 msgid "Technical skills"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:229
+#: cv-enrico/templates/cv.html:166
 msgid "Social skills"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:240
+#: cv-enrico/templates/cv.html:176
+msgid "Work experience"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:179
+msgid "Employer"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:182
+msgid "Job types"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:184
+msgid "Job type"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:211
+msgid "Free Software projects"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:214
+msgid "Project type"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:215
+msgid "Summary"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:223
+msgid "Invited talks"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:226
+msgid "Title"
+msgstr ""
+
+#: cv-enrico/templates/cv.html:235
 msgid "Dichiarazione"
 msgstr ""
 
-#: cv-enrico/templates/cv.html:242
+#: cv-enrico/templates/cv.html:237
 msgid ""
 "Dichiaro che le informazioni riportate nel presente Curriculum\n"
 "Vitae sono esatte e veritiere."
 msgstr ""
 
-#: cv-enrico/templates/cv.html:245
+#: cv-enrico/templates/cv.html:240
 msgid ""
 "Autorizzo il trattamento dei dati personali, ivi compresi quelli "
 "sensibili,\n"
@@ -236,8 +212,32 @@ msgid ""
 "al presente avviso di candidatura."
 msgstr ""
 
-#: cv-enrico/templates/cv.html:249
+#: cv-enrico/templates/cv.html:244
 #, python-format
 msgid "Data: %(lastedit)s"
 msgstr ""
+
+#~ msgid "Mother tongue"
+#~ msgstr ""
+
+#~ msgid "Understanding"
+#~ msgstr ""
+
+#~ msgid "Speaking"
+#~ msgstr ""
+
+#~ msgid "Writing"
+#~ msgstr ""
+
+#~ msgid "Listening"
+#~ msgstr ""
+
+#~ msgid "Reading"
+#~ msgstr ""
+
+#~ msgid "Spoken interaction"
+#~ msgstr ""
+
+#~ msgid "Spoken production"
+#~ msgstr ""
 
