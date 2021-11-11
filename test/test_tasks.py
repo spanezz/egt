@@ -87,7 +87,6 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         test_attributes = [("due", "2031-01-02", datedata),
                            ("wait", "2031-01-02", datedata),
                            ("start", "2031-01-02", datedata),
-                           ("end", "2031-01-02", datedata),
                            ("until", "2031-01-02", datedata),
                            ("scheduled", "2031-01-02", datedata),
                            ("priority", "H", "H"),

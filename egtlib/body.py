@@ -33,8 +33,7 @@ class Task(BodyEntry):
     A TaskWarrior task
     """
     re_attribute = re.compile(r"^(?P<key>[^:]+):(?P<val>[^:]+)$")
-    task_attributes = ["start", "end", "due", "until",
-                       "wait", "scheduled", "priority"]
+    task_attributes = ["start", "due", "until", "wait", "scheduled", "priority"]
 
     def __init__(self, body, id, indent="", text=None, task=None):
         # Body object owning this Task
