@@ -12,6 +12,7 @@ re_ignores = (
     re.compile(r"E701 multiple statements on one line \(colon\)"),
     re.compile(r"E265 block comment should start with"),
     re.compile(r"egtlib/texttable.py:"),
+    re.compile(r"E741 ambiguous variable name 'l'")
 )
 
 
