@@ -86,6 +86,8 @@ def stream_output(proc: "subprocess.Popen"):
     one last element: ("result", return_code) with the return code of the
     process.
     """
+    assert proc.stdout is not None
+    assert proc.stderr is not None
     fds = [proc.stdout, proc.stderr]
     bufs = [b"", b""]
     types = ["stdout", "stderr"]

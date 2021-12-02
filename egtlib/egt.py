@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 class WeeklyReport(object):
     def __init__(self):
-        self.projs: List["project.Project"] = []
+        self.projs: List["Project"] = []
 
     def add(self, p: Project) -> None:
         self.projs.append(p)
