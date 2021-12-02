@@ -193,9 +193,10 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             "Archive-Dir: " + self.workdir.name,
             "",
             "2019",
+            str(datetime.date.today().year),
             "",
         ]
-        self.assertEqual(self.to_text(proj).splitlines(), remainder)
+        self.assertEqual(self.to_text(proj, today=None).splitlines(), remainder)
         with open(proj.abspath, "rt") as fd:
             self.assertEqual([x.rstrip() for x in fd], remainder)
 
@@ -215,9 +216,10 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             "2019",
             "01 february: 10:00-13:00 3h",
             " - fixed",
+            str(datetime.date.today().year),
             "",
         ]
-        self.assertEqual(self.to_text(proj).splitlines(), remainder)
+        self.assertEqual(self.to_text(proj, today=None).splitlines(), remainder)
         with open(proj.abspath, "rt") as fd:
             self.assertEqual([x.rstrip() for x in fd], remainder)
 
@@ -233,8 +235,9 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             "Archive-Dir: " + self.workdir.name,
             "",
             "2019",
+            str(datetime.date.today().year),
             "",
         ]
-        self.assertEqual(self.to_text(proj).splitlines(), remainder)
+        self.assertEqual(self.to_text(proj, today=None).splitlines(), remainder)
         with open(proj.abspath, "rt") as fd:
             self.assertEqual([x.rstrip() for x in fd], remainder)

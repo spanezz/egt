@@ -40,10 +40,10 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(self.annotate("Lang: it\n"), "Lang: it\n\n2019\n\n")
 
     def test_parse_error(self):
-        res = self.annotate("Lang: it\n\n01 pippo:\n - error\n")
+        res = self.annotate("Lang: it\n\n2019\n01 pippo:\n - error\n")
         self.assertEqual(res.splitlines(), [
             "Lang: it",
-            "Parse-Errors: line 3: cannot parse log header date: '01 pippo' (lang=it)",
+            "Parse-Errors: line 4: cannot parse log header date: '01 pippo' (lang=it)",
             "",
             "2019",
             "01 pippo:",
@@ -52,7 +52,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
         ])
 
     def test_parse_errors_fixed(self):
-        res = self.annotate("Lang: it\nParse-Errors: foo\n\n01 marzo:\n - fixed\n")
+        res = self.annotate("Lang: it\nParse-Errors: foo\n\n2019\n01 marzo:\n - fixed\n")
         self.assertEqual(res.splitlines(), [
             "Lang: it",
             "",
