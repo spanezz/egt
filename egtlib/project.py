@@ -208,25 +208,6 @@ class Project(object):
         return ", ".join(sorted(self.tags))
 
     @property
-    def next_actions(self):
-        for el in self.body:
-            if el.TAG != "next-actions":
-                continue
-            yield el
-
-    @property
-    def contexts(self):
-        """
-        Return a set with all contexts in this project
-        """
-        res = set()
-        for el in self.body:
-            if el.TAG != "next-actions":
-                continue
-            res |= el.contexts
-        return res
-
-    @property
     def formal_period(self):
         """
         Compute the begin and end dates for this project.

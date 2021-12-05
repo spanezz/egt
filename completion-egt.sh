@@ -8,10 +8,6 @@ _egt() {
 			local projects=$(egt completion projects)
 			COMPREPLY=($(compgen -W "$projects" -- "$cur"))
 		;;
-		when)
-			local contexts=$(egt completion contexts)
-			COMPREPLY=($(compgen -W "$contexts" -- "$cur"))
-		;;
 		-t|--tag)
 			local tags=$(egt completion tags)
 			COMPREPLY=($(compgen -W "$tags" -- "$cur"))
