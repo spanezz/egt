@@ -18,10 +18,12 @@ body_p = """Name: test
 Write more unit tests
 """
 
-body_p1 = """
+body_p1 = """Name: p1
+tags: foo, bar
 """
 
-body_p2 = """
+body_p2 = """Name: p2
+tags: blubb, foo
 """
 
 
@@ -56,16 +58,22 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertIn("p2", names)
         self.assertEqual(len(names), 3)
 
-    def test_complete_projects(self):
+    def test_complete(self):
+        subtests = [
+                {"cmd": "projects", "res": ["p1", "p2", "test"]},
+                {"cmd": "tags", "res": ["bar", "blubb", "foo"]},
+                ]
         State.rescan([self.workdir.name], statedir=self.workdir.name)
         egt = egtlib.Egt(config=ConfigParser(), statedir=self.workdir.name)
-        mock_arg = Mock(subcommand='projects')
-        completion = Completion(mock_arg)
-        with patch.object(completion, 'make_egt', return_value=egt):
-            with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-                completion.main()
-        names = mock_stdout.getvalue().split("\n")[:-1]
-        self.assertEqual(names, ["p1", "p2", "test"])
+        for subtest in subtests:
+            with self.subTest(config=subtest["cmd"]):
+                mock_arg = Mock(subcommand=subtest["cmd"])
+                completion = Completion(mock_arg)
+                with patch.object(completion, 'make_egt', return_value=egt):
+                    with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                        completion.main()
+                names = mock_stdout.getvalue().split("\n")[:-1]
+                self.assertEqual(names, subtest["res"])
 
     # TODO: test_summary
     # TODO: test_term
@@ -78,7 +86,6 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     # TODO: test_annotate
     # TODO: test_archive
     # TODO: test_serve
-    # TODO: test_completion
 
     def test_backup(self):
         State.rescan([self.workdir.name], statedir=self.workdir.name)
