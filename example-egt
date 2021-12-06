@@ -9,14 +9,7 @@
 
  - this is a next-action entry
  - this is another next-action entry
-
-home:
- - next action entries can be tagged with contexts
-
-work, john:
- - there can be more contexts, comma-separated
-
- * Someday/maybe
+ t this is a next-action entry that will be turned into a taskwarrior task
 
 The first line that starts with "\s*[#*] " marks the end of parsed data and the
 start of a freeform information section.

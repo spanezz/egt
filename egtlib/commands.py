@@ -454,7 +454,7 @@ class Completion(Command):
             raise CommandError("Usage: egt completion {projects|tags|contexts}")
         if self.args.subcommand == "projects":
             e = self.make_egt()
-            names = sorted(e.projects.keys())
+            names = e.project_names
             for n in names:
                 print(n)
         elif self.args.subcommand == "tags":

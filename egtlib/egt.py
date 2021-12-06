@@ -159,6 +159,10 @@ class Egt:
         return sorted(self.loaded_projects.values(), key=lambda p: p.name)
 
     @property
+    def project_names(self):
+        return sorted(self.loaded_projects.keys())
+
+    @property
     def all_tags(self) -> List[str]:
         res: Set[str] = set()
         for p in self.projects:
