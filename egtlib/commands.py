@@ -451,8 +451,11 @@ class Completion(Command):
     """
     def main(self):
         if not self.args.subcommand:
-            raise CommandError("Usage: egt completion {projects|tags|contexts}")
-        if self.args.subcommand == "projects":
+            raise CommandError("Usage: egt completion {commands|projects|tags}")
+        if self.args.subcommand == "commands":
+            for c in Command.COMMANDS:
+                print(c.get_name())
+        elif self.args.subcommand == "projects":
             e = self.make_egt()
             names = e.project_names
             for n in names:
@@ -464,15 +467,8 @@ class Completion(Command):
                 res |= p.tags
             for n in sorted(res):
                 print(n)
-        elif self.args.subcommand == "contexts":
-            e = self.make_egt()
-            res = set()
-            for p in e.projects:
-                res |= p.contexts
-            for n in sorted(res):
-                print(n)
         else:
-            raise CommandError("Usage: egt completion {projects|tags|contexts}")
+            raise CommandError("Usage: egt completion {commands|projects|tags}")
 
     @classmethod
     def add_args(cls, subparser):
