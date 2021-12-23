@@ -261,7 +261,7 @@ class Entry(EntryBase):
         line += ["+" + tag for tag in self.tags]
 
         if project is not None:
-            line.append("[%s]" % project)
+            line.append("[%s]" % project.name)
 
         print(" ".join(line), file=file)
 

@@ -343,7 +343,7 @@ class PrintLog(Command):
                 log_entry.print(sys.stdout)
         else:
             for log_entry, p in log:
-                log_entry.print(sys.stdout)
+                log_entry.print(sys.stdout, p)
 
     @classmethod
     def add_args(cls, subparser):
