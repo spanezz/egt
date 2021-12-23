@@ -30,14 +30,18 @@ def main():
     else:
         logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
 
-    if args.command:
-        action = args.command(args)
-        try:
-            action.main()
-        except CommandError as e:
-            print(e, file=sys.stderr)
-            sys.exit(1)
+    try:
+        command = args.command
+    except AttributeError:
+        parser.print_help(sys.stdout)
+        sys.exit(1)
 
+    action = command(args)
+    try:
+        action.main()
+    except CommandError as e:
+        print(e, file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
