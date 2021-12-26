@@ -352,6 +352,38 @@ class PrintLog(Command):
 
 
 @Command.register
+class Cat(Command):
+    """
+    Output the content of one or more project files
+    """
+    NAME = "cat"
+
+    def main(self):
+        if self.args.log:
+            # delegate to separate command
+            action = PrintLog(self.args)
+            action.main()
+            return
+
+        e = self.make_egt(self.args.projects)
+        for p in e.projects:
+            if self.args.annotate:
+                p.annotate()
+                p.print(sys.stdout)
+            else:
+                with open(p.abspath) as fd:
+                    print(fd.read(), end="")
+
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        group = subparser.add_mutually_exclusive_group()
+        group.add_argument("-a", "--annotate", action="store_true", help="run output through annotate (useful to get up-to-date task-numbers, might create new tasks)")
+        group.add_argument("-l", "--log", action="store_true", help="limit output to project log")
+        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+
+
+@Command.register
 class Annotate(Command):
     """
     Print a project file on stdout, annotating its contents with anything
