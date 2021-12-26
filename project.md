@@ -181,7 +181,7 @@ entries by writing a special header line at the end of the log:
 
 For example, if you run this through `egt annotate`:
 
-``
+```
 2016
 15 January: 14:00-17:00
  - done something
@@ -190,7 +190,7 @@ For example, if you run this through `egt annotate`:
 
 then it becomes (assuming that today is the 16th of March):
 
-``
+```
 2016
 15 January: 14:00-17:00 3h
  - done something
@@ -209,7 +209,7 @@ And if you run this through `egt annotate`:
 
 then it becomes (assuming that today is the 16th of March):
 
-``
+```
 2016
 15 January:
  - done something
