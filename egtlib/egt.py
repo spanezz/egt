@@ -4,6 +4,7 @@ import logging
 import datetime
 import sys
 import re
+import taskw
 from .state import State
 from .utils import intervals_intersect
 from .project import Project
@@ -65,18 +66,36 @@ class ProjectFilter:
     contain any of the -tag tags.
     """
     def __init__(self, args: List[str]):
+        self._tw = None
         self.args = args
         self.names: Set[str] = set()
         self.tags_wanted: Set[str] = set()
         self.tags_unwanted: Set[str] = set()
 
         for f in args:
-            if f.startswith("+"):
+            if f == "_":
+                tasks = self.tw.filter_tasks({"status": "completed", "end": datetime.date.today()})
+                try:
+                    self.names.add(tasks[0]["project"])
+                except IndexError:
+                    pass
+            elif f.startswith("+"):
                 self.tags_wanted.add(f[1:])
             elif f.startswith("-"):
                 self.tags_unwanted.add(f[1:])
             else:
-                self.names.add(f)
+                if f.isdecimal():
+                    task = self.tw.get_task(id=f)
+                    if task[0]:
+                        self.names.add(task[1]["project"])
+                else:
+                    self.names.add(f)
+
+    @property
+    def tw(self) -> taskw.TaskWarrior:
+        if self._tw is None:
+            self._tw = taskw.TaskWarrior(marshal=True)
+        return self._tw
 
     def matches(self, project: Project) -> bool:
         """
