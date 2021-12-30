@@ -158,6 +158,8 @@ class Task(BodyEntry):
         else:
             res.append("t{}".format(self.id))
         if self.task:
+            if self.task["status"] == "completed":
+                return
             res.append("[{:%Y-%m-%d %H:%M} {}]".format(self.task["modified"], self.task["status"]))
         res.append(self.desc)
         bl = self.body.project.tags
@@ -227,6 +229,12 @@ class Body:
         if known_annotations:
             self._known_annotations = known_annotations
 
+    def new_log(self, date, line):
+        try:
+            self._new_log[date].append(line)
+        except KeyError:
+            self._new_log[date] = [line]
+
     def _sync_annotations(self, task: taskw.task.Task) -> None:
         """
         Sync annotations between task and TaskWarrior
@@ -246,10 +254,19 @@ class Body:
                         annot=annotation
                         )
                         )
-            try:
-                self._new_log[date].append(line)
-            except KeyError:
-                self._new_log[date] = [line]
+            self.new_log(date, line)
+
+    def _sync_completed(self, task: taskw.task.Task) -> None:
+        """
+        Add log line for completed tasks
+        """
+        if task["status"] == "completed":
+            date = task["modified"].date().isoformat()
+            line = Line("  - [completed] {desc}".format(
+                        desc=task["description"],
+                        )
+                        )
+            self.new_log(date, line)
 
     def sync_tasks(self) -> None:
         """
@@ -277,6 +294,8 @@ class Body:
         for task in self.tw.filter_tasks({"project": self.project.name}):
             self._sync_annotations(task)
             if task["id"] == 0 or str(task["uuid"]) in known_uuids:
+                if str(task["uuid"]) in known_uuids:
+                   self._sync_completed(task)
                 continue
             task = Task(self, task["id"], task=task)
             new.append(task)
