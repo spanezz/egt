@@ -130,9 +130,12 @@ class Summary(Command):
         e = self.make_egt(self.args.projects)
         projs = e.projects
 
-        tasks = projs[0].body.tw.filter_tasks({"status": "pending"})
-        # could not figure out how to do this in one go
-        tasks += projs[0].body.tw.filter_tasks({"status": "waiting"})
+        try:
+            tasks = projs[0].body.tw.filter_tasks({"status": "pending"})
+            # could not figure out how to do this in one go
+            tasks += projs[0].body.tw.filter_tasks({"status": "waiting"})
+        except IndexError:
+            return
         task_stats = defaultdict(int)
         for task in tasks:
             try:
