@@ -112,7 +112,7 @@ class ProjectFilter:
         # (prevents accidentlly running on all projects)
         if self.bad_filter:
             return False
-        if self.names and project.name not in self.names:
+        if self.names and project.name not in self.names and list(self.names)[0] not in project.name:
             return False
         if self.tags_wanted and self.tags_wanted.isdisjoint(project.tags):
             return False
