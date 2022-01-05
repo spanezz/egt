@@ -8,6 +8,7 @@ import os
 import datetime
 import sys
 import logging
+from collections import defaultdict
 
 log = logging.getLogger(__name__)
 
@@ -119,23 +120,42 @@ class Summary(Command):
         from egtlib.utils import format_duration, format_td
         import shutil
         termsize = shutil.get_terminal_size((80, 25))
-        table = Texttable(max_width=termsize.columns)
+        if self.args.width:
+            table = Texttable(max_width=self.args.width)
+        else:
+            table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
-        table.set_cols_align(("l", "l", "r", "c", "r"))
-        table.add_row(("Name", "Tags", "Logs", "Hrs", "Last entry"))
+        table.set_cols_align(("l", "l", "r", "r", "c", "r"))
+        table.add_row(("Name", "Tags", "Logs", "Tasks", "Hrs", "Last entry"))
         e = self.make_egt(self.args.projects)
         projs = e.projects
 
-        blanks = []
-        worked = []
-        for p in projs:
-            if p.last_updated is None:
-                blanks.append(p)
-            else:
-                worked.append(p)
+        tasks = projs[0].body.tw.filter_tasks({"status": "pending"})
+        # could not figure out how to do this in one go
+        tasks += projs[0].body.tw.filter_tasks({"status": "waiting"})
+        task_stats = defaultdict(int)
+        for task in tasks:
+            try:
+                task_stats[task["project"]] += 1
+            except KeyError:
+                pass
 
-        blanks.sort(key=lambda p: p.name)
-        worked.sort(key=lambda p: p.last_updated)
+        if self.args.name:
+            sorted_projects = sorted(projs, key=lambda p: p.name)
+        elif self.args.tasks:
+            sorted_projects = sorted(projs, key=lambda p: task_stats[p.name])
+        else:
+            blanks = []
+            worked = []
+            for p in projs:
+                if p.last_updated is None:
+                    blanks.append(p)
+                else:
+                    worked.append(p)
+
+            blanks.sort(key=lambda p: p.name)
+            worked.sort(key=lambda p: p.last_updated)
+            sorted_projects = blanks+worked
 
         now = datetime.datetime.now()
 
@@ -144,6 +164,7 @@ class Summary(Command):
                 p.name,
                 " ".join(sorted(p.tags)),
                 len(list(p.log.entries)),
+                str(task_stats[p.name]),
                 format_duration(p.elapsed, tabular=True) if p.last_updated else "--",
                 "%s ago" % format_td(now - p.last_updated, tabular=True) if p.last_updated else "--",
             ))
@@ -156,9 +177,7 @@ class Summary(Command):
 #        #format_td(datetime.datetime.now() - self.last_updated)),
 #        print "%s\t%s" % (self.name, ", ".join(stats))
 
-        for p in blanks:
-            add_summary(p)
-        for p in worked:
+        for p in sorted_projects:
             add_summary(p)
 
         print(table.draw())
@@ -167,6 +186,11 @@ class Summary(Command):
     def add_args(cls, subparser):
         super().add_args(subparser)
         subparser.add_argument("projects", nargs="*", help="list of projects to summarise (default: all)")
+        sorting = subparser.add_mutually_exclusive_group()
+        sorting.add_argument("--name", action="store_true", help="sort projects by name")
+        sorting.add_argument("--tasks", action="store_true", help="sort projects by number of tasks")
+        sorting.add_argument("--update", action="store_true", help="sort projects by last log-update (default)")
+        subparser.add_argument("--width", type=int, help="width of output, useful when piped to other command")
 
 
 @Command.register
