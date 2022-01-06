@@ -454,7 +454,7 @@ class Archive(Command):
         e = self.make_egt(self.args.projects)
         with self.report_fd() as fd:
             for p in e.projects:
-                archives = p.archive(cutoff, report_fd=fd, save=self.args.remove_old)
+                archives = p.archive(cutoff, report_fd=fd, save=self.args.remove_old, combined=self.args.singlefile)
                 for archive in archives:
                     print("Archived {}: {}".format(p.name, archive.abspath))
 
@@ -480,6 +480,8 @@ class Archive(Command):
         subparser.add_argument(
                 "--output", "-o", action="store",
                 help="output of aggregated archived logs (default: standard output)")
+        subparser.add_argument(
+                "--singlefile", "-s", action="store_true", help="write archive log lines into a single file")
 
 
 @Command.register

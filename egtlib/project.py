@@ -1,4 +1,4 @@
-from typing import Optional, TextIO, Any, List
+from typing import Optional, TextIO, Any, List, Tuple
 import os.path
 import subprocess
 import datetime
@@ -328,26 +328,17 @@ class Project(object):
                 continue
             tarout.add(path)
 
-    def archive_month(self, archive_dir: str, month: datetime.date) -> Optional["Project"]:
-        """
-        Write log entries for the given month to an archive file
-        """
-        # Generate the target file name
-        if "%" in archive_dir:
-            archive_dir = month.strftime(archive_dir)
-        archive_dir = os.path.expanduser(archive_dir)
-        pathname = os.path.join(archive_dir, month.strftime("%Y%m-") + self.name + ".egt")
+    def _create_archive(self, pathname: str, start: datetime.date, end: datetime.date) -> Optional["Project"]:
+        pathname = os.path.expanduser(pathname)
         if os.path.exists(pathname):
-            log.warn("%s not archived for %04d-%02d: %s already exists", self.name, month.year, month.month, pathname)
+            log.warn("%s not archived: %s already exists", self.name, pathname)
             return None
 
         # Select the log entries
-        next_month = (month + datetime.timedelta(days=40)).replace(day=1)
-        entries = self.log.detach_entries(month, next_month)
+        entries = self.log.detach_entries(start, end)
         if not entries:
             return None
 
-        # Create a new project
         archived = Project(pathname)
         archived.meta = self.meta.copy()
         archived.log._entries = entries
@@ -358,7 +349,31 @@ class Project(object):
             archived.print(out)
         return archived
 
-    def archive(self, cutoff: datetime.date, report_fd: Optional[TextIO], save=True) -> List["Project"]:
+    def archive_month(self, archive_dir: str, month: datetime.date) -> Tuple[datetime.date, Optional["Project"]]:
+        """
+        Write log entries for the given month to an archive file
+        """
+        # Generate the target file name
+        if "%" in archive_dir:
+            archive_dir = month.strftime(archive_dir)
+        pathname = os.path.join(archive_dir, month.strftime("%Y%m-") + self.name + ".egt")
+
+        next_month = (month + datetime.timedelta(days=40)).replace(day=1)
+        return next_month, self._create_archive(pathname, month, next_month)
+
+    def archive_range(self, archive_dir: str, start: datetime.date, end: datetime.date) -> Tuple[datetime.date, Optional["Project"]]:
+        """
+        Write log entries for the given range to an archive file
+        """
+        # Generate the target file name
+        if "%" in archive_dir:
+            raise RuntimeError("Placeholders in archive-dir not supported for single-file archives")
+        last_day = end - datetime.timedelta(days=1)
+        pathname = os.path.join(archive_dir, self.name + start.strftime("_%Y-%m-%d_to_") + last_day.strftime("%Y-%m-%d") + ".egt")
+
+        return end, self._create_archive(pathname, start, end)
+
+    def archive(self, cutoff: datetime.date, report_fd: Optional[TextIO], save=True, combined=True) -> List["Project"]:
         """
         Archive contents until the given cutoff date (excluded).
 
@@ -379,12 +394,14 @@ class Project(object):
 
             # Iterate until cutoff
             while date < cutoff:
-                arc = self.archive_month(archive_dir, date)
+                if combined:
+                    date, arc = self.archive_range(archive_dir, date.replace(day=1), cutoff)
+                else:
+                    date, arc = self.archive_month(archive_dir, date)
                 if arc is not None:
                     archived.append(arc)
                     if report_fd is not None:
                         arc.print(report_fd)
-                date = (date + datetime.timedelta(days=40)).replace(day=1)
 
         # Save without the archived enties
         if save:
