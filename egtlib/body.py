@@ -153,7 +153,7 @@ class Task(BodyEntry):
         res = []
         if self.is_orphan:
             res.append("- [orphan]")
-        elif self.task["id"] == 0:
+        elif self.task and self.task["id"] == 0:
             res.append("-")
         else:
             res.append("t{}".format(self.id))
