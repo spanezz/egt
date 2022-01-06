@@ -62,6 +62,7 @@ class ProjectFilter:
         name  matches projects with this name
           NN  matches the project of the taskwarrior task with ID NN
            _  matches the project of the last taskwarrior task completed today
+     pattern  if only one keyword: fnmatch pattern to match against project names
 
     A project matches the filter if its name is explicitly listed. If it is
     not, it matches if its tag set contains all the +tag tags, and does not
@@ -112,8 +113,17 @@ class ProjectFilter:
         # (prevents accidentlly running on all projects)
         if self.bad_filter:
             return False
-        if self.names and project.name not in self.names and list(self.names)[0] not in project.name:
-            return False
+        if self.names and project.name not in self.names:
+            # project-name is not mached exactly
+            exact_match = False
+            # check if a pattern is matches
+            pattern_match = False
+            if len(self.names) == 1:
+                import fnmatch
+                (pattern,) = self.names
+                pattern_match = fnmatch.fnmatch(project.name, pattern)
+            if not exact_match and not pattern_match:
+                return False
         if self.tags_wanted and self.tags_wanted.isdisjoint(project.tags):
             return False
         if self.tags_unwanted and not self.tags_unwanted.isdisjoint(project.tags):
