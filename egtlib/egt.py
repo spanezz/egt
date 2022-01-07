@@ -62,7 +62,6 @@ class ProjectFilter:
         name  matches projects with this name
           NN  matches the project of the taskwarrior task with ID NN
            _  matches the project of the last taskwarrior task completed today
-     pattern  if only one keyword: fnmatch pattern to match against project names
 
     A project matches the filter if its name is explicitly listed. If it is
     not, it matches if its tag set contains all the +tag tags, and does not
