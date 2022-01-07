@@ -60,6 +60,9 @@ class ProjectFilter:
         +tag  matches projects that have this tag
         -tag  matches projects that do not have this tag
         name  matches projects with this name
+          NN  matches the project of the taskwarrior task with ID NN
+           _  matches the project of the last taskwarrior task completed today
+     pattern  if only one keyword: fnmatch pattern to match against project names
 
     A project matches the filter if its name is explicitly listed. If it is
     not, it matches if its tag set contains all the +tag tags, and does not
@@ -71,14 +74,15 @@ class ProjectFilter:
         self.names: Set[str] = set()
         self.tags_wanted: Set[str] = set()
         self.tags_unwanted: Set[str] = set()
+        self.bad_filter: bool = False
 
         for f in args:
             if f == "_":
                 tasks = self.tw.filter_tasks({"status": "completed", "end": datetime.date.today()})
                 try:
                     self.names.add(tasks[0]["project"])
-                except IndexError:
-                    pass
+                except (IndexError, KeyError):
+                    self.bad_filter = True
             elif f.startswith("+"):
                 self.tags_wanted.add(f[1:])
             elif f.startswith("-"):
@@ -86,10 +90,14 @@ class ProjectFilter:
             else:
                 if f.isdecimal():
                     task = self.tw.get_task(id=f)
-                    if task[0]:
+                    try:
                         self.names.add(task[1]["project"])
+                    except (IndexError, KeyError):
+                        self.bad_filter = True
                 else:
                     self.names.add(f)
+        if self.bad_filter:
+            log.warn("bad filter no projects will match")
 
     @property
     def tw(self) -> taskw.TaskWarrior:
@@ -101,6 +109,10 @@ class ProjectFilter:
         """
         Check if this project matches the filter.
         """
+        # do not match if the filter was bad
+        # (prevents accidentlly running on all projects)
+        if self.bad_filter:
+            return False
         if self.names and project.name not in self.names:
             return False
         if self.tags_wanted and self.tags_wanted.isdisjoint(project.tags):
