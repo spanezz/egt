@@ -4,6 +4,7 @@ import logging
 import datetime
 import sys
 import re
+import taskw
 from .state import State
 from .utils import intervals_intersect
 from .project import Project
@@ -59,29 +60,58 @@ class ProjectFilter:
         +tag  matches projects that have this tag
         -tag  matches projects that do not have this tag
         name  matches projects with this name
+          NN  matches the project of the taskwarrior task with ID NN
+           _  matches the project of the last taskwarrior task completed today
 
     A project matches the filter if its name is explicitly listed. If it is
     not, it matches if its tag set contains all the +tag tags, and does not
     contain any of the -tag tags.
     """
     def __init__(self, args: List[str]):
+        self._tw = None
         self.args = args
         self.names: Set[str] = set()
         self.tags_wanted: Set[str] = set()
         self.tags_unwanted: Set[str] = set()
+        self.bad_filter: bool = False
 
         for f in args:
-            if f.startswith("+"):
+            if f == "_":
+                tasks = self.tw.filter_tasks({"status": "completed", "end": datetime.date.today()})
+                try:
+                    self.names.add(tasks[0]["project"])
+                except (IndexError, KeyError):
+                    self.bad_filter = True
+            elif f.startswith("+"):
                 self.tags_wanted.add(f[1:])
             elif f.startswith("-"):
                 self.tags_unwanted.add(f[1:])
             else:
-                self.names.add(f)
+                if f.isdecimal():
+                    task = self.tw.get_task(id=f)
+                    try:
+                        self.names.add(task[1]["project"])
+                    except (IndexError, KeyError):
+                        self.bad_filter = True
+                else:
+                    self.names.add(f)
+        if self.bad_filter:
+            log.warn("bad filter no projects will match")
+
+    @property
+    def tw(self) -> taskw.TaskWarrior:
+        if self._tw is None:
+            self._tw = taskw.TaskWarrior(marshal=True)
+        return self._tw
 
     def matches(self, project: Project) -> bool:
         """
         Check if this project matches the filter.
         """
+        # do not match if the filter was bad
+        # (prevents accidentlly running on all projects)
+        if self.bad_filter:
+            return False
         if self.names and project.name not in self.names:
             return False
         if self.tags_wanted and self.tags_wanted.isdisjoint(project.tags):
