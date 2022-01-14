@@ -17,7 +17,7 @@ _egt() {
 
     local base="${COMP_WORDS[1]}"
     case "$base" in
-        edit|grep|term|work|print_log)
+        edit|grep|term|work|cat)
             local projects=$(egt completion projects)
             COMPREPLY=($(compgen -W "$projects" -- "$cur"))
         ;;
