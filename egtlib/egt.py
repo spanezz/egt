@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Set, Optional, TextIO, BinaryIO
-from configparser import RawConfigParser
+from configparser import ConfigParser
 import logging
 import datetime
 import sys
@@ -132,7 +132,7 @@ class ProjectFilter:
 
 
 class Egt:
-    def __init__(self, config: Optional[RawConfigParser] = None, filter: List[str] = [], show_archived: bool = False, statedir: str = None):
+    def __init__(self, config: Optional[ConfigParser] = None, filter: List[str] = [], show_archived: bool = False, statedir: str = None):
         self.config = config
         self.state = State()
         self.state.load(statedir)

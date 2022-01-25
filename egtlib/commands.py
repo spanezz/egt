@@ -2,7 +2,8 @@ from __future__ import annotations
 import typing
 from typing import Optional, Type
 import egtlib
-from configparser import RawConfigParser
+import xdg
+from configparser import ConfigParser
 from contextlib import contextmanager
 import os
 import datetime
@@ -30,8 +31,16 @@ class Command:
 
     def __init__(self, args):
         self.args = args
-        self.config = RawConfigParser()
-        self.config.read([os.path.expanduser("~/.egt.conf")])
+        self.config = ConfigParser()
+        old_cfg = os.path.expanduser("~/.egt.conf")
+        new_cfg = os.path.join(xdg.XDG_CONFIG_HOME, "egt")
+        if os.path.isfile(new_cfg):
+            if os.path.isfile(old_cfg):
+                log.warn("Config file exists in old an new location.\n  %s used\n  %s will be ignored (remove to get rid of this message)\n", new_cfg, old_cfg)
+        elif os.path.isfile(old_cfg):
+            os.rename(old_cfg, new_cfg)
+            log.info("Config file %s moved to new location %s", old_cfg, new_cfg)
+        self.config.read([new_cfg])
 
     def make_egt(self, filter: typing.List[str] = []):
         return egtlib.Egt(config=self.config, filter=filter, show_archived=self.args.archived)
