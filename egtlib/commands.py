@@ -31,7 +31,13 @@ class Command:
 
     def __init__(self, args):
         self.args = args
-        self.config = ConfigParser()
+        self.config = ConfigParser(
+        {
+            "date-format": "%d %B",
+            "time-format": "%H:%M",
+        },
+        interpolation=None # we want '%' in formats to work directly
+        )
         old_cfg = os.path.expanduser("~/.egt.conf")
         new_cfg = os.path.join(xdg.XDG_CONFIG_HOME, "egt")
         if os.path.isfile(new_cfg):
@@ -439,6 +445,7 @@ class Annotate(Command):
             else:
                 proj = egt.project(self.args.project)
         if proj is None:
+            log.info("No project found.")
             return
 
         proj.annotate()

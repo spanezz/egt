@@ -47,7 +47,8 @@ class ProjectState(object):
 
 
 class Project(object):
-    def __init__(self, abspath, statedir=None):
+    def __init__(self, abspath, statedir=None, config=None):
+        self.config=config
         self.statedir = statedir
         self.abspath = abspath
         self.default_path, basename = os.path.split(abspath)
@@ -100,9 +101,9 @@ class Project(object):
         return self.default_tags | self.meta.tags
 
     @classmethod
-    def from_file(self, abspath, fd=None):
+    def from_file(self, abspath, fd=None, config=None):
         # Default values, can be overridden by file metadata
-        p = Project(abspath)
+        p = Project(abspath, config=config)
         # Load the actual data
         p.load(fd=fd)
         return p

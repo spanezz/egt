@@ -178,6 +178,7 @@ class Body:
 
     def __init__(self, project: "project.Project"):
         self.project = project
+        self.date_format = self.project.config.get("config", "date-format")
 
         # Line number in the project file where the body starts
         self._lineno: Optional[int] = None
@@ -248,7 +249,7 @@ class Body:
             if entry in self._known_annotations:
                 continue
             self._known_annotations.append(entry)
-            date = annotation.entry.date().isoformat()
+            date = annotation.entry.date().strftime(self.date_format)
             line = Line("  - {desc}: {annot}".format(
                         desc= task["description"],
                         annot=annotation
@@ -261,7 +262,7 @@ class Body:
         Add log line for completed tasks
         """
         if task["status"] == "completed":
-            date = task["modified"].date().isoformat()
+            date = task["modified"].date().strftime(self.date_format)
             line = Line("  - [completed] {desc}".format(
                         desc=task["description"],
                         )

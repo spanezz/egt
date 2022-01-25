@@ -153,7 +153,7 @@ class Egt:
         if not Project.has_project(fname):
             log.warning("project %s has disappeared: please rerun scan", fname)
             return None
-        proj = Project.from_file(fname, fd=project_fd)
+        proj = Project.from_file(fname, fd=project_fd, config=self.config)
         if not self.show_archived and proj.archived:
             return None
         proj.default_tags.update(self._default_tags(fname))
