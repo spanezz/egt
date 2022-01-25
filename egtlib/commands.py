@@ -9,7 +9,7 @@ import os
 import datetime
 import sys
 import logging
-from collections import defaultdict
+from egtlib.utils import SummaryCol, TaskStatCol, HoursCol, LastEntryCol
 
 log = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ class Command:
             "date-format": "%d %B",
             "time-format": "%H:%M",
             "sync-tw-annotations": "True",
+            "summary-columns": 'name, tags, logs, hours, last',
         },
         interpolation=None # we want '%' in formats to work directly
         )
@@ -131,38 +132,45 @@ class Summary(Command):
     """
     Print a summary of the activity on all projects
     """
+
+    def _load_col_config(self, projs):
+        COLUMNS = {
+                "name": SummaryCol("Name", "l", lambda p: p.name),
+                "tags": SummaryCol("Tags", "l", lambda p: " ".join(sorted(p.tags))),
+                "logs": SummaryCol("Logs", "r", lambda p: len(list(p.log.entries))),
+                "tasks": TaskStatCol("Tasks", "r", projs),
+                "hours": HoursCol("Hrs", "c"),
+                "last": LastEntryCol("Last entry", "r"),
+        }
+        active_cols = []
+        raw_cols = self.config.get("config", "summary-columns")
+        for raw in raw_cols.split(","):
+            col = raw.strip().lower()
+            if col in COLUMNS:
+                active_cols.append(COLUMNS[col])
+                active_cols[-1].init_data()
+        return active_cols, COLUMNS
+
     def main(self):
         from texttable import Texttable
-        from egtlib.utils import format_duration, format_td
         import shutil
+        e = self.make_egt(self.args.projects)
+        projs = e.projects
+
+        active_cols, columns = self._load_col_config(projs)
         termsize = shutil.get_terminal_size((80, 25))
         if self.args.width:
             table = Texttable(max_width=self.args.width)
         else:
             table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
-        table.set_cols_align(("l", "l", "r", "r", "c", "r"))
-        table.add_row(("Name", "Tags", "Logs", "Tasks", "Hrs", "Last entry"))
-        e = self.make_egt(self.args.projects)
-        projs = e.projects
-
-        try:
-            tasks = projs[0].body.tw.filter_tasks({"status": "pending"})
-            # could not figure out how to do this in one go
-            tasks += projs[0].body.tw.filter_tasks({"status": "waiting"})
-        except IndexError:
-            return
-        task_stats = defaultdict(int)
-        for task in tasks:
-            try:
-                task_stats[task["project"]] += 1
-            except KeyError:
-                pass
+        table.set_cols_align([c.align for c in active_cols])
+        table.add_row([c.label for c in active_cols])
 
         if self.args.name:
             sorted_projects = sorted(projs, key=lambda p: p.name)
         elif self.args.tasks:
-            sorted_projects = sorted(projs, key=lambda p: task_stats[p.name])
+            sorted_projects = sorted(projs, key=lambda p: columns["tasks"].task_stats[p.name])
         else:
             blanks = []
             worked = []
@@ -176,17 +184,8 @@ class Summary(Command):
             worked.sort(key=lambda p: p.last_updated)
             sorted_projects = blanks+worked
 
-        now = datetime.datetime.now()
-
         def add_summary(p):
-            table.add_row((
-                p.name,
-                " ".join(sorted(p.tags)),
-                len(list(p.log.entries)),
-                str(task_stats[p.name]),
-                format_duration(p.elapsed, tabular=True) if p.last_updated else "--",
-                "%s ago" % format_td(now - p.last_updated, tabular=True) if p.last_updated else "--",
-            ))
+            table.add_row([c.func(p) for c in active_cols])
 
 #        res["mins"] = self.elapsed
 #        res["last"] = self.last_updated
