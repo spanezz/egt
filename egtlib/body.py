@@ -293,7 +293,8 @@ class Body:
         # Add all the Taskwarrior tasks not present in self.tasks
         new = []
         for task in self.tw.filter_tasks({"project.is": self.project.name}):
-            self._sync_annotations(task)
+            if self.project.config.getboolean("config", "sync-tw-annotations"):
+                self._sync_annotations(task)
             if task["id"] == 0 or str(task["uuid"]) in known_uuids:
                 if str(task["uuid"]) in known_uuids:
                    self._sync_completed(task)

@@ -35,6 +35,7 @@ class Command:
         {
             "date-format": "%d %B",
             "time-format": "%H:%M",
+            "sync-tw-annotations": "True",
         },
         interpolation=None # we want '%' in formats to work directly
         )
