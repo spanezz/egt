@@ -69,7 +69,7 @@ class ProjectFilter:
     contain any of the -tag tags.
     """
     def __init__(self, args: List[str]):
-        self._tw = None
+        self._tw: Optional[taskw.TaskWarrior] = None
         self.args = args
         self.names: Set[str] = set()
         self.tags_wanted: Set[str] = set()
@@ -89,7 +89,7 @@ class ProjectFilter:
                 self.tags_unwanted.add(f[1:])
             else:
                 if f.isdecimal():
-                    task = self.tw.get_task(id=f)
+                    task = self.tw.get_task(id=int(f))
                     try:
                         self.names.add(task[1]["project"])
                     except (IndexError, KeyError):

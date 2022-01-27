@@ -236,7 +236,7 @@ class Body:
         except KeyError:
             self._new_log[date] = [line]
 
-    def _sync_annotations(self, task: taskw.task.Task) -> None:
+    def _sync_annotations(self, task) -> None:
         """
         Sync annotations between task and TaskWarrior
         """
@@ -257,7 +257,7 @@ class Body:
                         )
             self.new_log(date, line)
 
-    def _sync_completed(self, task: taskw.task.Task) -> None:
+    def _sync_completed(self, task) -> None:
         """
         Add log line for completed tasks
         """
