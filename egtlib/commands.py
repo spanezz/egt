@@ -92,7 +92,7 @@ class Scan(Command):
         else:
             dirs = [os.path.expanduser("~")]
         from .state import State
-        State.rescan(dirs)
+        State.rescan(dirs, config=self.config)
 
     @classmethod
     def add_args(cls, subparser):

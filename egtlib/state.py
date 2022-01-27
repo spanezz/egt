@@ -1,4 +1,5 @@
 from typing import List, Dict
+import configparser
 from .utils import atomic_writer
 from .project import Project
 from .scan import scan
@@ -46,7 +47,7 @@ class State:
             return
 
     @classmethod
-    def rescan(cls, dirs: List[str], statedir: str = None) -> None:
+    def rescan(cls, dirs: List[str], statedir: str = None, config: configparser.ConfigParser = None) -> None:
         """
         Rebuild the state looking for files in the given directories.
 
@@ -62,7 +63,7 @@ class State:
         for dirname in dirs:
             for fname in scan(dirname):
                 try:
-                    p = Project.from_file(fname)
+                    p = Project.from_file(fname, config=config)
                 except Exception as e:
                     log.exception("%s: failed to parse: %s", fname, str(e))
                     continue
