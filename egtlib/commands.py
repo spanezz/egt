@@ -31,15 +31,13 @@ class Command:
 
     def __init__(self, args):
         self.args = args
-        self.config = ConfigParser(
-        {
-            "date-format": "%d %B",
-            "time-format": "%H:%M",
-            "sync-tw-annotations": "True",
-            "summary-columns": 'name, tags, logs, hours, last',
-        },
-        interpolation=None # we want '%' in formats to work directly
-        )
+        self.config = ConfigParser(interpolation=None) # we want '%' in formats to work directly
+        self.config["config"] = {
+                "date-format": "%d %B",
+                "time-format": "%H:%M",
+                "sync-tw-annotations": "True",
+                "summary-columns": 'name, tags, logs, hours, last',
+                }
         old_cfg = os.path.expanduser("~/.egt.conf")
         new_cfg = os.path.join(xdg.XDG_CONFIG_HOME, "egt")
         if os.path.isfile(new_cfg):

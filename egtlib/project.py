@@ -48,6 +48,16 @@ class ProjectState(object):
 
 class Project(object):
     def __init__(self, abspath, statedir=None, config=None):
+        if config is None:
+            from configparser import ConfigParser
+            # TODO: refactor to single location (`commands.Command.__init__`)
+            config = ConfigParser(interpolation=None) # we want '%' in formats to work directly
+            config["config"] = {
+                    "date-format": "%d %B",
+                    "time-format": "%H:%M",
+                    "sync-tw-annotations": "True",
+                    "summary-columns": 'name, tags, logs, hours, last',
+                    }
         self.config=config
         self.statedir = statedir
         self.abspath = abspath
@@ -109,8 +119,8 @@ class Project(object):
         return p
 
     @classmethod
-    def mock(self, abspath, name=None, path=None, tags=None):
-        p = Project(abspath)
+    def mock(self, abspath, name=None, path=None, tags=None, config=None):
+        p = Project(abspath, config=config)
         if path is not None:
             p.default_path = path
         if name is not None:
@@ -340,7 +350,7 @@ class Project(object):
         if not entries:
             return None
 
-        archived = Project(pathname)
+        archived = Project(pathname, config=self.config)
         archived.meta = self.meta.copy()
         archived.log._entries = entries
         archived.meta.set("archived", "yes")
