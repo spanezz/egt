@@ -247,7 +247,7 @@ class Body:
         except KeyError:
             return
         for annotation in annotations:
-            entry = [str(task["uuid"]), annotation.entry.isoformat()]
+            entry = [str(task["uuid"]), annotation.entry.isoformat()] # isoformat as used internally only
             if entry in self._known_annotations:
                 continue
             self._known_annotations.append(entry)
@@ -300,15 +300,22 @@ class Body:
                 continue
             known_uuids.add(str(t.task["uuid"]))
 
-        # Add all the Taskwarrior tasks not present in self.tasks
+        # Process all tasks known to taskwarrior
         new = []
         for task in self.tw.filter_tasks({"project.is": self.project.name}):
             if self.project.config.getboolean("config", "sync-tw-annotations"):
                 self._sync_annotations(task)
+            # process tasks known to egt (+ ignore unknown completed or deleted tasks)
+            #
+            # TODO:
+            # tasks that get added and completed in taskwarrior without a sync to egt
+            # will be ignored completely. To fix this store UUIDs of completed and deleted
+            # tasks, then adjust code below.
             if task["id"] == 0 or str(task["uuid"]) in known_uuids:
                 if str(task["uuid"]) in known_uuids:
-                   self._sync_completed(task)
+                    self._sync_completed(task)
                 continue
+            # Add all Taskwarrior tasks not present in self.tasks
             task = Task(self, task["id"], task=task)
             new.append(task)
 
