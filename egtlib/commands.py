@@ -407,19 +407,21 @@ class Cat(Command):
 
         e = self.make_egt(self.args.projects)
         for p in e.projects:
-            if self.args.annotate:
-                p.annotate()
-                p.print(sys.stdout)
-            else:
+            if self.args.raw:
                 with open(p.abspath) as fd:
                     print(fd.read(), end="")
+            else:
+                p.sync_tasks(modify_state=False)
+                p.print(sys.stdout)
 
     @classmethod
     def add_args(cls, subparser):
         super().add_args(subparser)
         group = subparser.add_mutually_exclusive_group()
-        group.add_argument("-a", "--annotate", action="store_true", help="run output through annotate (useful to get up-to-date task-numbers, might create new tasks)")
-        group.add_argument("-l", "--log", action="store_true", help="limit output to project log")
+        group.add_argument("-r", "--raw", action="store_true",
+                help="print the egt-file(s) directly, do not update task info)"
+                )
+        group.add_argument("-l", "--log", action="store_true", help="limit output to (merged) project log")
         subparser.add_argument("projects", nargs="*", help="project(s) to work on")
 
 
