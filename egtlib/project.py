@@ -392,12 +392,19 @@ class Project(object):
 
         return archived
 
+    def sync_tasks(self, modify_state=True):
+        """
+        Sync project with taskwarrior
+        """
+        self.body.sync_tasks(modify_state=modify_state)
+
+
     def annotate(self, today: Optional[datetime.date] = None):
         """
         Fill in fields, resolve commands, and perform all pending actions
         embedded in the project
         """
-        self.body.sync_tasks()
+        self.sync_tasks(modify_state=True)
         self.log.sync(today=today)
         if self.meta.has("total"):
             self.meta.set_durations(self.log.durations())
