@@ -293,8 +293,14 @@ class Body:
                 if t.is_new:
                     t.create()
 
-        # Collect known task UUIDs
-        known_uuids = set()
+        # Load UUIDs of tasks known to have been completed or deleted
+        try:
+            old_uuids = set(self.project.state.get("tasks")["old_uuids"])
+        except (TypeError, KeyError):
+            old_uuids = set()
+
+        # Collect known UUIDs (old tasks + tasks in project-file)
+        known_uuids = old_uuids.copy()
         for t in self.tasks:
             if t.task is None:
                 continue
@@ -302,21 +308,24 @@ class Body:
 
         # Process all tasks known to taskwarrior
         new = []
-        for task in self.tw.filter_tasks({"project.is": self.project.name}):
+        for tw_task in self.tw.filter_tasks({"project.is": self.project.name}):
+            uuid = str(tw_task["uuid"])
             if self.project.config.getboolean("config", "sync-tw-annotations"):
-                self._sync_annotations(task)
-            # process tasks known to egt (+ ignore unknown completed or deleted tasks)
-            #
-            # TODO:
-            # tasks that get added and completed in taskwarrior without a sync to egt
-            # will be ignored completely. To fix this store UUIDs of completed and deleted
-            # tasks, then adjust code below.
-            if task["id"] == 0 or str(task["uuid"]) in known_uuids:
-                if str(task["uuid"]) in known_uuids:
-                    self._sync_completed(task)
+                self._sync_annotations(tw_task)
+            # handle completed and deleted tasks
+            if tw_task["id"] == 0 and uuid not in old_uuids:
+                self._sync_completed(tw_task)
+                old_uuids.add(uuid)
                 continue
-            # Add all Taskwarrior tasks not present in self.tasks
-            task = Task(self, task["id"], task=task)
+            # handle reactivated tasks
+            if uuid in old_uuids and tw_task["id"] != 0:
+                old_uuids.remove(uuid)
+                known_tasks.remove(uuid)
+            # skip tasks that exist in project-file already
+            if uuid in known_uuids:
+                continue
+            # Add remaining Taskwarrior tasks to project-file
+            task = Task(self, tw_task["id"], task=tw_task)
             new.append(task)
 
         # If we created new task-content, prepend it to self.tasks and self.content
@@ -343,7 +352,7 @@ class Body:
                 if t.id is None:
                     continue
                 ids[t.id] = str(t.task["uuid"])
-            self.project.state.set("tasks", {"ids": ids})
+            self.project.state.set("tasks", {"ids": ids, "old_uuids": list(old_uuids)})
             self.project.state.set("annotations", self._known_annotations)
 
     def print(self, file: TextIO) -> bool:
