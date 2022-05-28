@@ -320,7 +320,7 @@ class Body:
             # handle reactivated tasks
             if uuid in old_uuids and tw_task["id"] != 0:
                 old_uuids.remove(uuid)
-                known_tasks.remove(uuid)
+                known_uuids.remove(uuid)
             # skip tasks that exist in project-file already
             if uuid in known_uuids:
                 continue
