@@ -14,7 +14,7 @@ import jinja2
 import yaml
 
 import egtlib
-from egtlib.commands import Command, CommandError
+from egtlib import cli
 
 
 VERSION = "0.1"
@@ -514,11 +514,12 @@ class CV:
             os.unlink(compiled_fname)
 
 
-class CVCommand(Command):
+class CVCommand(cli.Command):
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("project", help="project directory")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("project", help="project directory")
+        return parser
 
     def get_cv(self):
         cv = CV(self.args.project)
@@ -563,34 +564,21 @@ def main():
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
     parser.add_argument("--debug", action="store_true", help="debug output")
     # parser.add_argument("--archived", action="store_true", help="also show archived projects")
-    subparsers = parser.add_subparsers(help="subcommands")
+    subparsers = parser.add_subparsers(help="subcommands", required=True, dest="command")
 
-    Dump.make_subparser(subparsers)
-    UpdateCatalog.make_subparser(subparsers)
-    Render.make_subparser(subparsers)
+    Dump.add_subparser(subparsers)
+    UpdateCatalog.add_subparser(subparsers)
+    Render.add_subparser(subparsers)
 
     args = parser.parse_args()
+    cmd = args.command(args)
 
-    # Setup logging
-    FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
-    elif args.verbose:
-        logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
-    else:
-        logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
-
-    if hasattr(args, "command"):
-        action = args.command(args)
-        action.main()
-    else:
-        parser.print_help(file=sys.stderr)
+    try:
+        return cmd.main()
+    except cli.Fail as e:
+        print(e, file=sys.stderr)
         return 1
 
 
 if __name__ == '__main__':
-    try:
-        sys.exit(main())
-    except CommandError as e:
-        print(e, file=sys.stderr)
-        sys.exit(1)
+    sys.exit(main())

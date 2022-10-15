@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import argparse
 import sys
-import logging
 
 VERSION = "0.4"
 
@@ -11,38 +10,23 @@ def main():
     parser.add_argument("--version", action="version", version="%(prog)s " + VERSION)
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
     parser.add_argument("--debug", action="store_true", help="debug output")
-    parser.add_argument("--archived", action="store_true", help="also show archived projects")
-    subparsers = parser.add_subparsers(help="egt subcommands")
+    subparsers = parser.add_subparsers(help="egt subcommands", required=True, dest="command")
 
-    from egtlib.commands import Command, CommandError
+    from egtlib.commands import COMMANDS
+    from egtlib.cli import Fail
 
-    for c in Command.COMMANDS:
-        c.make_subparser(subparsers)
+    for c in COMMANDS:
+        c.add_subparser(subparsers)
 
     args = parser.parse_args()
-
-    # Setup logging
-    FORMAT = "%(asctime)-15s %(levelname)s %(message)s"
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format=FORMAT)
-    elif args.verbose:
-        logging.basicConfig(level=logging.INFO, stream=sys.stderr, format=FORMAT)
-    else:
-        logging.basicConfig(level=logging.WARN, stream=sys.stderr, format=FORMAT)
+    cmd = args.command(args)
 
     try:
-        command = args.command
-    except AttributeError:
-        parser.print_help(sys.stdout)
-        sys.exit(1)
-
-    action = command(args)
-    try:
-        action.main()
-    except CommandError as e:
+        return cmd.main()
+    except Fail as e:
         print(e, file=sys.stderr)
-        sys.exit(1)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

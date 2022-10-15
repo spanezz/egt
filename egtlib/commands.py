@@ -7,29 +7,25 @@ import sys
 import typing
 from configparser import RawConfigParser
 from contextlib import contextmanager
-from typing import Optional, Type
+from typing import Type
 
 import egtlib
+from . import cli
 
 log = logging.getLogger(__name__)
 
 
-class CommandError(Exception):
-    pass
+COMMANDS: typing.List[Type["cli.Command"]] = []
 
 
-class Command:
-    COMMANDS: typing.List[Type["Command"]] = []
+def register(c: Type["cli.Command"]):
+    COMMANDS.append(c)
+    return c
 
-    # Command name (as used in command line)
-    # Defaults to the lowercased class name
-    NAME: Optional[str] = None
 
-    # Command description (as used in command line help)
-    # Defaults to the strip()ped class docstring.
-    DESC: Optional[str] = None
-
+class EgtCommand(cli.Command):
     def __init__(self, args):
+        super().__init__(args)
         self.args = args
         self.config = RawConfigParser()
         self.config.read([os.path.expanduser("~/.egt.conf")])
@@ -38,34 +34,14 @@ class Command:
         return egtlib.Egt(config=self.config, filter=filter, show_archived=self.args.archived)
 
     @classmethod
-    def add_args(cls, subparser):
-        pass
-
-    @classmethod
-    def register(cls, c: Type["Command"]):
-        cls.COMMANDS.append(c)
-        return c
-
-    @classmethod
-    def get_name(cls):
-        if cls.NAME is not None:
-            return cls.NAME
-        return cls.__name__.lower()
-
-    @classmethod
-    def make_subparser(cls, subparsers):
-        desc = cls.DESC
-        if desc is None:
-            desc = cls.__doc__.strip()
-
-        parser = subparsers.add_parser(cls.get_name(), help=desc)
-        parser.set_defaults(command=cls)
-        cls.add_args(parser)
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("--archived", action="store_true", help="also show archived projects")
         return parser
 
 
-@Command.register
-class Scan(Command):
+@register
+class Scan(EgtCommand):
     """
     Update the list of known project files, by scanning everything below the
     home directory.
@@ -79,13 +55,14 @@ class Scan(Command):
         State.rescan(dirs)
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("roots", nargs="*", help="root directories to search (default: the home directory)")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("roots", nargs="*", help="root directories to search (default: the home directory)")
+        return parser
 
 
-@Command.register
-class List(Command):
+@register
+class List(EgtCommand):
     """
     List known projects.
     """
@@ -105,14 +82,15 @@ class List(Command):
                 print(p.name.ljust(name_len), p.path)
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="projects list or filter (default: all)")
-        subparser.add_argument("--files", action="store_true", help="list paths to .egt files")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="*", help="projects list or filter (default: all)")
+        parser.add_argument("--files", action="store_true", help="list paths to .egt files")
+        return parser
 
 
-@Command.register
-class Summary(Command):
+@register
+class Summary(EgtCommand):
     """
     Print a summary of the activity on all projects
     """
@@ -168,13 +146,14 @@ class Summary(Command):
         print(table.draw())
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="list of projects to summarise (default: all)")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="*", help="list of projects to summarise (default: all)")
+        return parser
 
 
-@Command.register
-class Term(Command):
+@register
+class Term(EgtCommand):
     """
     Open a terminal in the directory of the given project(s)
     """
@@ -184,13 +163,14 @@ class Term(Command):
             proj.spawn_terminal()
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="+", help="project(s) for which to open a terminal")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="+", help="project(s) for which to open a terminal")
+        return parser
 
 
-@Command.register
-class Work(Command):
+@register
+class Work(EgtCommand):
     """
     Open a terminal in a project directory, and edit the project file.
     """
@@ -200,13 +180,14 @@ class Work(Command):
             proj.spawn_terminal(with_editor=True)
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="+", help="project(s) to work on")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="+", help="project(s) to work on")
+        return parser
 
 
-@Command.register
-class Edit(Command):
+@register
+class Edit(EgtCommand):
     """
     Open a terminal in a project directory, and edit the project file.
     """
@@ -216,13 +197,14 @@ class Edit(Command):
             proj.run_editor()
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="+", help="project(s) to work on")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="+", help="project(s) to work on")
+        return parser
 
 
-@Command.register
-class Grep(Command):
+@register
+class Grep(EgtCommand):
     """
     Run 'git grep' on all project .git dirs
     """
@@ -232,14 +214,15 @@ class Grep(Command):
             proj.run_grep([self.args.pattern])
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("pattern", help="pattern to pass to git grep")
-        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("pattern", help="pattern to pass to git grep")
+        parser.add_argument("projects", nargs="*", help="project(s) to work on")
+        return parser
 
 
-@Command.register
-class MrConfig(Command):
+@register
+class MrConfig(EgtCommand):
     """
     Print a mr configuration snippet for all git projects
     """
@@ -252,13 +235,14 @@ class MrConfig(Command):
                 print()
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="*", help="project(s) to work on")
+        return parser
 
 
-@Command.register
-class Weekrpt(Command):
+@register
+class Weekrpt(EgtCommand):
     """
     Compute weekly reports
     """
@@ -322,13 +306,14 @@ class Weekrpt(Command):
             log_entry.print(sys.stdout, project=p.name)
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="*", help="project(s) to work on")
+        return parser
 
 
-@Command.register
-class PrintLog(Command):
+@register
+class PrintLog(EgtCommand):
     """
     Output the log for one or more projects
     """
@@ -352,13 +337,14 @@ class PrintLog(Command):
                 log_entry.print(sys.stdout, p)
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="*", help="project(s) to work on")
+        return parser
 
 
-@Command.register
-class Cat(Command):
+@register
+class Cat(EgtCommand):
     """
     Output the content of one or more project files
     """
@@ -381,17 +367,18 @@ class Cat(Command):
                 p.print(sys.stdout)
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        group = subparser.add_mutually_exclusive_group()
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        group = parser.add_mutually_exclusive_group()
         group.add_argument("-r", "--raw", action="store_true",
                            help="print the egt-file(s) directly, do not update task info)")
         group.add_argument("-l", "--log", action="store_true", help="limit output to (merged) project log")
-        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+        parser.add_argument("projects", nargs="*", help="project(s) to work on")
+        return parser
 
 
-@Command.register
-class Annotate(Command):
+@register
+class Annotate(EgtCommand):
     """
     Print a project file on stdout, annotating its contents with anything
     useful that can be computed.
@@ -416,14 +403,15 @@ class Annotate(Command):
         proj.print(sys.stdout)
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("project", help="project to work on")
-        subparser.add_argument("--stdin", action="store_true", help="read project file data from stdin")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("project", help="project to work on")
+        parser.add_argument("--stdin", action="store_true", help="read project file data from stdin")
+        return parser
 
 
-@Command.register
-class Archive(Command):
+@register
+class Archive(EgtCommand):
     """
     Output the log for one or more projects
     """
@@ -447,23 +435,24 @@ class Archive(Command):
             yield sys.stdout
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="*", help="project(s) to work on")
         last_month = datetime.date.today().replace(day=1) - datetime.timedelta(days=1)
-        subparser.add_argument(
+        parser.add_argument(
                 "--month", "-m", action="store", default=last_month.strftime("%Y-%m"),
                 help="print log until the given month (default: %(default)s)")
-        subparser.add_argument(
+        parser.add_argument(
                 "--remove-old", action="store_true",
                 help="rewrite the original project file removing archived entries")
-        subparser.add_argument(
+        parser.add_argument(
                 "--output", "-o", action="store",
                 help="output of aggregated archived logs (default: standard output)")
+        return parser
 
 
-@Command.register
-class Backup(Command):
+@register
+class Backup(EgtCommand):
     """
     Backup of egt project core information
     """
@@ -478,22 +467,23 @@ class Backup(Command):
             e.backup(sys.stdout)
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="project(s) to work on")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="*", help="project(s) to work on")
+        return parser
 
 
-@Command.register
-class Completion(Command):
+@register
+class Completion(EgtCommand):
     """
     Tab completion support
     """
     def main(self):
         if not self.args.subcommand:
-            raise CommandError("Usage: egt completion {commands|projects|tags}")
+            raise cli.Fail("Usage: egt completion {commands|projects|tags}")
         if self.args.subcommand == "commands":
-            for c in Command.COMMANDS:
-                print(c.get_name())
+            for c in COMMANDS:
+                print(c.NAME or c.__name__.lower())
         elif self.args.subcommand == "projects":
             e = self.make_egt()
             names = e.project_names
@@ -507,9 +497,10 @@ class Completion(Command):
             for n in sorted(res):
                 print(n)
         else:
-            raise CommandError("Usage: egt completion {commands|projects|tags}")
+            raise cli.Fail("Usage: egt completion {commands|projects|tags}")
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("subcommand", nargs="?", default=None, help="command for which to provide completion")
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("subcommand", nargs="?", default=None, help="command for which to provide completion")
+        return parser
