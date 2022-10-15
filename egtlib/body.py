@@ -184,6 +184,7 @@ class Body:
 
     def __init__(self, project: "project.Project"):
         self.project = project
+        self.date_format = self.project.config.get("config", "date-format")
 
         # Line number in the project file where the body starts
         self._lineno: Optional[int] = None
@@ -241,7 +242,7 @@ class Body:
         except KeyError:
             self._new_log[date] = [line]
 
-    def _sync_annotations(self, task: taskw.task.Task) -> None:
+    def _sync_annotations(self, task) -> None:
         """
         Sync annotations between task and TaskWarrior
         """
@@ -250,11 +251,11 @@ class Body:
         except KeyError:
             return
         for annotation in annotations:
-            entry = [str(task["uuid"]), annotation.entry.isoformat()]
+            entry = [str(task["uuid"]), annotation.entry.isoformat()] # isoformat as used internally only
             if entry in self._known_annotations:
                 continue
             self._known_annotations.append(entry)
-            date = annotation.entry.date().isoformat()
+            date = annotation.entry.date().strftime(self.date_format)
             line = Line("  - {desc}: {annot}".format(
                         desc=task["description"],
                         annot=annotation
@@ -262,12 +263,12 @@ class Body:
                         )
             self.new_log(date, line)
 
-    def _sync_completed(self, task: taskw.task.Task) -> None:
+    def _sync_completed(self, task) -> None:
         """
         Add log line for completed tasks
         """
         if task["status"] == "completed":
-            date = task["modified"].date().isoformat()
+            date = task["modified"].date().strftime(self.date_format)
             line = Line("  - [completed] {desc}".format(
                         desc=task["description"],
                         )
@@ -296,22 +297,39 @@ class Body:
                 if t.is_new:
                     t.create()
 
-        # Collect known task UUIDs
-        known_uuids = set()
+        # Load UUIDs of tasks known to have been completed or deleted
+        try:
+            old_uuids = set(self.project.state.get("tasks")["old_uuids"])
+        except (TypeError, KeyError):
+            old_uuids = set()
+
+        # Collect known UUIDs (old tasks + tasks in project-file)
+        known_uuids = old_uuids.copy()
         for t in self.tasks:
             if t.task is None:
                 continue
             known_uuids.add(str(t.task["uuid"]))
 
-        # Add all the Taskwarrior tasks not present in self.tasks
+        # Process all tasks known to taskwarrior
         new = []
-        for task in self.tw.filter_tasks({"project.is": self.project.name}):
-            self._sync_annotations(task)
-            if task["id"] == 0 or str(task["uuid"]) in known_uuids:
-                if str(task["uuid"]) in known_uuids:
-                    self._sync_completed(task)
+        for tw_task in self.tw.filter_tasks({"project.is": self.project.name}):
+            uuid = str(tw_task["uuid"])
+            if self.project.config.getboolean("config", "sync-tw-annotations"):
+                self._sync_annotations(tw_task)
+            # handle completed and deleted tasks
+            if tw_task["id"] == 0 and uuid not in old_uuids:
+                self._sync_completed(tw_task)
+                old_uuids.add(uuid)
                 continue
-            task = Task(self, task["id"], task=task)
+            # handle reactivated tasks
+            if uuid in old_uuids and tw_task["id"] != 0:
+                old_uuids.remove(uuid)
+                known_uuids.remove(uuid)
+            # skip tasks that exist in project-file already
+            if uuid in known_uuids:
+                continue
+            # Add remaining Taskwarrior tasks to project-file
+            task = Task(self, tw_task["id"], task=tw_task)
             new.append(task)
 
         # If we created new task-content, prepend it to self.tasks and self.content
@@ -338,7 +356,7 @@ class Body:
                 if t.id is None:
                     continue
                 ids[t.id] = str(t.task["uuid"])
-            self.project.state.set("tasks", {"ids": ids})
+            self.project.state.set("tasks", {"ids": ids, "old_uuids": list(old_uuids)})
             self.project.state.set("annotations", self._known_annotations)
 
     def print(self, file: TextIO) -> bool:

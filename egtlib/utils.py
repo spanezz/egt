@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import datetime
 import fcntl
 import os
@@ -8,7 +6,7 @@ import select
 import subprocess
 import tempfile
 from typing import IO
-
+from collections import defaultdict
 
 def today() -> datetime.date:
     """
@@ -54,6 +52,58 @@ def intervals_intersect(p1s, p1e, p2s, p2e):
     if p1s is not None and p2e is not None and p1s > p2e:
         return False
     return True
+
+
+class SummaryCol:
+    def __init__(self, label, align, func=None):
+        self.label = label
+        self.align = align
+        self._func = func
+
+    def init_data(self):
+        pass
+
+    def func(self, p):
+        return self._func(p)
+
+
+class TaskStatCol(SummaryCol):
+    def __init__(self, label, align, projs):
+        super().__init__(label, align)
+        self.task_stats =  defaultdict(int)
+        try:
+            self._proj = projs[0]
+        except IndexError:
+            self._proj = None
+
+    def init_data(self):
+        if self._proj is None:
+            return
+        tasks = self._proj.body.tw.filter_tasks({"status": "pending"})
+        # could not figure out how to do this in one go
+        tasks += self._proj.body.tw.filter_tasks({"status": "waiting"})
+        for task in tasks:
+            try:
+                self.task_stats[task["project"]] += 1
+            except KeyError:
+                pass
+
+    def func(self, p):
+        return str(self.task_stats[p.name])
+
+
+class HoursCol(SummaryCol):
+    def func(self, p):
+        return format_duration(p.elapsed, tabular=True) if p.last_updated else "--"
+
+
+class LastEntryCol(SummaryCol):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.now = datetime.datetime.now()
+
+    def func(self, p):
+        return "%s ago" % format_td(self.now - p.last_updated, tabular=True) if p.last_updated else "--"
 
 
 def format_duration(mins: int, tabular: bool = False) -> str:

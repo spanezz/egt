@@ -7,13 +7,16 @@ import os
 import shutil
 import sys
 import typing
-from configparser import RawConfigParser
-from contextlib import contextmanager
-from typing import Type
-
-import egtlib
 from . import cli
-from .utils import format_duration, format_td
+import egtlib
+import xdg
+from configparser import ConfigParser
+from contextlib import contextmanager
+import os
+import datetime
+import sys
+import logging
+from egtlib.utils import SummaryCol, TaskStatCol, HoursCol, LastEntryCol, format_td
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +33,22 @@ class EgtCommand(cli.Command):
     def __init__(self, args):
         super().__init__(args)
         self.args = args
-        self.config = RawConfigParser()
-        self.config.read([os.path.expanduser("~/.egt.conf")])
+        self.config = ConfigParser(interpolation=None) # we want '%' in formats to work directly
+        self.config["config"] = {
+                "date-format": "%d %B",
+                "time-format": "%H:%M",
+                "sync-tw-annotations": "True",
+                "summary-columns": 'name, tags, logs, hours, last',
+                }
+        old_cfg = os.path.expanduser("~/.egt.conf")
+        new_cfg = os.path.join(xdg.XDG_CONFIG_HOME, "egt")
+        if os.path.isfile(new_cfg):
+            if os.path.isfile(old_cfg):
+                log.warn("Config file exists in old an new location.\n  %s used\n  %s will be ignored (remove to get rid of this message)\n", new_cfg, old_cfg)
+        elif os.path.isfile(old_cfg):
+            os.rename(old_cfg, new_cfg)
+            log.info("Config file %s moved to new location %s", old_cfg, new_cfg)
+        self.config.read([new_cfg])
 
     def make_egt(self, filter: typing.List[str] = []):
         return egtlib.Egt(config=self.config, filter=filter, show_archived=self.args.archived)
@@ -55,7 +72,7 @@ class Scan(EgtCommand):
         else:
             dirs = [os.path.expanduser("~")]
         from .state import State
-        State.rescan(dirs)
+        State.rescan(dirs, config=self.config)
 
     @classmethod
     def add_subparser(cls, subparsers):
@@ -126,38 +143,59 @@ class Summary(ProjectsCommand):
     """
     Print a summary of the activity on all projects
     """
+
+    def _load_col_config(self, projs):
+        COLUMNS = {
+                "name": SummaryCol("Name", "l", lambda p: p.name),
+                "tags": SummaryCol("Tags", "l", lambda p: " ".join(sorted(p.tags))),
+                "logs": SummaryCol("Logs", "r", lambda p: len(list(p.log.entries))),
+                "tasks": TaskStatCol("Tasks", "r", projs),
+                "hours": HoursCol("Hrs", "c"),
+                "last": LastEntryCol("Last entry", "r"),
+        }
+        active_cols = []
+        raw_cols = self.config.get("config", "summary-columns")
+        for raw in raw_cols.split(","):
+            col = raw.strip().lower()
+            if col in COLUMNS:
+                active_cols.append(COLUMNS[col])
+                active_cols[-1].init_data()
+        return active_cols, COLUMNS
+
     def main(self):
         from texttable import Texttable
-
-        termsize = shutil.get_terminal_size((80, 25))
-        table = Texttable(max_width=termsize.columns)
-        table.set_deco(Texttable.HEADER)
-        table.set_cols_align(("l", "l", "r", "c", "r"))
-        table.add_row(("Name", "Tags", "Logs", "Hrs", "Last entry"))
         e = self.make_egt()
         projs = e.projects
 
-        blanks = []
-        worked = []
-        for p in projs:
-            if p.last_updated is None:
-                blanks.append(p)
-            else:
-                worked.append(p)
+        active_cols, columns = self._load_col_config(projs)
+        termsize = shutil.get_terminal_size((80, 25))
+        if self.args.width:
+            table = Texttable(max_width=self.args.width)
+        else:
+            table = Texttable(max_width=termsize.columns)
+        table.set_deco(Texttable.HEADER)
+        table.set_cols_align([c.align for c in active_cols])
+        table.add_row([c.label for c in active_cols])
 
-        blanks.sort(key=lambda p: p.name)
-        worked.sort(key=lambda p: p.last_updated)
+        if self.args.name:
+            sorted_projects = sorted(projs, key=lambda p: p.name)
+        elif self.args.tasks:
+            sorted_projects = sorted(projs, key=lambda p: columns["tasks"].task_stats[p.name])
+        else:
+            blanks = []
+            worked = []
+            for p in projs:
+                if p.last_updated is None:
+                    blanks.append(p)
+                else:
+                    worked.append(p)
 
-        now = datetime.datetime.now()
+            blanks.sort(key=lambda p: p.name)
+            worked.sort(key=lambda p: p.last_updated)
+            sorted_projects = blanks+worked
 
         def add_summary(p):
-            table.add_row((
-                p.name,
-                " ".join(sorted(p.tags)),
-                len(list(p.log.entries)),
-                format_duration(p.elapsed, tabular=True) if p.last_updated else "--",
-                "%s ago" % format_td(now - p.last_updated, tabular=True) if p.last_updated else "--",
-            ))
+            table.add_row([c.func(p) for c in active_cols])
 
 #        res["mins"] = self.elapsed
 #        res["last"] = self.last_updated
@@ -167,13 +205,20 @@ class Summary(ProjectsCommand):
 #        #format_td(datetime.datetime.now() - self.last_updated)),
 #        print "%s\t%s" % (self.name, ", ".join(stats))
 
-        for p in blanks:
-            add_summary(p)
-        for p in worked:
+        for p in sorted_projects:
             add_summary(p)
 
         print(table.draw())
 
+    @classmethod
+    def add_args(cls, subparser):
+        super().add_args(subparser)
+        subparser.add_argument("projects", nargs="*", help="list of projects to summarise (default: all)")
+        sorting = subparser.add_mutually_exclusive_group()
+        sorting.add_argument("--name", action="store_true", help="sort projects by name")
+        sorting.add_argument("--tasks", action="store_true", help="sort projects by number of tasks")
+        sorting.add_argument("--update", action="store_true", help="sort projects by last log-update (default)")
+        subparser.add_argument("--width", type=int, help="width of output, useful when piped to other command")
 
 @register
 class Term(ProjectsCommand):
@@ -381,6 +426,7 @@ class Annotate(EgtCommand):
             else:
                 proj = egt.project(self.args.project)
         if proj is None:
+            log.info("No project found.")
             return
 
         proj.annotate()
@@ -406,7 +452,7 @@ class Archive(ProjectsCommand):
         e = self.make_egt()
         with self.report_fd() as fd:
             for p in e.projects:
-                archives = p.archive(cutoff, report_fd=fd, save=self.args.remove_old)
+                archives = p.archive(cutoff, report_fd=fd, save=self.args.remove_old, combined=self.args.singlefile)
                 for archive in archives:
                     print("Archived {}: {}".format(p.name, archive.abspath))
 
@@ -431,6 +477,8 @@ class Archive(ProjectsCommand):
         parser.add_argument(
                 "--output", "-o", action="store",
                 help="output of aggregated archived logs (default: standard output)")
+        parser.add_argument(
+                "--singlefile", "-s", action="store_true", help="write archive log lines into a single file")
         return parser
 
 

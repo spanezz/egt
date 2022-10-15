@@ -1,5 +1,6 @@
-from __future__ import annotations
-
+from typing import List, Dict, Any, Set, Optional, TextIO, BinaryIO
+from configparser import ConfigParser
+import logging
 import datetime
 import logging
 import re
@@ -67,13 +68,14 @@ class ProjectFilter:
         name  matches projects with this name
           NN  matches the project of the taskwarrior task with ID NN
            _  matches the project of the last taskwarrior task completed today
+     pattern  if only one keyword: fnmatch pattern to match against project names
 
     A project matches the filter if its name is explicitly listed. If it is
     not, it matches if its tag set contains all the +tag tags, and does not
     contain any of the -tag tags.
     """
     def __init__(self, args: List[str]):
-        self._tw = None
+        self._tw: Optional[taskw.TaskWarrior] = None
         self.args = args
         self.names: Set[str] = set()
         self.tags_wanted: Set[str] = set()
@@ -93,7 +95,7 @@ class ProjectFilter:
                 self.tags_unwanted.add(f[1:])
             else:
                 if f.isdecimal():
-                    task = self.tw.get_task(id=f)
+                    task = self.tw.get_task(id=int(f))
                     try:
                         self.names.add(task[1]["project"])
                     except (IndexError, KeyError):
@@ -118,7 +120,16 @@ class ProjectFilter:
         if self.bad_filter:
             return False
         if self.names and project.name not in self.names:
-            return False
+            # project-name is not mached exactly
+            exact_match = False
+            # check if a pattern is matches
+            pattern_match = False
+            if len(self.names) == 1:
+                import fnmatch
+                (pattern,) = self.names
+                pattern_match = fnmatch.fnmatch(project.name, pattern)
+            if not exact_match and not pattern_match:
+                return False
         if self.tags_wanted and self.tags_wanted.isdisjoint(project.tags):
             return False
         if self.tags_unwanted and not self.tags_unwanted.isdisjoint(project.tags):
@@ -153,7 +164,7 @@ class Egt:
         if not Project.has_project(fname):
             log.warning("project %s has disappeared: please rerun scan", fname)
             return None
-        proj = Project.from_file(fname, fd=project_fd)
+        proj = Project.from_file(fname, fd=project_fd, config=self.config)
         if not self.show_archived and proj.archived:
             return None
         proj.default_tags.update(self._default_tags(fname))

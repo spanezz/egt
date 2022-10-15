@@ -356,16 +356,18 @@ class Command(EntryBase):
         return None
 
     def sync(self, project: "project.Project", today: datetime.date):
+        date_format = project.config.get("config", "date-format")+":"
+        datetime_format = date_format+" "+project.config.get("config", "time-format")+"-"
         if self.start is None:
             begin = datetime.datetime.combine(today, datetime.time(0))
             until = begin + datetime.timedelta(days=1)
-            head = begin.strftime("%d %B:")
+            head = begin.strftime(date_format)
             res = Entry(begin, until, head, self.body, True)
             if self.head == "++":
                 self.body.append(" +")
         else:
             begin = datetime.datetime.combine(today, self.start)
-            head = begin.strftime("%d %B: %H:%M-")
+            head = begin.strftime(datetime_format)
             res = Entry(begin, None, head, self.body, False)
             if self.head.endswith("+"):
                 self.body.append(" +")
