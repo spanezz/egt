@@ -1,5 +1,11 @@
 # User-visible feature changes in new egt versions
 
+## New in version UNRELEASED
+
+* Implemented `egt next` to show the first line of body from .egt files, sorted
+  by .egt file age
+* Implemented `egt list --age` to show the age alongside project paths
+
 ## New in version 0.4
 
  - basic taskwarrior integration
