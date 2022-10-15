@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 # If one of these files is present, consider it as the start of a source tree
 # and do not recurse into subdirs
 LEAF_FILE_MARKERS = frozenset((
-    "manage.py", "configure.ac", "setup.py", "Rakefile"
+    "manage.py", "configure.ac", "setup.py", "Rakefile", "meson.build",
 ))
 
 
