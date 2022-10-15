@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import datetime
+import io
 import logging
 import os
+import shutil
 import sys
 import typing
 from configparser import RawConfigParser
@@ -11,6 +13,7 @@ from typing import Type
 
 import egtlib
 from . import cli
+from .utils import format_duration, format_td
 
 log = logging.getLogger(__name__)
 
@@ -75,7 +78,6 @@ class ProjectsCommand(EgtCommand):
         return parser
 
 
-
 @register
 class List(ProjectsCommand):
     """
@@ -106,11 +108,8 @@ class Summary(ProjectsCommand):
     Print a summary of the activity on all projects
     """
     def main(self):
-        import shutil
-
         from texttable import Texttable
 
-        from egtlib.utils import format_duration, format_td
         termsize = shutil.get_terminal_size((80, 25))
         table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
@@ -228,8 +227,6 @@ class Weekrpt(ProjectsCommand):
     Compute weekly reports
     """
     def main(self):
-        import shutil
-
         from texttable import Texttable
 
         # egt weekrpt also showing stats by project, and by tags
@@ -432,6 +429,35 @@ class Backup(ProjectsCommand):
                 e.backup(fd)
         else:
             e.backup(sys.stdout)
+
+
+@register
+class Next(ProjectsCommand):
+    """
+    Show the top of the notes of the most recent .egt files
+    """
+    def main(self):
+        from texttable import Texttable
+
+        termsize = shutil.get_terminal_size((80, 25))
+        table = Texttable(max_width=termsize.columns)
+        table.set_deco(Texttable.HEADER)
+        table.set_cols_align(("l", "l", "l"))
+        table.add_row(("Name", "Age", "First entry"))
+
+        egt = self.make_egt()
+        projects = sorted(egt.projects, key=lambda p: -p.mtime)
+        now = datetime.datetime.today()
+        for p in projects:
+            if not p.body.content:
+                continue
+            with io.StringIO() as fd:
+                p.body.content[0].print(file=fd)
+                text = fd.getvalue().strip()
+            age = now - datetime.datetime.fromtimestamp(p.mtime)
+            table.add_row((p.name, format_td(age), text))
+
+        print(table.draw())
 
 
 @register

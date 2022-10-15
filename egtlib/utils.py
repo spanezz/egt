@@ -76,15 +76,19 @@ def format_td(td: datetime.timedelta, tabular=False) -> str:
     Format a timedelta object
     """
     if tabular:
-        if td.days > 0:
-            return "%3d days" % td.days
-        else:
+        if td.days == 0:
             return format_duration(td.seconds / 60, tabular=True)
-    else:
-        if td.days > 0:
-            return "%d days" % td.days
+        elif td.days == 1:
+            return f"{td.days:3d} day"
         else:
+            return f"{td.days:3d} days"
+    else:
+        if td.days == 0:
             return format_duration(td.seconds / 60)
+        elif td.days == 1:
+            return f"{td.days} day"
+        else:
+            return f"{td.days} days"
 
 
 def stream_output(proc: "subprocess.Popen"):

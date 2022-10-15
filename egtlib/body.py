@@ -14,7 +14,7 @@ class BodyEntry:
     """
     Base class for elements that compose a project body
     """
-    def print(self, file: TextIO) -> None:
+    def print(self, file: Optional[TextIO] = None) -> None:
         raise NotImplementedError("print has been called on raw BodyEntry object")
 
 
@@ -25,7 +25,7 @@ class Line(BodyEntry):
     def __init__(self, line: str):
         self.line = line
 
-    def print(self, file: TextIO) -> None:
+    def print(self, file: Optional[TextIO] = None) -> None:
         print(self.line, file=file)
 
     def __repr__(self):

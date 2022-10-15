@@ -109,6 +109,13 @@ class Project:
         return self.meta.get("path", self.default_path)
 
     @property
+    def mtime(self) -> float:
+        """
+        Returh the modification time of the .egt file
+        """
+        return os.path.getmtime(self.abspath)
+
+    @property
     def tags(self):
         return self.default_tags | self.meta.tags
 
