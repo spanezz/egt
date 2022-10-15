@@ -431,6 +431,9 @@ class LogPrinter:
 
 
 class Log:
+    """
+    Time-based log section of a .egt file
+    """
     def __init__(self, project: "project.Project"):
         self.project = project
         # Line number in the project file where the log starts

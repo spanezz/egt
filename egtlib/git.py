@@ -15,6 +15,10 @@ re_gitsha = re.compile(r"^\s+- \[git:(?P<sha>[a-f0-9]{4,})\]\s+")
 
 
 def collect_achievements(proj: "project.Project", entry: Entry):
+    """
+    Add to a log Entry one line for each commit that happened during the entry
+    time span
+    """
     if not os.path.exists(os.path.join(proj.path, ".git")):
         return
 

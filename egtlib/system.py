@@ -3,9 +3,16 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .project import Project
 
 
-def run_editor(proj):
+def run_editor(proj: Project):
+    """
+    Edit the .egt file for the give Project
+    """
     editor = proj.meta.get("editor", None)
     if editor is None:
         editor = os.environ.get("EDITOR", "vim")
@@ -13,7 +20,11 @@ def run_editor(proj):
     p.wait()
 
 
-def run_work_session(proj, with_editor=True):
+def run_work_session(proj: Project, with_editor=True):
+    """
+    Open a terminal on the working directory of the given project, optionally
+    opening the project file in an editor inside the terminal
+    """
     pid = os.fork()
     if pid > 0:
         return

@@ -50,7 +50,16 @@ class ProjectState(object):
             json.dump(self._state, fd, indent=1)
 
 
-class Project(object):
+class Project:
+    """
+    A .egt file.
+
+    The file contains:
+
+    * Metadata (meta.Meta)
+    * A time-based log (log.Log)
+    * A free-text body (body.Body)
+    """
     def __init__(self, abspath, statedir=None):
         self.statedir = statedir
         self.abspath = abspath

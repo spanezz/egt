@@ -56,7 +56,10 @@ def intervals_intersect(p1s, p1e, p2s, p2e):
     return True
 
 
-def format_duration(mins: int, tabular: bool = False):
+def format_duration(mins: int, tabular: bool = False) -> str:
+    """
+    Format a time duration in minutes
+    """
     h = mins / 60
     m = mins % 60
     if tabular:
@@ -68,7 +71,10 @@ def format_duration(mins: int, tabular: bool = False):
             return "%dh" % h
 
 
-def format_td(td, tabular=False):
+def format_td(td: datetime.timedelta, tabular=False) -> str:
+    """
+    Format a timedelta object
+    """
     if tabular:
         if td.days > 0:
             return "%3d days" % td.days
