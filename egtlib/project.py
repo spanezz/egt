@@ -1,15 +1,19 @@
-from typing import Optional, TextIO, Any, List
+from __future__ import annotations
+
+import datetime
+import json
+import logging
 import os.path
 import subprocess
-import datetime
 import sys
-import json
-from .lang import set_locale
-from .utils import format_duration, intervals_intersect, today, atomic_writer, stream_output
-from .meta import Meta
-from .log import Log
+from typing import Any, List, Optional, TextIO
+
 from .body import Body
-import logging
+from .lang import set_locale
+from .log import Log
+from .meta import Meta
+from .utils import (atomic_writer, format_duration, intervals_intersect,
+                    stream_output, today)
 
 log = logging.getLogger(__name__)
 
@@ -195,8 +199,8 @@ class Project(object):
     @property
     def elapsed(self):
         mins = 0
-        for l in self.log.entries:
-            mins += l.duration
+        for entry in self.log.entries:
+            mins += entry.duration
         return mins
 
     @property
@@ -397,7 +401,6 @@ class Project(object):
         Sync project with taskwarrior
         """
         self.body.sync_tasks(modify_state=modify_state)
-
 
     def annotate(self, today: Optional[datetime.date] = None):
         """

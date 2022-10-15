@@ -1,7 +1,9 @@
-from typing import Generator, Set
+from __future__ import annotations
+
+import logging
 import os
 import os.path
-import logging
+from typing import Generator, Set
 
 log = logging.getLogger(__name__)
 

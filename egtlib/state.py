@@ -1,11 +1,15 @@
-from typing import List, Dict
-from .utils import atomic_writer
-from .project import Project
-from .scan import scan
-from xdg import BaseDirectory
-import os.path
+from __future__ import annotations
+
 import json
 import logging
+import os.path
+from typing import Dict, List
+
+from xdg import BaseDirectory
+
+from .project import Project
+from .scan import scan
+from .utils import atomic_writer
 
 log = logging.getLogger(__name__)
 

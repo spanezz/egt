@@ -1,13 +1,15 @@
 from __future__ import annotations
+
+import datetime
+import logging
+import os
+import sys
 import typing
-from typing import Optional, Type
-import egtlib
 from configparser import RawConfigParser
 from contextlib import contextmanager
-import os
-import datetime
-import sys
-import logging
+from typing import Optional, Type
+
+import egtlib
 
 log = logging.getLogger(__name__)
 
@@ -115,9 +117,11 @@ class Summary(Command):
     Print a summary of the activity on all projects
     """
     def main(self):
-        from texttable import Texttable
-        from egtlib.utils import format_duration, format_td
         import shutil
+
+        from texttable import Texttable
+
+        from egtlib.utils import format_duration, format_td
         termsize = shutil.get_terminal_size((80, 25))
         table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
@@ -259,8 +263,10 @@ class Weekrpt(Command):
     Compute weekly reports
     """
     def main(self):
-        from texttable import Texttable
         import shutil
+
+        from texttable import Texttable
+
         # egt weekrpt also showing stats by project, and by tags
         e = self.make_egt(self.args.projects)
         # TODO: add an option to choose the current time
@@ -379,8 +385,7 @@ class Cat(Command):
         super().add_args(subparser)
         group = subparser.add_mutually_exclusive_group()
         group.add_argument("-r", "--raw", action="store_true",
-                help="print the egt-file(s) directly, do not update task info)"
-                )
+                           help="print the egt-file(s) directly, do not update task info)")
         group.add_argument("-l", "--log", action="store_true", help="limit output to (merged) project log")
         subparser.add_argument("projects", nargs="*", help="project(s) to work on")
 

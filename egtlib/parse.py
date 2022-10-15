@@ -1,4 +1,6 @@
-from typing import List, Optional, TextIO, Generator
+from __future__ import annotations
+
+from typing import Generator, List, Optional, TextIO
 
 
 class Lines:

@@ -1,10 +1,13 @@
-from typing import Optional, TextIO, List, Dict
-from collections import OrderedDict
-from .parse import Lines
-from .utils import format_duration
+from __future__ import annotations
+
+import inspect
 import re
 import sys
-import inspect
+from collections import OrderedDict
+from typing import Dict, List, Optional, TextIO
+
+from .parse import Lines
+from .utils import format_duration
 
 
 class Meta:

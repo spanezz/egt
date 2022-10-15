@@ -1,11 +1,13 @@
-from typing import IO
+from __future__ import annotations
+
+import datetime
+import fcntl
+import os
+import os.path
+import select
 import subprocess
 import tempfile
-import os.path
-import os
-import fcntl
-import select
-import datetime
+from typing import IO
 
 
 def today() -> datetime.date:
@@ -109,7 +111,7 @@ def stream_output(proc: "subprocess.Popen"):
                 bufs[idx] += buf
                 lines = bufs[idx].split(b"\n")
                 bufs[idx] = lines.pop()
-                for l in lines:
-                    yield types[idx], l.decode("utf-8")
+                for line in lines:
+                    yield types[idx], line.decode("utf-8")
     res = proc.wait()
     yield "result", res

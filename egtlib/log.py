@@ -1,14 +1,17 @@
-from typing import List, Optional, Type, TextIO, Generator
-from .utils import format_duration
-from . import utils
-from .lang import get_parserinfo
-from . import project
-from .parse import Lines
-from collections import Counter
-import dateutil.parser
+from __future__ import annotations
+
 import datetime
-import sys
 import re
+import sys
+from collections import Counter
+from typing import Generator, List, Optional, TextIO, Type
+
+import dateutil.parser
+
+from . import project, utils
+from .lang import get_parserinfo
+from .parse import Lines
+from .utils import format_duration
 
 
 class LogParser:
@@ -183,7 +186,14 @@ class Entry(EntryBase):
     re_tag = re.compile(r"\s*\+\S+\s*$")
     re_hours = re.compile(r"^")
 
-    def __init__(self, begin: datetime.datetime, until: Optional[datetime.datetime], head: str, body: List[str], fullday: bool, tags: List[str] = []):
+    def __init__(
+            self,
+            begin: datetime.datetime,
+            until: Optional[datetime.datetime],
+            head: str,
+            body: List[str],
+            fullday: bool,
+            tags: List[str] = []):
         super().__init__(body)
         # Datetime of beginning of log entry timespan
         self.begin = begin
@@ -279,7 +289,8 @@ class Entry(EntryBase):
         # Parse entry head
         date = logparser.parse_date(kw["date"])
         if date is None:
-            logparser.log_parse_error(entry_lineno, "cannot parse log header date: {} (lang={})".format(repr(kw["date"]), logparser.lang))
+            logparser.log_parse_error(
+                    entry_lineno, "cannot parse log header date: {} (lang={})".format(repr(kw["date"]), logparser.lang))
             date = logparser.default
 
         # Parse start-end times
@@ -363,7 +374,8 @@ class Command(EntryBase):
         return res
 
     def print_lead_timeref(self, file):
-        raise RuntimeError("Cannot output a log with a Command as the very first element, without a previous time reference")
+        raise RuntimeError(
+                "Cannot output a log with a Command as the very first element, without a previous time reference")
 
     def print(self, file=sys.stdout):
         print(self.head, file=file)
@@ -482,7 +494,9 @@ class Log:
         # remove the first of the two
         res = self._entries[first:last + 1]
         del self._entries[first:last + 1]
-        if first > 0 and first < len(self._entries) and isinstance(self._entries[first - 1], Timebase) and isinstance(self._entries[first], Timebase):
+        if (first > 0 and first < len(self._entries) and
+                isinstance(self._entries[first - 1], Timebase) and
+                isinstance(self._entries[first], Timebase)):
             self._entries.pop(first - 1)
         return res
 

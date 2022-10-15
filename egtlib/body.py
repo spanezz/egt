@@ -1,9 +1,13 @@
-from typing import TextIO, Optional, List, Dict
-from . import project
-from .parse import Lines
+from __future__ import annotations
+
 import re
 import shlex
+from typing import Dict, List, Optional, TextIO
+
 import taskw
+
+from . import project
+from .parse import Lines
 
 
 class BodyEntry:
@@ -192,7 +196,7 @@ class Body:
 
         # Storage for handling annotations
         self._new_log: Dict[str, List[Line]] = {}
-        self._known_annotations: List[List[str]] = [] # using list instead of tuple due to json constraints
+        self._known_annotations: List[List[str]] = []  # using list instead of tuple due to json constraints
 
         # Taskwarrior interface, loaded lazily
         self._tw: Optional[taskw.TaskWarrior] = None
@@ -252,7 +256,7 @@ class Body:
             self._known_annotations.append(entry)
             date = annotation.entry.date().isoformat()
             line = Line("  - {desc}: {annot}".format(
-                        desc= task["description"],
+                        desc=task["description"],
                         annot=annotation
                         )
                         )
@@ -305,7 +309,7 @@ class Body:
             self._sync_annotations(task)
             if task["id"] == 0 or str(task["uuid"]) in known_uuids:
                 if str(task["uuid"]) in known_uuids:
-                   self._sync_completed(task)
+                    self._sync_completed(task)
                 continue
             task = Task(self, task["id"], task=task)
             new.append(task)

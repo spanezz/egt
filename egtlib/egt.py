@@ -1,13 +1,17 @@
-from typing import List, Dict, Any, Set, Optional, TextIO, BinaryIO
-from configparser import RawConfigParser
-import logging
+from __future__ import annotations
+
 import datetime
-import sys
+import logging
 import re
+import sys
+from configparser import RawConfigParser
+from typing import Any, BinaryIO, Dict, List, Optional, Set, TextIO
+
 import taskw
+
+from .project import Project
 from .state import State
 from .utils import intervals_intersect
-from .project import Project
 
 log = logging.getLogger(__name__)
 

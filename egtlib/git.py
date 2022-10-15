@@ -1,9 +1,13 @@
-from . import project
-from .log import Entry
-import git
+from __future__ import annotations
+
+import logging
 import os
 import re
-import logging
+
+import git
+
+from . import project
+from .log import Entry
 
 log = logging.getLogger(__name__)
 

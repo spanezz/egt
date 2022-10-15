@@ -1,7 +1,10 @@
-from typing import Optional, Dict, Type
-from contextlib import contextmanager
-import dateutil.parser
+from __future__ import annotations
+
 import logging
+from contextlib import contextmanager
+from typing import Dict, Optional, Type
+
+import dateutil.parser
 
 log = logging.getLogger(__name__)
 
