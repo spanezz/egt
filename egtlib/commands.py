@@ -85,20 +85,39 @@ class List(ProjectsCommand):
     """
     def main(self):
         e = self.make_egt()
-        name_len = max((len(x.name) for x in e.projects))
         homedir = os.path.expanduser("~")
-        for p in e.projects:
+        projects = e.projects
+
+        if self.args.age:
+            projects.sort(key=lambda p: -p.mtime)
+            now = datetime.datetime.now()
+            ages = []
+            for project in projects:
+                age = now - datetime.datetime.fromtimestamp(project.mtime)
+                ages.append(format_td(age))
+            age_len = max(len(a) for a in ages)
+
+        name_len = max((len(x.name) for x in projects))
+        for idx, p in enumerate(projects):
             if self.args.files:
-                print(p.abspath)
-            elif p.path.startswith(homedir):
-                print(p.name.ljust(name_len), "~%s" % p.path[len(homedir):])
+                if self.args.age:
+                    print(ages[idx].ljust(age_len), p.abspath)
+                else:
+                    print(p.abspath)
             else:
-                print(p.name.ljust(name_len), p.path)
+                path = p.path
+                if p.path.startswith(homedir):
+                    path = "~" + p.path[len(homedir):]
+                if self.args.age:
+                    print(p.name.ljust(name_len), ages[idx].ljust(age_len), path)
+                else:
+                    print(p.name.ljust(name_len), path)
 
     @classmethod
     def add_subparser(cls, subparsers):
         parser = super().add_subparser(subparsers)
         parser.add_argument("--files", action="store_true", help="list paths to .egt files")
+        parser.add_argument("--age", action="store_true", help="sort by age and show ages")
         return parser
 
 
