@@ -35,11 +35,12 @@ class WeeklyReport(object):
         count = 0
         mins = 0
         for p in self.projs:
-            for l in p.log.entries:
-                if intervals_intersect(l.begin.date(), l.until.date() if l.until else datetime.date.today(), d_begin, d_until):
-                    log.append((l, p))
+            for e in p.log.entries:
+                if intervals_intersect(
+                        e.begin.date(), e.until.date() if e.until else datetime.date.today(), d_begin, d_until):
+                    log.append((e, p))
                     count += 1
-                    mins += l.duration
+                    mins += e.duration
 
         res.update(
             count=count,
@@ -122,7 +123,12 @@ class ProjectFilter:
 
 
 class Egt:
-    def __init__(self, config: Optional[RawConfigParser] = None, filter: List[str] = [], show_archived: bool = False, statedir: str = None):
+    def __init__(
+            self,
+            config: Optional[RawConfigParser] = None,
+            filter: List[str] = [],
+            show_archived: bool = False,
+            statedir: str = None):
         self.config = config
         self.state = State()
         self.state.load(statedir)
@@ -213,7 +219,12 @@ class Egt:
             return None
         return self.load_project(info["fname"], project_fd=project_fd)
 
-    def weekrpt(self, tags: List[str] = None, end: datetime.date = None, days: int = 7, projs: List[Project] = None) -> Dict[str, Any]:
+    def weekrpt(
+            self,
+            tags: List[str] = None,
+            end: datetime.date = None,
+            days: int = 7,
+            projs: List[Project] = None) -> Dict[str, Any]:
         rep = WeeklyReport()
         if projs:
             for p in projs:
