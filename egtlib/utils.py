@@ -77,14 +77,14 @@ def format_td(td: datetime.timedelta, tabular=False) -> str:
     """
     if tabular:
         if td.days == 0:
-            return format_duration(td.seconds / 60, tabular=True)
+            return format_duration(td.seconds // 60, tabular=True)
         elif td.days == 1:
             return f"{td.days:3d} day"
         else:
             return f"{td.days:3d} days"
     else:
         if td.days == 0:
-            return format_duration(td.seconds / 60)
+            return format_duration(td.seconds // 60)
         elif td.days == 1:
             return f"{td.days} day"
         else:
