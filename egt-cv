@@ -1,21 +1,20 @@
 #!/usr/bin/python3
 from __future__ import annotations
-from typing import List, Dict, Optional, Set
+
 import argparse
 import configparser
 import datetime
-import logging
 import os
 import shutil
 import subprocess
 import sys
+from typing import Dict, List, Optional, Set
 
 import jinja2
 import yaml
 
 import egtlib
 from egtlib import cli
-
 
 VERSION = "0.1"
 
@@ -454,6 +453,7 @@ class CV:
         Render the curriculum, writing results to the given output directory
         """
         from babel.support import Translations
+
         # Reset the output directory
         if os.path.exists(outdir):
             shutil.rmtree(outdir)
