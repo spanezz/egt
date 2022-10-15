@@ -23,8 +23,8 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
             print("15 march: 9:30-", file=fd)
             print(" - wrote more unit tests", file=fd)
             print(file=fd)
-            for l in body_lines:
-                print(l, file=fd)
+            for line in body_lines:
+                print(line, file=fd)
 
     def testCreateFromEgt(self):
         """
