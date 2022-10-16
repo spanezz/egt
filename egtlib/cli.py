@@ -4,8 +4,9 @@ from typing import Optional
 
 try:
     import coloredlogs
+    HAS_COLOREDLOGS = True
 except ModuleNotFoundError:
-    coloredlogs = None
+    HAS_COLOREDLOGS = False
 
 
 def _get_first_docstring_line(obj):
@@ -44,7 +45,7 @@ class Command:
         else:
             level = logging.WARN
 
-        if coloredlogs is not None:
+        if HAS_COLOREDLOGS:
             coloredlogs.install(level=level, fmt=FORMAT)
         else:
             logging.basicConfig(level=level, stream=sys.stderr, format=FORMAT)
