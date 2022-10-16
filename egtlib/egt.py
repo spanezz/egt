@@ -1,12 +1,9 @@
 from typing import List, Dict, Any, Set, Optional, TextIO, BinaryIO
-from configparser import ConfigParser
 import logging
 import datetime
-import logging
 import re
 import sys
 from configparser import RawConfigParser
-from typing import Any, BinaryIO, Dict, List, Optional, Set, TextIO
 
 import taskw
 

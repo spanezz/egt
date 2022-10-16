@@ -5,7 +5,6 @@ from typing import Optional, TextIO, Any, List, Tuple
 import os.path
 import subprocess
 import sys
-from typing import Any, List, Optional, TextIO
 
 from .body import Body
 from .lang import set_locale
@@ -63,14 +62,14 @@ class Project:
         if config is None:
             from configparser import ConfigParser
             # TODO: refactor to single location (`commands.Command.__init__`)
-            config = ConfigParser(interpolation=None) # we want '%' in formats to work directly
+            config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
             config["config"] = {
                     "date-format": "%d %B",
                     "time-format": "%H:%M",
                     "sync-tw-annotations": "True",
                     "summary-columns": 'name, tags, logs, hours, last',
                     }
-        self.config=config
+        self.config = config
         self.statedir = statedir
         self.abspath = abspath
         self.default_path, basename = os.path.split(abspath)

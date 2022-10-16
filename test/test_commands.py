@@ -3,7 +3,6 @@ import unittest
 from unittest.mock import Mock, patch
 from io import StringIO
 from .utils import ProjectTestMixin
-from configparser import ConfigParser
 import os
 from egtlib.state import State
 from egtlib.commands import Completion
@@ -51,7 +50,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
 
     def test_list(self):
         State.rescan([self.workdir.name], statedir=self.workdir.name)
-        egt = egtlib.Egt(config=ConfigParser(), statedir=self.workdir.name)
+        egt = egtlib.Egt(config=None, statedir=self.workdir.name)
         names = set(p.name for p in egt.projects)
         self.assertIn("test", names)
         self.assertIn("p1", names)
@@ -64,7 +63,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
                 {"cmd": "tags", "res": ["bar", "blubb", "foo"]},
                 ]
         State.rescan([self.workdir.name], statedir=self.workdir.name)
-        egt = egtlib.Egt(config=ConfigParser(), statedir=self.workdir.name)
+        egt = egtlib.Egt(config=None, statedir=self.workdir.name)
         for subtest in subtests:
             with self.subTest(config=subtest["cmd"]):
                 mock_arg = Mock(subcommand=subtest["cmd"])
@@ -89,7 +88,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
 
     def test_backup(self):
         State.rescan([self.workdir.name], statedir=self.workdir.name)
-        egt = egtlib.Egt(config=ConfigParser(), statedir=self.workdir.name)
+        egt = egtlib.Egt(config=None, statedir=self.workdir.name)
         tarfname = os.path.join(self.workdir.name, "backup.tar")
         with open(tarfname, "wb") as fd:
             egt.backup(fd)

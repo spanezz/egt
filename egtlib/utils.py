@@ -8,6 +8,7 @@ import tempfile
 from typing import IO
 from collections import defaultdict
 
+
 def today() -> datetime.date:
     """
     Mockable version of datetime.date.today()
@@ -70,7 +71,7 @@ class SummaryCol:
 class TaskStatCol(SummaryCol):
     def __init__(self, label, align, projs):
         super().__init__(label, align)
-        self.task_stats =  defaultdict(int)
+        self.task_stats = defaultdict(int)
         try:
             self._proj = projs[0]
         except IndexError:

@@ -308,10 +308,12 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
             proj.body.print(out)
             body_lines = out.getvalue().splitlines()
 
-        self.assertEqual(len(body_lines), 3)
-        self.assertEqual(body_lines[0], "body line1")
-        self.assertRegex(body_lines[1], r"^ - \[[^]]+\] task \+tag$")
-        self.assertEqual(body_lines[2], "body line3")
+        self.assertEqual(len(body_lines), 5)
+        self.assertRegex(body_lines[0], r"[0-9]{1,2} [A-z]*:")
+        self.assertEqual(body_lines[1], "  - [completed] task")
+        self.assertEqual(body_lines[2], "")
+        self.assertEqual(body_lines[3], "body line1")
+        self.assertEqual(body_lines[4], "body line3")
 
         with open(os.path.join(self.workdir.name, "project-testprj.json"), "rt") as fd:
             state = json.load(fd)

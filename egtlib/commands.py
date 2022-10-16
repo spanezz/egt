@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import datetime
 import io
 import logging
@@ -7,15 +5,12 @@ import os
 import shutil
 import sys
 import typing
+from typing import Type
 from . import cli
 import egtlib
 import xdg
 from configparser import ConfigParser
 from contextlib import contextmanager
-import os
-import datetime
-import sys
-import logging
 from egtlib.utils import SummaryCol, TaskStatCol, HoursCol, LastEntryCol, format_td
 
 log = logging.getLogger(__name__)
@@ -33,7 +28,7 @@ class EgtCommand(cli.Command):
     def __init__(self, args):
         super().__init__(args)
         self.args = args
-        self.config = ConfigParser(interpolation=None) # we want '%' in formats to work directly
+        self.config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
         self.config["config"] = {
                 "date-format": "%d %B",
                 "time-format": "%H:%M",
@@ -211,14 +206,16 @@ class Summary(ProjectsCommand):
         print(table.draw())
 
     @classmethod
-    def add_args(cls, subparser):
-        super().add_args(subparser)
-        subparser.add_argument("projects", nargs="*", help="list of projects to summarise (default: all)")
-        sorting = subparser.add_mutually_exclusive_group()
+    def add_subparser(cls, subparsers):
+        parser = super().add_subparser(subparsers)
+        parser.add_argument("projects", nargs="*", help="list of projects to summarise (default: all)")
+        sorting = parser.add_mutually_exclusive_group()
         sorting.add_argument("--name", action="store_true", help="sort projects by name")
         sorting.add_argument("--tasks", action="store_true", help="sort projects by number of tasks")
         sorting.add_argument("--update", action="store_true", help="sort projects by last log-update (default)")
-        subparser.add_argument("--width", type=int, help="width of output, useful when piped to other command")
+        parser.add_argument("--width", type=int, help="width of output, useful when piped to other command")
+        return parser
+
 
 @register
 class Term(ProjectsCommand):

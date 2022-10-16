@@ -251,7 +251,7 @@ class Body:
         except KeyError:
             return
         for annotation in annotations:
-            entry = [str(task["uuid"]), annotation.entry.isoformat()] # isoformat as used internally only
+            entry = [str(task["uuid"]), annotation.entry.isoformat()]  # isoformat as used internally only
             if entry in self._known_annotations:
                 continue
             self._known_annotations.append(entry)
@@ -335,8 +335,7 @@ class Body:
         # If we created new task-content, prepend it to self.tasks and self.content
         if new:
             self.tasks[0:0] = new
-            new.append(Line(""))
-            self.content[0:0] = new
+            self.content[0:0] = new + [Line("")]
 
         # If we created new log-content, prepend it to self.content
         if self._new_log:

@@ -25,7 +25,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
         proj.meta.set("Name", "test")
         proj.meta.set("Archive-Dir", self.workdir.name)
         with open(self.reportfile, "wt") as fd:
-            return proj, proj.archive(cutoff=today.replace(day=1), report_fd=fd)
+            return proj, proj.archive(cutoff=today.replace(day=1), report_fd=fd, combined=False)
 
     def to_text(self, proj, today=datetime.date(2019, 2, 1)):
         with io.StringIO() as fd:
