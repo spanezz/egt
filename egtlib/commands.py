@@ -346,7 +346,7 @@ class Weekrpt(ProjectsCommand):
 
         log.sort(key=lambda x: x[0].begin)
         for log_entry, p in log:
-            log_entry.print(sys.stdout, project=p.name)
+            log_entry.print(sys.stdout, project=p)
 
 
 @register
