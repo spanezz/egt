@@ -258,7 +258,7 @@ class Entry(EntryBase):
     def print_lead_timeref(self, file):
         print(self.begin.year, file=file)
 
-    def print(self, file=sys.stdout, project: "project.Project" = None):
+    def print(self, file=sys.stdout, project: Optional["project.Project"] = None):
         mo = self.re_entry.match(self.head)
         if not mo:
             raise RuntimeError("Header line was parsed right during parsing, and not during printing")
