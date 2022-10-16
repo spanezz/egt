@@ -1,6 +1,6 @@
 # coding: utf8
 import unittest
-from unittest.mock import Mock, patch
+from unittest import mock
 from io import StringIO
 from .utils import ProjectTestMixin
 import os
@@ -64,15 +64,16 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
                 ]
         State.rescan([self.workdir.name], statedir=self.workdir.name)
         egt = egtlib.Egt(config=None, statedir=self.workdir.name)
-        for subtest in subtests:
-            with self.subTest(config=subtest["cmd"]):
-                mock_arg = Mock(subcommand=subtest["cmd"])
-                completion = Completion(mock_arg)
-                with patch.object(completion, 'make_egt', return_value=egt):
-                    with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
-                        completion.main()
-                names = mock_stdout.getvalue().split("\n")[:-1]
-                self.assertEqual(names, subtest["res"])
+        with mock.patch("egtlib.cli.Command.setup_logging"):
+            for subtest in subtests:
+                with self.subTest(config=subtest["cmd"]):
+                    mock_arg = mock.Mock(subcommand=subtest["cmd"])
+                    completion = Completion(mock_arg)
+                    with mock.patch.object(completion, 'make_egt', return_value=egt):
+                        with mock.patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                            completion.main()
+                    names = mock_stdout.getvalue().split("\n")[:-1]
+                    self.assertEqual(names, subtest["res"])
 
     # TODO: test_summary
     # TODO: test_term
