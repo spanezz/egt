@@ -20,6 +20,7 @@ class atomic_writer(object):
     """
     Atomically write to a file
     """
+
     def __init__(self, fname: str, mode: str, osmode: int = 0o644, sync: bool = True, **kw):
         self.fname = fname
         self.osmode = osmode

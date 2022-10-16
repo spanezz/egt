@@ -39,7 +39,8 @@ class WeeklyReport(object):
         for p in self.projs:
             for e in p.log.entries:
                 if intervals_intersect(
-                        e.begin.date(), e.until.date() if e.until else datetime.date.today(), d_begin, d_until):
+                    e.begin.date(), e.until.date() if e.until else datetime.date.today(), d_begin, d_until
+                ):
                     log.append((e, p))
                     count += 1
                     mins += e.duration
@@ -71,6 +72,7 @@ class ProjectFilter:
     not, it matches if its tag set contains all the +tag tags, and does not
     contain any of the -tag tags.
     """
+
     def __init__(self, args: List[str]):
         self._tw: Optional[taskw.TaskWarrior] = None
         self.args = args
@@ -123,6 +125,7 @@ class ProjectFilter:
             pattern_match = False
             if len(self.names) == 1:
                 import fnmatch
+
                 (pattern,) = self.names
                 pattern_match = fnmatch.fnmatch(project.name, pattern)
             if not exact_match and not pattern_match:
@@ -136,11 +139,12 @@ class ProjectFilter:
 
 class Egt:
     def __init__(
-            self,
-            config: Optional[RawConfigParser] = None,
-            filter: List[str] = [],
-            show_archived: bool = False,
-            statedir: str = None):
+        self,
+        config: Optional[RawConfigParser] = None,
+        filter: List[str] = [],
+        show_archived: bool = False,
+        statedir: str = None,
+    ):
         self.config = config
         self.state = State()
         self.state.load(statedir)
@@ -158,6 +162,7 @@ class Egt:
         created from that file.
         """
         from .project import Project
+
         if not Project.has_project(fname):
             log.warning("project %s has disappeared: please rerun scan", fname)
             return None
@@ -232,11 +237,8 @@ class Egt:
         return self.load_project(info["fname"], project_fd=project_fd)
 
     def weekrpt(
-            self,
-            tags: List[str] = None,
-            end: datetime.date = None,
-            days: int = 7,
-            projs: List[Project] = None) -> Dict[str, Any]:
+        self, tags: List[str] = None, end: datetime.date = None, days: int = 7, projs: List[Project] = None
+    ) -> Dict[str, Any]:
         rep = WeeklyReport()
         if projs:
             for p in projs:
@@ -249,6 +251,7 @@ class Egt:
 
     def backup(self, out: BinaryIO = sys.stdout.buffer) -> None:
         import tarfile
+
         tarout = tarfile.open(None, "w|", fileobj=out)
         for p in self.projects:
             p.backup(tarout)

@@ -72,6 +72,7 @@ class EntryBase:
     """
     Base class for log entries
     """
+
     def __init__(self, body: List[str] = None):
         # List of lines with the body of the log entry
         self.body: List[str]
@@ -134,6 +135,7 @@ class Timebase(EntryBase):
     """
     Log entry providing a time reference for the next log entries
     """
+
     re_timebase = re.compile(r"^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
 
     def __init__(self, line: str, dt: datetime.datetime):
@@ -175,6 +177,7 @@ class Entry(EntryBase):
     """
     Free text log entry with a time header
     """
+
     re_entry = re.compile(
         r"^"
         r"(?P<date>(?:\S| \d)[^:]*):\s*"  # Date header
@@ -187,13 +190,14 @@ class Entry(EntryBase):
     re_hours = re.compile(r"^")
 
     def __init__(
-            self,
-            begin: datetime.datetime,
-            until: Optional[datetime.datetime],
-            head: str,
-            body: List[str],
-            fullday: bool,
-            tags: List[str] = []):
+        self,
+        begin: datetime.datetime,
+        until: Optional[datetime.datetime],
+        head: str,
+        body: List[str],
+        fullday: bool,
+        tags: List[str] = [],
+    ):
         super().__init__(body)
         # Datetime of beginning of log entry timespan
         self.begin = begin
@@ -229,6 +233,7 @@ class Entry(EntryBase):
             return
         self.body.pop()
         from .git import collect_achievements
+
         collect_achievements(project, self)
 
     def sync(self, project: "project.Project", today: datetime.date):
@@ -248,7 +253,7 @@ class Entry(EntryBase):
         else:
             until = self.until
 
-        td = (until - self.begin)
+        td = until - self.begin
         return (td.days * 86400 + td.seconds) / 60
 
     @property
@@ -290,7 +295,8 @@ class Entry(EntryBase):
         date = logparser.parse_date(kw["date"])
         if date is None:
             logparser.log_parse_error(
-                    entry_lineno, "cannot parse log header date: {} (lang={})".format(repr(kw["date"]), logparser.lang))
+                entry_lineno, "cannot parse log header date: {} (lang={})".format(repr(kw["date"]), logparser.lang)
+            )
             date = logparser.default
 
         # Parse start-end times
@@ -344,6 +350,7 @@ class Command(EntryBase):
     """
     Log entry with a user query, to be expanded with the query result
     """
+
     re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})-?\s*\+?\s*$")
     re_new_day = re.compile(r"^\+\+?\s*$")
 
@@ -356,8 +363,8 @@ class Command(EntryBase):
         return None
 
     def sync(self, project: "project.Project", today: datetime.date):
-        date_format = project.config.get("config", "date-format")+":"
-        datetime_format = date_format+" "+project.config.get("config", "time-format")+"-"
+        date_format = project.config.get("config", "date-format") + ":"
+        datetime_format = date_format + " " + project.config.get("config", "time-format") + "-"
         if self.start is None:
             begin = datetime.datetime.combine(today, datetime.time(0))
             until = begin + datetime.timedelta(days=1)
@@ -377,7 +384,8 @@ class Command(EntryBase):
 
     def print_lead_timeref(self, file):
         raise RuntimeError(
-                "Cannot output a log with a Command as the very first element, without a previous time reference")
+            "Cannot output a log with a Command as the very first element, without a previous time reference"
+        )
 
     def print(self, file=sys.stdout):
         print(self.head, file=file)
@@ -436,6 +444,7 @@ class Log:
     """
     Time-based log section of a .egt file
     """
+
     def __init__(self, project: "project.Project"):
         self.project = project
         # Line number in the project file where the log starts
@@ -497,11 +506,14 @@ class Log:
 
         # If we removed Entry entries making two Timebase entries consecutive,
         # remove the first of the two
-        res = self._entries[first:last + 1]
-        del self._entries[first:last + 1]
-        if (first > 0 and first < len(self._entries) and
-                isinstance(self._entries[first - 1], Timebase) and
-                isinstance(self._entries[first], Timebase)):
+        res = self._entries[first : last + 1]
+        del self._entries[first : last + 1]
+        if (
+            first > 0
+            and first < len(self._entries)
+            and isinstance(self._entries[first - 1], Timebase)
+            and isinstance(self._entries[first], Timebase)
+        ):
             self._entries.pop(first - 1)
         return res
 

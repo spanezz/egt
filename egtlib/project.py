@@ -10,8 +10,7 @@ from .body import Body
 from .lang import set_locale
 from .log import Log
 from .meta import Meta
-from .utils import (atomic_writer, format_duration, intervals_intersect,
-                    stream_output, today)
+from .utils import atomic_writer, format_duration, intervals_intersect, stream_output, today
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +20,7 @@ class ProjectState(object):
         statedir = project.statedir
         if statedir is None:
             from .state import State
+
             statedir = State.get_state_dir()
         # TODO: ensure name does not contain '/'
         self.abspath = os.path.join(statedir, "project-{}.json".format(project.name))
@@ -58,6 +58,7 @@ class Project:
     * A time-based log (log.Log)
     * A free-text body (body.Body)
     """
+
     def __init__(self, abspath, statedir=None, config=None):
         if config is None:
             from configparser import ConfigParser
@@ -65,11 +66,11 @@ class Project:
             # TODO: refactor to single location (`commands.Command.__init__`)
             config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
             config["config"] = {
-                    "date-format": "%d %B",
-                    "time-format": "%H:%M",
-                    "sync-tw-annotations": "True",
-                    "summary-columns": 'name, tags, logs, hours, last',
-                    }
+                "date-format": "%d %B",
+                "time-format": "%H:%M",
+                "sync-tw-annotations": "True",
+                "summary-columns": "name, tags, logs, hours, last",
+            }
         self.config = config
         self.statedir = statedir
         self.abspath = abspath
@@ -150,6 +151,7 @@ class Project:
 
     def load(self, fd: Optional[TextIO] = None):
         from .parse import Lines
+
         lines = Lines(self.abspath, fd=fd)
 
         # Parse optionalmetadata
@@ -192,6 +194,7 @@ class Project:
         descriptor.
         """
         from . import utils
+
         if today is None:
             today = utils.today()
 
@@ -287,10 +290,12 @@ class Project:
 
     def spawn_terminal(self, with_editor=False):
         from .system import run_work_session
+
         run_work_session(self, with_editor)
 
     def run_editor(self):
         from .system import run_editor
+
         run_editor(self)
 
     def run_grep(self, args):
@@ -391,7 +396,9 @@ class Project:
         next_month = (month + datetime.timedelta(days=40)).replace(day=1)
         return next_month, self._create_archive(pathname, month, next_month)
 
-    def archive_range(self, archive_dir: str, start: datetime.date, end: datetime.date) -> Tuple[datetime.date, Optional["Project"]]:
+    def archive_range(
+        self, archive_dir: str, start: datetime.date, end: datetime.date
+    ) -> Tuple[datetime.date, Optional["Project"]]:
         """
         Write log entries for the given range to an archive file
         """
@@ -399,7 +406,9 @@ class Project:
         if "%" in archive_dir:
             raise RuntimeError("Placeholders in archive-dir not supported for single-file archives")
         last_day = end - datetime.timedelta(days=1)
-        pathname = os.path.join(archive_dir, self.name + start.strftime("_%Y-%m-%d_to_") + last_day.strftime("%Y-%m-%d") + ".egt")
+        pathname = os.path.join(
+            archive_dir, self.name + start.strftime("_%Y-%m-%d_to_") + last_day.strftime("%Y-%m-%d") + ".egt"
+        )
 
         return end, self._create_archive(pathname, start, end)
 

@@ -12,8 +12,7 @@ from typing import Type
 import xdg
 
 import egtlib
-from egtlib.utils import (HoursCol, LastEntryCol, SummaryCol, TaskStatCol,
-                          format_td)
+from egtlib.utils import HoursCol, LastEntryCol, SummaryCol, TaskStatCol, format_td
 
 from . import cli
 
@@ -34,16 +33,20 @@ class EgtCommand(cli.Command):
         self.args = args
         self.config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
         self.config["config"] = {
-                "date-format": "%d %B",
-                "time-format": "%H:%M",
-                "sync-tw-annotations": "True",
-                "summary-columns": 'name, tags, logs, hours, last',
-                }
+            "date-format": "%d %B",
+            "time-format": "%H:%M",
+            "sync-tw-annotations": "True",
+            "summary-columns": "name, tags, logs, hours, last",
+        }
         old_cfg = os.path.expanduser("~/.egt.conf")
         new_cfg = os.path.join(xdg.XDG_CONFIG_HOME, "egt")
         if os.path.isfile(new_cfg):
             if os.path.isfile(old_cfg):
-                log.warn("Config file exists in old an new location.\n  %s used\n  %s will be ignored (remove to get rid of this message)\n", new_cfg, old_cfg)
+                log.warn(
+                    "Config file exists in old an new location.\n  %s used\n  %s will be ignored (remove to get rid of this message)\n",
+                    new_cfg,
+                    old_cfg,
+                )
         elif os.path.isfile(old_cfg):
             os.rename(old_cfg, new_cfg)
             log.info("Config file %s moved to new location %s", old_cfg, new_cfg)
@@ -65,12 +68,14 @@ class Scan(EgtCommand):
     Update the list of known project files, by scanning everything below the
     home directory.
     """
+
     def main(self):
         if self.args.roots:
             dirs = self.args.roots
         else:
             dirs = [os.path.expanduser("~")]
         from .state import State
+
         State.rescan(dirs, config=self.config)
 
     @classmethod
@@ -99,6 +104,7 @@ class List(ProjectsCommand):
     """
     List known projects.
     """
+
     def main(self):
         e = self.make_egt()
         homedir = os.path.expanduser("~")
@@ -123,7 +129,7 @@ class List(ProjectsCommand):
             else:
                 path = p.path
                 if p.path.startswith(homedir):
-                    path = "~" + p.path[len(homedir):]
+                    path = "~" + p.path[len(homedir) :]
                 if self.args.age:
                     print(p.name.ljust(name_len), ages[idx].ljust(age_len), path)
                 else:
@@ -145,12 +151,12 @@ class Summary(ProjectsCommand):
 
     def _load_col_config(self, projs):
         COLUMNS = {
-                "name": SummaryCol("Name", "l", lambda p: p.name),
-                "tags": SummaryCol("Tags", "l", lambda p: " ".join(sorted(p.tags))),
-                "logs": SummaryCol("Logs", "r", lambda p: len(list(p.log.entries))),
-                "tasks": TaskStatCol("Tasks", "r", projs),
-                "hours": HoursCol("Hrs", "c"),
-                "last": LastEntryCol("Last entry", "r"),
+            "name": SummaryCol("Name", "l", lambda p: p.name),
+            "tags": SummaryCol("Tags", "l", lambda p: " ".join(sorted(p.tags))),
+            "logs": SummaryCol("Logs", "r", lambda p: len(list(p.log.entries))),
+            "tasks": TaskStatCol("Tasks", "r", projs),
+            "hours": HoursCol("Hrs", "c"),
+            "last": LastEntryCol("Last entry", "r"),
         }
         active_cols = []
         raw_cols = self.config.get("config", "summary-columns")
@@ -163,6 +169,7 @@ class Summary(ProjectsCommand):
 
     def main(self):
         from texttable import Texttable
+
         e = self.make_egt()
         projs = e.projects
 
@@ -191,18 +198,18 @@ class Summary(ProjectsCommand):
 
             blanks.sort(key=lambda p: p.name)
             worked.sort(key=lambda p: p.last_updated)
-            sorted_projects = blanks+worked
+            sorted_projects = blanks + worked
 
         def add_summary(p):
             table.add_row([c.func(p) for c in active_cols])
 
-#        res["mins"] = self.elapsed
-#        res["last"] = self.last_updated
-#        res["tags"] = self.tags
-#        res["entries"] = len(self.log)
-#        #"%s" % format_duration(mins),
-#        #format_td(datetime.datetime.now() - self.last_updated)),
-#        print "%s\t%s" % (self.name, ", ".join(stats))
+        #        res["mins"] = self.elapsed
+        #        res["last"] = self.last_updated
+        #        res["tags"] = self.tags
+        #        res["entries"] = len(self.log)
+        #        #"%s" % format_duration(mins),
+        #        #format_td(datetime.datetime.now() - self.last_updated)),
+        #        print "%s\t%s" % (self.name, ", ".join(stats))
 
         for p in sorted_projects:
             add_summary(p)
@@ -226,6 +233,7 @@ class Term(ProjectsCommand):
     """
     Open a terminal in the directory of the given project(s)
     """
+
     def main(self):
         e = self.make_egt()
         for proj in e.projects:
@@ -237,6 +245,7 @@ class Work(ProjectsCommand):
     """
     Open a terminal in a project directory, and edit the project file.
     """
+
     def main(self):
         e = self.make_egt()
         for proj in e.projects:
@@ -248,6 +257,7 @@ class Edit(ProjectsCommand):
     """
     Open a terminal in a project directory, and edit the project file.
     """
+
     def main(self):
         e = self.make_egt()
         for proj in e.projects:
@@ -259,6 +269,7 @@ class Grep(EgtCommand):
     """
     Run 'git grep' on all project .git dirs
     """
+
     def main(self):
         e = self.make_egt(self.args.projects)
         for proj in e.projects:
@@ -277,6 +288,7 @@ class MrConfig(ProjectsCommand):
     """
     Print a mr configuration snippet for all git projects
     """
+
     def main(self):
         e = self.make_egt()
         for name, proj in e.projects.items():
@@ -291,6 +303,7 @@ class Weekrpt(ProjectsCommand):
     """
     Compute weekly reports
     """
+
     def main(self):
         from texttable import Texttable
 
@@ -307,7 +320,7 @@ class Weekrpt(ProjectsCommand):
         table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
         table.set_cols_align(("l", "r", "r", "r", "r"))
-        table.set_cols_dtype(('t', "i", "i", "i", "i"))
+        table.set_cols_dtype(("t", "i", "i", "i", "i"))
         table.add_row(("Tag", "Entries", "Hours", "h/day", "h/wday"))
         rep = e.weekrpt(end=end)
         print()
@@ -333,7 +346,7 @@ class Weekrpt(ProjectsCommand):
         table = Texttable(max_width=termsize.columns)
         table.set_deco(Texttable.HEADER)
         table.set_cols_align(("l", "r", "r", "r", "r"))
-        table.set_cols_dtype(('t', "i", "i", "i", "i"))
+        table.set_cols_dtype(("t", "i", "i", "i", "i"))
         table.add_row(("Project", "Entries", "Hours", "h/day", "h/wday"))
         for p in e.projects:
             rep = e.weekrpt(end=end, projs=[p])
@@ -354,6 +367,7 @@ class PrintLog(ProjectsCommand):
     """
     Output the log for one or more projects
     """
+
     NAME = "print_log"
 
     def main(self):
@@ -379,6 +393,7 @@ class Cat(ProjectsCommand):
     """
     Output the content of one or more project files
     """
+
     NAME = "cat"
 
     def main(self):
@@ -401,8 +416,9 @@ class Cat(ProjectsCommand):
     def add_subparser(cls, subparsers):
         parser = super().add_subparser(subparsers)
         group = parser.add_mutually_exclusive_group()
-        group.add_argument("-r", "--raw", action="store_true",
-                           help="print the egt-file(s) directly, do not update task info)")
+        group.add_argument(
+            "-r", "--raw", action="store_true", help="print the egt-file(s) directly, do not update task info)"
+        )
         group.add_argument("-l", "--log", action="store_true", help="limit output to (merged) project log")
         return parser
 
@@ -413,6 +429,7 @@ class Annotate(EgtCommand):
     Print a project file on stdout, annotating its contents with anything
     useful that can be computed.
     """
+
     def main(self):
         egt = egtlib.Egt(config=self.config, show_archived=True)
         abspath = os.path.abspath(self.args.project)
@@ -446,6 +463,7 @@ class Archive(ProjectsCommand):
     """
     Output the log for one or more projects
     """
+
     def main(self):
         cutoff = datetime.datetime.strptime(self.args.month, "%Y-%m").date()
         cutoff = (cutoff + datetime.timedelta(days=40)).replace(day=1)
@@ -470,16 +488,21 @@ class Archive(ProjectsCommand):
         parser = super().add_subparser(subparsers)
         last_month = datetime.date.today().replace(day=1) - datetime.timedelta(days=1)
         parser.add_argument(
-                "--month", "-m", action="store", default=last_month.strftime("%Y-%m"),
-                help="print log until the given month (default: %(default)s)")
+            "--month",
+            "-m",
+            action="store",
+            default=last_month.strftime("%Y-%m"),
+            help="print log until the given month (default: %(default)s)",
+        )
         parser.add_argument(
-                "--remove-old", action="store_true",
-                help="rewrite the original project file removing archived entries")
+            "--remove-old", action="store_true", help="rewrite the original project file removing archived entries"
+        )
         parser.add_argument(
-                "--output", "-o", action="store",
-                help="output of aggregated archived logs (default: standard output)")
+            "--output", "-o", action="store", help="output of aggregated archived logs (default: standard output)"
+        )
         parser.add_argument(
-                "--singlefile", "-s", action="store_true", help="write archive log lines into a single file")
+            "--singlefile", "-s", action="store_true", help="write archive log lines into a single file"
+        )
         return parser
 
 
@@ -488,6 +511,7 @@ class Backup(ProjectsCommand):
     """
     Backup of egt project core information
     """
+
     def main(self):
         out = self.config.get("config", "backup-output", fallback=None)
         e = self.make_egt()
@@ -504,6 +528,7 @@ class Next(ProjectsCommand):
     """
     Show the top of the notes of the most recent .egt files
     """
+
     def main(self):
         from texttable import Texttable
 
@@ -533,6 +558,7 @@ class Completion(EgtCommand):
     """
     Tab completion support
     """
+
     def main(self):
         if not self.args.subcommand:
             raise cli.Fail("Usage: egt completion {commands|projects|tags}")

@@ -16,12 +16,15 @@ class TestScan(unittest.TestCase):
     """
 
     def test_scan(self):
-        res = sorted([x[len(testdir) + 10:] for x in scan(os.path.join(testdir, "testdata"))])
-        self.assertEqual(res, [
-            "baz/egt",
-            "foo/.egt",
-            "gnu/.egt",
-            "onedir/foo.egt",
-            "onedir/wibble.egt",
-            "onedir/wobble.egt",
-        ])
+        res = sorted([x[len(testdir) + 10 :] for x in scan(os.path.join(testdir, "testdata"))])
+        self.assertEqual(
+            res,
+            [
+                "baz/egt",
+                "foo/.egt",
+                "gnu/.egt",
+                "onedir/foo.egt",
+                "onedir/wibble.egt",
+                "onedir/wobble.egt",
+            ],
+        )

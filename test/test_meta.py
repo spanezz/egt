@@ -15,9 +15,7 @@ TEST_META1 = (
     "2019\n"
 )
 
-TEST_META_SHORT = (
-    "Name: test\n"
-)
+TEST_META_SHORT = "Name: test\n"
 
 
 class TestMeta(unittest.TestCase):
@@ -27,13 +25,16 @@ class TestMeta(unittest.TestCase):
         meta.parse(lines)
 
         self.assertEqual(meta._lineno, 0)
-        self.assertEqual(meta._raw, {
-            "field": "value",
-            "lowercase": "value1",
-            "uppercase": "value2",
-            "multiline": "foobar\n baz",
-            "tags": "a,  b,  c",
-        })
+        self.assertEqual(
+            meta._raw,
+            {
+                "field": "value",
+                "lowercase": "value1",
+                "uppercase": "value2",
+                "multiline": "foobar\n baz",
+                "tags": "a,  b,  c",
+            },
+        )
         self.assertEqual(meta.tags, {"a", "b", "c"})
         self.assertEqual(lines.peek(), "2019")
 
@@ -58,13 +59,16 @@ class TestMeta(unittest.TestCase):
 
         out = io.StringIO()
         meta.print(out)
-        self.assertEqual(out.getvalue().splitlines(), [
-            "Name: test",
-            "Foo: bar",
-            "Multiline:",
-            " line1",
-            " line2",
-        ])
+        self.assertEqual(
+            out.getvalue().splitlines(),
+            [
+                "Name: test",
+                "Foo: bar",
+                "Multiline:",
+                " line1",
+                " line2",
+            ],
+        )
 
         out.seek(0)
         meta = Meta()
@@ -78,12 +82,15 @@ class TestMeta(unittest.TestCase):
         meta.parse(Lines("test/.egt", io.StringIO(TEST_META1)))
         out = io.StringIO()
         meta.print(out)
-        self.assertEqual(out.getvalue().splitlines(), [
-            "Field: value",
-            "Lowercase: value1",
-            "Uppercase: value2",
-            "Multiline:",
-            " foobar",
-            "  baz",
-            "Tags: a,  b,  c",
-        ])
+        self.assertEqual(
+            out.getvalue().splitlines(),
+            [
+                "Field: value",
+                "Lowercase: value1",
+                "Uppercase: value2",
+                "Multiline:",
+                " foobar",
+                "  baz",
+                "Tags: a,  b,  c",
+            ],
+        )

@@ -16,6 +16,7 @@ class Meta:
 
     This is the first section of the project file, and can be omitted.
     """
+
     re_meta_head = re.compile(r"^\w.*:")
 
     def __init__(self):
@@ -97,6 +98,7 @@ class Meta:
 
         # Parse fields in the same way as email headers
         import email
+
         for k, v in email.message_from_string("\n".join(meta_lines)).items():
             if v is None:
                 continue

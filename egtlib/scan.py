@@ -9,9 +9,15 @@ log = logging.getLogger(__name__)
 
 # If one of these files is present, consider it as the start of a source tree
 # and do not recurse into subdirs
-LEAF_FILE_MARKERS = frozenset((
-    "manage.py", "configure.ac", "setup.py", "Rakefile", "meson.build",
-))
+LEAF_FILE_MARKERS = frozenset(
+    (
+        "manage.py",
+        "configure.ac",
+        "setup.py",
+        "Rakefile",
+        "meson.build",
+    )
+)
 
 
 def is_script(fname: str) -> bool:
@@ -61,7 +67,7 @@ def scan(top: str) -> Generator[str, None, None]:
         # If 'egt' exists, there is no '.egt' and egt isn't a script, it is
         # good
         if has_egt and not has_dot_egt:
-            fname = os.path.join(top, root, 'egt')
+            fname = os.path.join(top, root, "egt")
             if not is_script(fname):
                 yield fname
             else:

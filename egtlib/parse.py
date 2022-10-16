@@ -7,6 +7,7 @@ class Lines:
     """
     Access a text file line by line, with line numbers
     """
+
     def __init__(self, pathname: str, fd: Optional[TextIO] = None):
         # File name being parsed
         self.fname = pathname
@@ -45,7 +46,7 @@ class Lines:
         """
         Generate all remaining lines
         """
-        yield from self.lines[self.lineno:]
+        yield from self.lines[self.lineno :]
 
     def discard(self) -> None:
         """

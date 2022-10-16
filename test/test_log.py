@@ -36,13 +36,15 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(out.getvalue(), "2018\n")
 
     def testWritePartial(self):
-        self.write_project([
-            "2015",
-            "15 march: 9:00-12:00",
-            " - tested things",
-            "16 march:",
-            " - implemented day logs",
-        ])
+        self.write_project(
+            [
+                "2015",
+                "15 march: 9:00-12:00",
+                " - tested things",
+                "16 march:",
+                " - implemented day logs",
+            ]
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.load()
         proj.log._entries.pop(0)
@@ -52,45 +54,39 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         proj.log.print(file=out, today=datetime.date(2015, 6, 1))
         self.assertEqual(
             out.getvalue(),
-            "2015\n"
-            "15 march: 9:00-12:00 3h\n"
-            " - tested things\n"
-            "16 march:\n"
-            " - implemented day logs\n"
+            "2015\n" "15 march: 9:00-12:00 3h\n" " - tested things\n" "16 march:\n" " - implemented day logs\n",
         )
 
     def testWriteNewYear(self):
         # TODO: mock year as 2016
-        self.write_project([
-            "2015",
-            "15 march: 9:00-12:00",
-            " - tested things",
-        ])
+        self.write_project(
+            [
+                "2015",
+                "15 march: 9:00-12:00",
+                " - tested things",
+            ]
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.load()
         self.assertEqual(len(proj.log._entries), 2)
 
         out = io.StringIO()
         proj.log.print(file=out, today=datetime.date(2016, 6, 1))
-        self.assertEqual(
-            out.getvalue(),
-            "2015\n"
-            "15 march: 9:00-12:00 3h\n"
-            " - tested things\n"
-            "2016\n"
-        )
+        self.assertEqual(out.getvalue(), "2015\n" "15 march: 9:00-12:00 3h\n" " - tested things\n" "2016\n")
 
     def testParse(self):
         """
         Test creation of new taskwarrior tasks from a project file
         """
-        self.write_project([
-            "2015",
-            "15 march: 9:00-12:00",
-            " - tested things",
-            "16 march:",
-            " - implemented day logs",
-        ])
+        self.write_project(
+            [
+                "2015",
+                "15 march: 9:00-12:00",
+                " - tested things",
+                "16 march:",
+                " - implemented day logs",
+            ]
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
@@ -132,15 +128,17 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         """
         Test creation of new taskwarrior tasks from a project file
         """
-        self.write_project([
-            "2015",
-            "15 march: 9:00-12:00",
-            " - tested things",
-            "8:00",
-            " - new entry",
-            "+",
-            " - new day entry",
-        ])
+        self.write_project(
+            [
+                "2015",
+                "15 march: 9:00-12:00",
+                " - tested things",
+                "8:00",
+                " - new entry",
+                "+",
+                " - new day entry",
+            ]
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
@@ -214,13 +212,16 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         """
         Test creation of new taskwarrior tasks from a project file
         """
-        self.write_project([
-            "2015",
-            "15 marzo: 9:00-12:00",
-            " - tested things",
-            "16 marzo:",
-            " - implemented day logs",
-        ], lang="it")
+        self.write_project(
+            [
+                "2015",
+                "15 marzo: 9:00-12:00",
+                " - tested things",
+                "16 marzo:",
+                " - implemented day logs",
+            ],
+            lang="it",
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
@@ -262,13 +263,16 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         """
         Test creation of new taskwarrior tasks from a project file
         """
-        self.write_project([
-            "2015",
-            "15 mars: 9:00-12:00",
-            " - tested things",
-            "16 mars:",
-            " - implemented day logs",
-        ], lang="fr")
+        self.write_project(
+            [
+                "2015",
+                "15 mars: 9:00-12:00",
+                " - tested things",
+                "16 mars:",
+                " - implemented day logs",
+            ],
+            lang="fr",
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
@@ -341,53 +345,64 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         with io.StringIO() as out:
             proj_default.log.print(out, today=datetime.date(2015, 6, 1))
             body_lines = out.getvalue().splitlines()
-            self.assertEqual(body_lines, [
-                "2015",
-                "01 June: 09:00-",
-                " - tested things",
-                "01 June:",
-                " - implemented day logs",
-                "15 march:",
-                " - localized",
-            ])
+            self.assertEqual(
+                body_lines,
+                [
+                    "2015",
+                    "01 June: 09:00-",
+                    " - tested things",
+                    "01 June:",
+                    " - implemented day logs",
+                    "15 march:",
+                    " - localized",
+                ],
+            )
 
         with io.StringIO() as out:
             proj_it.log.print(out, today=datetime.date(2015, 6, 1))
             body_lines = out.getvalue().splitlines()
-            self.assertEqual(body_lines, [
-                "2015",
-                "01 giugno: 09:00-",
-                " - tested things",
-                "01 giugno:",
-                " - implemented day logs",
-                "15 marzo:",
-                " - localized",
-            ])
+            self.assertEqual(
+                body_lines,
+                [
+                    "2015",
+                    "01 giugno: 09:00-",
+                    " - tested things",
+                    "01 giugno:",
+                    " - implemented day logs",
+                    "15 marzo:",
+                    " - localized",
+                ],
+            )
 
         with io.StringIO() as out:
             proj_fr.log.print(out, today=datetime.date(2015, 6, 1))
             body_lines = out.getvalue().splitlines()
-            self.assertEqual(body_lines, [
-                "2015",
-                "01 juin: 09:00-",
-                " - tested things",
-                "01 juin:",
-                " - implemented day logs",
-                "15 mars:",
-                " - localized",
-            ])
+            self.assertEqual(
+                body_lines,
+                [
+                    "2015",
+                    "01 juin: 09:00-",
+                    " - tested things",
+                    "01 juin:",
+                    " - implemented day logs",
+                    "15 mars:",
+                    " - localized",
+                ],
+            )
 
     def testTags(self):
         """
         Test creation of new taskwarrior tasks from a project file
         """
-        self.write_project([
-            "2015",
-            "15 march: 9:00-12:00 3h +tag1 +tag2",
-            " - tested things",
-            "16 march: +tag2",
-            " - implemented day logs",
-        ])
+        self.write_project(
+            [
+                "2015",
+                "15 march: 9:00-12:00 3h +tag1 +tag2",
+                " - tested things",
+                "16 march: +tag2",
+                " - implemented day logs",
+            ]
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.load()
 

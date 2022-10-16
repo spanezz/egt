@@ -45,7 +45,5 @@ def collect_achievements(proj: "project.Project", entry: Entry):
         if any(c.hexsha.startswith(x) for x in seen):
             break
 
-        new_lines.append(" - [git:{sha}] {desc}".format(
-            sha=c.hexsha[:abbrev_size],
-            desc=c.summary))
+        new_lines.append(" - [git:{sha}] {desc}".format(sha=c.hexsha[:abbrev_size], desc=c.summary))
     entry.body.extend(new_lines[::-1])

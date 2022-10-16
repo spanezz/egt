@@ -39,6 +39,7 @@ class State:
         if os.path.exists(statefile):
             # Load state from legacy .ini file
             from configparser import RawConfigParser
+
             cp = RawConfigParser()
             cp.read([statefile])
             for secname in cp.sections():
@@ -91,9 +92,7 @@ class State:
         # Commit the new project set
         statefile = os.path.join(statedir, "state.json")
         with atomic_writer(statefile, "wt") as fd:
-            json.dump({
-                "projects": projects
-            }, fd, indent=1)
+            json.dump({"projects": projects}, fd, indent=1)
 
         # Clean up old version of state file
         old_statefile = os.path.join(statedir, "state")
@@ -108,4 +107,4 @@ class State:
 
     @classmethod
     def get_state_dir(cls) -> str:
-        return BaseDirectory.save_data_path('egt')
+        return BaseDirectory.save_data_path("egt")

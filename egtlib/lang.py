@@ -13,6 +13,7 @@ class Locale:
     """
     Set the current locale, doing nothing if it is already set
     """
+
     def __init__(self):
         self.current_locale: Optional[str] = None
         self.cached_parserinfo: Dict[str, Type[dateutil.parser.parserinfo]] = {}
@@ -22,6 +23,7 @@ class Locale:
             return
 
         import locale
+
         if lang is None:
             try:
                 locale.resetlocale()
@@ -66,15 +68,15 @@ class Locale:
                     (locale.nl_langinfo(locale.ABDAY_1), locale.nl_langinfo(locale.DAY_1)),
                 ]
                 MONTHS = [
-                    (locale.nl_langinfo(locale.ABMON_1),  locale.nl_langinfo(locale.MON_1)),
-                    (locale.nl_langinfo(locale.ABMON_2),  locale.nl_langinfo(locale.MON_2)),
-                    (locale.nl_langinfo(locale.ABMON_3),  locale.nl_langinfo(locale.MON_3)),
-                    (locale.nl_langinfo(locale.ABMON_4),  locale.nl_langinfo(locale.MON_4)),
-                    (locale.nl_langinfo(locale.ABMON_5),  locale.nl_langinfo(locale.MON_5)),
-                    (locale.nl_langinfo(locale.ABMON_6),  locale.nl_langinfo(locale.MON_6)),
-                    (locale.nl_langinfo(locale.ABMON_7),  locale.nl_langinfo(locale.MON_7)),
-                    (locale.nl_langinfo(locale.ABMON_8),  locale.nl_langinfo(locale.MON_8)),
-                    (locale.nl_langinfo(locale.ABMON_9),  locale.nl_langinfo(locale.MON_9)),
+                    (locale.nl_langinfo(locale.ABMON_1), locale.nl_langinfo(locale.MON_1)),
+                    (locale.nl_langinfo(locale.ABMON_2), locale.nl_langinfo(locale.MON_2)),
+                    (locale.nl_langinfo(locale.ABMON_3), locale.nl_langinfo(locale.MON_3)),
+                    (locale.nl_langinfo(locale.ABMON_4), locale.nl_langinfo(locale.MON_4)),
+                    (locale.nl_langinfo(locale.ABMON_5), locale.nl_langinfo(locale.MON_5)),
+                    (locale.nl_langinfo(locale.ABMON_6), locale.nl_langinfo(locale.MON_6)),
+                    (locale.nl_langinfo(locale.ABMON_7), locale.nl_langinfo(locale.MON_7)),
+                    (locale.nl_langinfo(locale.ABMON_8), locale.nl_langinfo(locale.MON_8)),
+                    (locale.nl_langinfo(locale.ABMON_9), locale.nl_langinfo(locale.MON_9)),
                     (locale.nl_langinfo(locale.ABMON_10), locale.nl_langinfo(locale.MON_10)),
                     (locale.nl_langinfo(locale.ABMON_11), locale.nl_langinfo(locale.MON_11)),
                     (locale.nl_langinfo(locale.ABMON_12), locale.nl_langinfo(locale.MON_12)),

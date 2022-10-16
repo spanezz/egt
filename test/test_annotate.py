@@ -41,72 +41,88 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
 
     def test_parse_error(self):
         res = self.annotate("Lang: it\n\n2019\n01 pippo:\n - error\n")
-        self.assertEqual(res.splitlines(), [
-            "Lang: it",
-            "Parse-Errors: line 4: cannot parse log header date: '01 pippo' (lang=it)",
-            "",
-            "2019",
-            "01 pippo:",
-            " - error",
-            "",
-        ])
+        self.assertEqual(
+            res.splitlines(),
+            [
+                "Lang: it",
+                "Parse-Errors: line 4: cannot parse log header date: '01 pippo' (lang=it)",
+                "",
+                "2019",
+                "01 pippo:",
+                " - error",
+                "",
+            ],
+        )
 
     def test_parse_errors_fixed(self):
         res = self.annotate("Lang: it\nParse-Errors: foo\n\n2019\n01 marzo:\n - fixed\n")
-        self.assertEqual(res.splitlines(), [
-            "Lang: it",
-            "",
-            "2019",
-            "01 marzo:",
-            " - fixed",
-            "",
-        ])
+        self.assertEqual(
+            res.splitlines(),
+            [
+                "Lang: it",
+                "",
+                "2019",
+                "01 marzo:",
+                " - fixed",
+                "",
+            ],
+        )
 
     def test_totals(self):
         self.maxDiff = None
 
-        res = self.annotate([
-            "Lang: it",
-            "Total:",
-            "",
-            "2019",
-            "01 marzo: 10:00-12:00",
-            " - fixed",
-            "02 marzo: 10:00-11:00",
-            " - fixed",
-        ])
-        self.assertEqual(res.splitlines(), [
-            "Lang: it",
-            "Total: 3h",
-            "",
-            "2019",
-            "01 marzo: 10:00-12:00 2h",
-            " - fixed",
-            "02 marzo: 10:00-11:00 1h",
-            " - fixed",
-            "",
-        ])
+        res = self.annotate(
+            [
+                "Lang: it",
+                "Total:",
+                "",
+                "2019",
+                "01 marzo: 10:00-12:00",
+                " - fixed",
+                "02 marzo: 10:00-11:00",
+                " - fixed",
+            ]
+        )
+        self.assertEqual(
+            res.splitlines(),
+            [
+                "Lang: it",
+                "Total: 3h",
+                "",
+                "2019",
+                "01 marzo: 10:00-12:00 2h",
+                " - fixed",
+                "02 marzo: 10:00-11:00 1h",
+                " - fixed",
+                "",
+            ],
+        )
 
-        res = self.annotate([
-            "Lang: it",
-            "Total: 3h",
-            "",
-            "2019",
-            "01 marzo: 10:00-12:00",
-            " - fixed",
-            "02 marzo: 10:00-11:00 +tag",
-            " - fixed",
-        ])
-        self.assertEqual(res.splitlines(), [
-            "Lang: it",
-            "Total:",
-            " *: 3h",
-            " tag: 1h",
-            "",
-            "2019",
-            "01 marzo: 10:00-12:00 2h",
-            " - fixed",
-            "02 marzo: 10:00-11:00 1h +tag",
-            " - fixed",
-            "",
-        ])
+        res = self.annotate(
+            [
+                "Lang: it",
+                "Total: 3h",
+                "",
+                "2019",
+                "01 marzo: 10:00-12:00",
+                " - fixed",
+                "02 marzo: 10:00-11:00 +tag",
+                " - fixed",
+            ]
+        )
+        self.assertEqual(
+            res.splitlines(),
+            [
+                "Lang: it",
+                "Total:",
+                " *: 3h",
+                " tag: 1h",
+                "",
+                "2019",
+                "01 marzo: 10:00-12:00 2h",
+                " - fixed",
+                "02 marzo: 10:00-11:00 1h +tag",
+                " - fixed",
+                "",
+            ],
+        )

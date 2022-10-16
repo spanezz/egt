@@ -4,6 +4,7 @@ from typing import Optional
 
 try:
     import coloredlogs
+
     HAS_COLOREDLOGS = True
 except ModuleNotFoundError:
     HAS_COLOREDLOGS = False
@@ -11,7 +12,7 @@ except ModuleNotFoundError:
 
 def _get_first_docstring_line(obj):
     try:
-        return obj.__doc__.split('\n')[1].strip()
+        return obj.__doc__.split("\n")[1].strip()
     except (AttributeError, IndexError):
         return None
 
@@ -28,6 +29,7 @@ class Command:
     """
     Base class for actions run from command line
     """
+
     NAME: Optional[str] = None
 
     def __init__(self, args):
@@ -60,7 +62,8 @@ class Command:
         )
         parser.set_defaults(command=cls)
         parser.add_argument(
-            "-v", "--verbose",
+            "-v",
+            "--verbose",
             action="store_true",
             help="verbose output",
         ),

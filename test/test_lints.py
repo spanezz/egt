@@ -12,7 +12,7 @@ re_ignores = (
     re.compile(r"E701 multiple statements on one line \(colon\)"),
     re.compile(r"E265 block comment should start with"),
     re.compile(r"egtlib/texttable.py:"),
-    re.compile(r"E741 ambiguous variable name 'l'")
+    re.compile(r"E741 ambiguous variable name 'l'"),
 )
 
 
@@ -63,7 +63,7 @@ def run_check(*args, **kw):
 
 
 class TestLinters(unittest.TestCase):
-    """ ensure that the tree is pep8 clean """
+    """ensure that the tree is pep8 clean"""
 
     def test_flake8_clean(self):
         self.assertEqual(run_check("flake8", basedir), 0)

@@ -59,9 +59,9 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
 
     def test_complete(self):
         subtests = [
-                {"cmd": "projects", "res": ["p1", "p2", "test"]},
-                {"cmd": "tags", "res": ["bar", "blubb", "foo"]},
-                ]
+            {"cmd": "projects", "res": ["p1", "p2", "test"]},
+            {"cmd": "tags", "res": ["bar", "blubb", "foo"]},
+        ]
         State.rescan([self.workdir.name], statedir=self.workdir.name)
         egt = egtlib.Egt(config=None, statedir=self.workdir.name)
         with mock.patch("egtlib.cli.Command.setup_logging"):
@@ -69,8 +69,8 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
                 with self.subTest(config=subtest["cmd"]):
                     mock_arg = mock.Mock(subcommand=subtest["cmd"])
                     completion = Completion(mock_arg)
-                    with mock.patch.object(completion, 'make_egt', return_value=egt):
-                        with mock.patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+                    with mock.patch.object(completion, "make_egt", return_value=egt):
+                        with mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout:
                             completion.main()
                     names = mock_stdout.getvalue().split("\n")[:-1]
                     self.assertEqual(names, subtest["res"])
@@ -97,6 +97,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         # Test backup contents
         names = []
         import tarfile
+
         with tarfile.open(tarfname, "r") as tar:
             for f in tar:
                 names.append(f.name)

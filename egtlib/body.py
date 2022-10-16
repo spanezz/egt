@@ -14,6 +14,7 @@ class BodyEntry:
     """
     Base class for elements that compose a project body
     """
+
     def print(self, file: Optional[TextIO] = None) -> None:
         raise NotImplementedError("print has been called on raw BodyEntry object")
 
@@ -22,6 +23,7 @@ class Line(BodyEntry):
     """
     One line of text
     """
+
     def __init__(self, line: str):
         self.line = line
 
@@ -36,6 +38,7 @@ class Task(BodyEntry):
     """
     A TaskWarrior task
     """
+
     re_attribute = re.compile(r"^(?P<key>[^:]+):(?P<val>[^:]+)$")
     task_attributes = ["start", "due", "until", "wait", "scheduled", "priority"]
 
@@ -180,6 +183,7 @@ class Body:
     The text body of a Project file, as anything that follows the metadata and
     the log
     """
+
     re_task = re.compile(r"^(?P<indent>\s*)t(?P<id>\d*)\s+(?P<text>.+)$")
 
     def __init__(self, project: "project.Project"):
@@ -256,11 +260,7 @@ class Body:
                 continue
             self._known_annotations.append(entry)
             date = annotation.entry.date().strftime(self.date_format)
-            line = Line("  - {desc}: {annot}".format(
-                        desc=task["description"],
-                        annot=annotation
-                        )
-                        )
+            line = Line("  - {desc}: {annot}".format(desc=task["description"], annot=annotation))
             self.new_log(date, line)
 
     def _sync_completed(self, task) -> None:
@@ -269,10 +269,11 @@ class Body:
         """
         if task["status"] == "completed":
             date = task["modified"].date().strftime(self.date_format)
-            line = Line("  - [completed] {desc}".format(
-                        desc=task["description"],
-                        )
-                        )
+            line = Line(
+                "  - [completed] {desc}".format(
+                    desc=task["description"],
+                )
+            )
             self.new_log(date, line)
 
     def sync_tasks(self, modify_state=True) -> None:
@@ -341,7 +342,7 @@ class Body:
         if self._new_log:
             content = []
             for key, lines in sorted(self._new_log.items()):
-                content.append(Line(key+":"))
+                content.append(Line(key + ":"))
                 content += lines
             content.append(Line(""))
             self.content[0:0] = content

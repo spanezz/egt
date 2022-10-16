@@ -30,12 +30,14 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         """
         Test creation of new taskwarrior tasks from a project file
         """
-        self.write_project([
-            "body line1",
-            "t new parent task",
-            "  t new taskwarrior task +tag",
-            "body line3",
-        ])
+        self.write_project(
+            [
+                "body line1",
+                "t new parent task",
+                "  t new taskwarrior task +tag",
+                "body line3",
+            ]
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
@@ -84,22 +86,25 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         Test creation of new taskwarrior tasks with attributes from a project file
         """
         datedata = datetime.datetime(2031, 1, 2, 0, 0, tzinfo=tzlocal())
-        test_attributes = [("due", "2031-01-02", datedata),
-                           ("wait", "2031-01-02", datedata),
-                           ("start", "2031-01-02", datedata),
-                           ("until", "2031-01-02", datedata),
-                           ("scheduled", "2031-01-02", datedata),
-                           ("priority", "H", "H"),
-                           ("due", "2030-12-26+week", datedata),
-                           ]
+        test_attributes = [
+            ("due", "2031-01-02", datedata),
+            ("wait", "2031-01-02", datedata),
+            ("start", "2031-01-02", datedata),
+            ("until", "2031-01-02", datedata),
+            ("scheduled", "2031-01-02", datedata),
+            ("priority", "H", "H"),
+            ("due", "2030-12-26+week", datedata),
+        ]
         for key, value, data in test_attributes:
             attr = "{}:{}".format(key, value)
             with self.subTest(config=attr):
-                self.write_project([
-                    "body line1",
-                    "t new test task "+attr,
-                    "body line3",
-                ])
+                self.write_project(
+                    [
+                        "body line1",
+                        "t new test task " + attr,
+                        "body line3",
+                    ]
+                )
                 proj = Project(self.projectfile, statedir=self.workdir.name)
                 proj.body.force_load_tw(config_filename=self.taskrc)
                 proj.load()
@@ -124,15 +129,18 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         Test import of new taskwarrior tasks in egt
         """
         import taskw
+
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("new task", ["tag", "testtag1"], project="testprj")
         tw.task_add("new parent task", project="testprj", depends=[new_task["uuid"]])
         tw = None
 
-        self.write_project([
-            "body line1",
-            "body line2",
-        ])
+        self.write_project(
+            [
+                "body line1",
+                "body line2",
+            ]
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
@@ -177,6 +185,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         Test handling of tasks present both in taskwarrior and in egt
         """
         import taskw
+
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
         tw = None
@@ -186,19 +195,25 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         # Add the task to egt's state using a different number than taskwarrior
         # has
         with open(os.path.join(self.workdir.name, "project-testprj.json"), "wt") as fd:
-            json.dump({
-                "tasks": {
-                    "ids": {
-                        egt_id: str(new_task["uuid"]),
+            json.dump(
+                {
+                    "tasks": {
+                        "ids": {
+                            egt_id: str(new_task["uuid"]),
+                        }
                     }
-                }
-            }, fd, indent=1)
+                },
+                fd,
+                indent=1,
+            )
 
-        self.write_project([
-            "body line1",
-            " t{} foo the bar".format(egt_id),
-            "body line3",
-        ])
+        self.write_project(
+            [
+                "body line1",
+                " t{} foo the bar".format(egt_id),
+                "body line3",
+            ]
+        )
         proj = Project(self.projectfile, statedir=self.workdir.name)
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
@@ -249,6 +264,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         task is marked done on taskwarrior
         """
         import taskw
+
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
 
@@ -257,19 +273,25 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         # Add the task to egt's state using a different number than taskwarrior
         # has
         with open(os.path.join(self.workdir.name, "project-testprj.json"), "wt") as fd:
-            json.dump({
-                "tasks": {
-                    "ids": {
-                        egt_id: str(new_task["uuid"]),
+            json.dump(
+                {
+                    "tasks": {
+                        "ids": {
+                            egt_id: str(new_task["uuid"]),
+                        }
                     }
-                }
-            }, fd, indent=1)
+                },
+                fd,
+                indent=1,
+            )
 
-        self.write_project([
-            "body line1",
-            " t{} foo the bar".format(egt_id),
-            "body line3",
-        ])
+        self.write_project(
+            [
+                "body line1",
+                " t{} foo the bar".format(egt_id),
+                "body line3",
+            ]
+        )
 
         # Mark the task as done
         tw.task_done(uuid=new_task["uuid"])
