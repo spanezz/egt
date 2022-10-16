@@ -5,6 +5,13 @@
 * Implemented `egt next` to show the first line of body from .egt files, sorted
   by .egt file age
 * Implemented `egt list --age` to show the age alongside project paths
+* Added options to sort `egt summary` by name, number of tasks or last
+  update
+* Moved config to XDG dir
+* Added config options for date-format and columns in `egt summary`
+* Adjusted project filter to allow wildcards
+* Modified and extended TaskWarrior syncing
+* Extended `egt archive` to allow exporting into a single file
 
 ## New in version 0.4
 
