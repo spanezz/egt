@@ -12,8 +12,8 @@ def main():
     parser.add_argument("--debug", action="store_true", help="debug output")
     subparsers = parser.add_subparsers(help="egt subcommands", required=True, dest="command")
 
-    from egtlib.commands import COMMANDS
     from egtlib.cli import Fail
+    from egtlib.commands import COMMANDS
 
     for c in COMMANDS:
         c.add_subparser(subparsers)

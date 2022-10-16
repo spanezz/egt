@@ -1,10 +1,10 @@
 import datetime
 import json
 import logging
-from typing import Optional, TextIO, Any, List, Tuple
 import os.path
 import subprocess
 import sys
+from typing import Any, List, Optional, TextIO, Tuple
 
 from .body import Body
 from .lang import set_locale
@@ -61,6 +61,7 @@ class Project:
     def __init__(self, abspath, statedir=None, config=None):
         if config is None:
             from configparser import ConfigParser
+
             # TODO: refactor to single location (`commands.Command.__init__`)
             config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
             config["config"] = {

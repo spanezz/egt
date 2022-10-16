@@ -1,12 +1,14 @@
-from typing import List, Dict
 import configparser
-from .utils import atomic_writer
-from .project import Project
-from .scan import scan
-from xdg import BaseDirectory
-import os.path
 import json
 import logging
+import os.path
+from typing import Dict, List
+
+from xdg import BaseDirectory
+
+from .project import Project
+from .scan import scan
+from .utils import atomic_writer
 
 log = logging.getLogger(__name__)
 

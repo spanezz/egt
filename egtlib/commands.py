@@ -5,13 +5,17 @@ import os
 import shutil
 import sys
 import typing
-from typing import Type
-from . import cli
-import egtlib
-import xdg
 from configparser import ConfigParser
 from contextlib import contextmanager
-from egtlib.utils import SummaryCol, TaskStatCol, HoursCol, LastEntryCol, format_td
+from typing import Type
+
+import xdg
+
+import egtlib
+from egtlib.utils import (HoursCol, LastEntryCol, SummaryCol, TaskStatCol,
+                          format_td)
+
+from . import cli
 
 log = logging.getLogger(__name__)
 

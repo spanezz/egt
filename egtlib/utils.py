@@ -5,8 +5,8 @@ import os.path
 import select
 import subprocess
 import tempfile
-from typing import IO
 from collections import defaultdict
+from typing import IO
 
 
 def today() -> datetime.date:
