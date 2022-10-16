@@ -43,7 +43,9 @@ class EgtCommand(cli.Command):
         if os.path.isfile(new_cfg):
             if os.path.isfile(old_cfg):
                 log.warn(
-                    "Config file exists in old an new location.\n  %s used\n  %s will be ignored (remove to get rid of this message)\n",
+                    "Config file exists in old an new location.\n"
+                    "%s used\n"
+                    "%s will be ignored (remove to get rid of this message)\n",
                     new_cfg,
                     old_cfg,
                 )
@@ -129,7 +131,7 @@ class List(ProjectsCommand):
             else:
                 path = p.path
                 if p.path.startswith(homedir):
-                    path = "~" + p.path[len(homedir) :]
+                    path = "~" + p.path[len(homedir):]
                 if self.args.age:
                     print(p.name.ljust(name_len), ages[idx].ljust(age_len), path)
                 else:
