@@ -4,13 +4,14 @@ import logging
 import os.path
 import subprocess
 import sys
-from typing import Any, List, Optional, TextIO, Tuple
+from configparser import ConfigParser
+from typing import Any, List, Optional, Set, TextIO, Tuple, cast
 
 from .body import Body
 from .lang import set_locale
 from .log import Log
 from .meta import Meta
-from .utils import atomic_writer, format_duration, intervals_intersect, stream_output, today
+from .utils import atomic_writer, format_duration, stream_output, today
 
 log = logging.getLogger(__name__)
 
@@ -59,10 +60,8 @@ class Project:
     * A free-text body (body.Body)
     """
 
-    def __init__(self, abspath, statedir=None, config=None):
+    def __init__(self, abspath: str, statedir: Optional[str] = None, config: Optional[ConfigParser] = None):
         if config is None:
-            from configparser import ConfigParser
-
             # TODO: refactor to single location (`commands.Command.__init__`)
             config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
             config["config"] = {
@@ -79,11 +78,11 @@ class Project:
             self.default_name = os.path.basename(self.default_path)
         else:
             self.default_name = os.path.splitext(basename)[0]
-        self.default_tags = set()
-        self.archived = False
+        self.default_tags: Set[str] = set()
+        self.archived: bool = False
 
         # Project state, loaded lazily, None if not loaded
-        self._state = None
+        self._state: Optional[ProjectState] = None
 
         self.meta = Meta()
         self.log = Log(self)
@@ -96,13 +95,13 @@ class Project:
         set_locale(self.meta.get("lang"))
 
     @property
-    def state(self):
+    def state(self) -> ProjectState:
         if not self._state:
             self._state = ProjectState(self)
         return self._state
 
     @property
-    def name(self):
+    def name(self) -> str:
         name = self.meta.get("name", self.default_name)
         if not self.archived:
             return name
@@ -116,7 +115,7 @@ class Project:
             return name
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self.meta.get("path", self.default_path)
 
     @property
@@ -127,11 +126,11 @@ class Project:
         return os.path.getmtime(self.abspath)
 
     @property
-    def tags(self):
+    def tags(self) -> Set[str]:
         return self.default_tags | self.meta.tags
 
     @classmethod
-    def from_file(self, abspath, fd=None, config=None):
+    def from_file(self, abspath: str, fd: Optional[TextIO] = None, config=None):
         # Default values, can be overridden by file metadata
         p = Project(abspath, config=config)
         # Load the actual data
@@ -139,7 +138,7 @@ class Project:
         return p
 
     @classmethod
-    def mock(self, abspath, name=None, path=None, tags=None, config=None):
+    def mock(self, abspath: str, name: Optional[str] = None, path: Optional[str] = None, tags=None, config=None):
         p = Project(abspath, config=config)
         if path is not None:
             p.default_path = path
@@ -168,9 +167,11 @@ class Project:
         lines.skip_empty_lines()
 
         # Parse log entries
-        if lines.peek() is None:
+        first_line = lines.peek()
+
+        if first_line is None:
             return
-        if self.log.is_start_line(lines.peek()):
+        elif self.log.is_start_line(first_line):
             log.debug("%s:%d: parsing log", lines.fname, lines.lineno)
             self.log.parse(lines, lang=self.meta.get("lang", None))
             lines.skip_empty_lines()
@@ -188,7 +189,7 @@ class Project:
         if self.meta.get("archived", "false").lower() in ("true", "yes"):
             self.archived = True
 
-    def print(self, out, today=None):
+    def print(self, out: TextIO, today: Optional[datetime.date] = None):
         """
         Serialize the whole project as a project file to the given file
         descriptor.
@@ -206,15 +207,15 @@ class Project:
 
         self.body.print(out)
 
-    def save(self, today=None):
+    def save(self, today: Optional[datetime.date] = None):
         """
         Save over the original source file
         """
         with atomic_writer(self.abspath, "wt") as fd:
-            self.print(fd, today)
+            self.print(cast(TextIO, fd), today)
 
     @property
-    def last_updated(self):
+    def last_updated(self) -> Optional[datetime.datetime]:
         """
         Datetime when this project was last updated
         """
@@ -226,22 +227,22 @@ class Project:
         return datetime.datetime.now()
 
     @property
-    def elapsed(self):
+    def elapsed(self) -> int:
         mins = 0
         for entry in self.log.entries:
             mins += entry.duration
         return mins
 
     @property
-    def formatted_elapsed(self):
+    def formatted_elapsed(self) -> str:
         return format_duration(self.elapsed)
 
     @property
-    def formatted_tags(self):
+    def formatted_tags(self) -> str:
         return ", ".join(sorted(self.tags))
 
     @property
-    def formal_period(self):
+    def formal_period(self) -> Tuple[datetime.date, datetime.date]:
         """
         Compute the begin and end dates for this project.
 
