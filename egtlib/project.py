@@ -249,25 +249,20 @@ class Project:
         If Start-date and End-date are provided in the metadata, return those.
         Else infer them from the first or last log entries.
         """
-        since = self.meta.get("start-date", None)
-        until = self.meta.get("end-date", None)
-        if since is None:
-            e = self.log.first_entry
-            if e is not None:
-                since = e.begin.date()
-        elif since is not None:
-            since = datetime.datetime.strptime(since, "%Y-%m-%d").date()
-        if until is None:
-            e = self.log.last_entry
-            if e is not None:
-                until = e.until
-            if until is None:
-                # Deal with entries that are still open
-                until = today()
-            else:
-                until = until.date()
-        elif until is not None:
-            until = datetime.datetime.strptime(until, "%Y-%m-%d").date()
+        if (since_str := self.meta.get("start-date", None)) is not None:
+            since = datetime.datetime.strptime(since_str, "%Y-%m-%d").date()
+        elif (e := self.log.first_entry) is not None:
+            since = e.begin.date()
+        else:
+            since = today()
+
+        if (until_str := self.meta.get("end-date", None)) is not None:
+            until = datetime.datetime.strptime(until_str, "%Y-%m-%d").date()
+        elif (e := self.log.last_entry) is not None:
+            until = e.until.date() if e.until is not None else today()
+        else:
+            until = today()
+
         return since, until
 
     def next_events(self, since=None, until=None):
