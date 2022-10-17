@@ -46,7 +46,7 @@ class Lines:
         """
         Generate all remaining lines
         """
-        yield from self.lines[self.lineno:]
+        yield from self.lines[self.lineno :]
 
     def discard(self) -> None:
         """

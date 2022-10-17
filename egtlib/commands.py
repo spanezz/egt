@@ -131,7 +131,7 @@ class List(ProjectsCommand):
             else:
                 path = p.path
                 if p.path.startswith(homedir):
-                    path = "~" + p.path[len(homedir):]
+                    path = "~" + p.path[len(homedir) :]
                 if self.args.age:
                     print(p.name.ljust(name_len), ages[idx].ljust(age_len), path)
                 else:

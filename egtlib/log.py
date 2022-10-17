@@ -506,8 +506,8 @@ class Log:
 
         # If we removed Entry entries making two Timebase entries consecutive,
         # remove the first of the two
-        res = self._entries[first:last + 1]
-        del self._entries[first:last + 1]
+        res = self._entries[first : last + 1]
+        del self._entries[first : last + 1]
         if (
             first > 0
             and first < len(self._entries)
