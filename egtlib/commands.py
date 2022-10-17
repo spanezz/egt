@@ -326,7 +326,7 @@ class Weekrpt(ProjectsCommand):
         table.add_row(("Tag", "Entries", "Hours", "h/day", "h/wday"))
         rep = e.weekrpt(end=end)
         print()
-        print(" * Activity from %s to %s" % (rep["begin"], rep["until"]))
+        print(f" * Activity from {rep['begin']} to {rep['until']}")
         print()
         log = rep["log"]
 

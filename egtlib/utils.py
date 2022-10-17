@@ -105,22 +105,25 @@ class LastEntryCol(SummaryCol):
         self.now = datetime.datetime.now()
 
     def func(self, p):
-        return "%s ago" % format_td(self.now - p.last_updated, tabular=True) if p.last_updated else "--"
+        if p.last_updated:
+            return format_td(self.now - p.last_updated, tabular=True) + " ago"
+        else:
+            return "--"
 
 
 def format_duration(mins: int, tabular: bool = False) -> str:
     """
     Format a time duration in minutes
     """
-    h = mins / 60
+    h = mins // 60
     m = mins % 60
     if tabular:
-        return "%3dh %02dm" % (h, m)
+        return f"{h:3d}h {m:02d}m"
     else:
         if m:
-            return "%dh %dm" % (h, m)
+            return f"{h}h {m}m"
         else:
-            return "%dh" % h
+            return f"{h}h"
 
 
 def format_td(td: datetime.timedelta, tabular=False) -> str:

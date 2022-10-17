@@ -109,9 +109,9 @@ class Project:
 
         since, until = self.formal_period
         if until:
-            return name + until.strftime("-%Y-%m-%d")
+            return f"{name}-{until:%Y-%m-%d}"
         elif since:
-            return name + since.strftime("-%Y-%m-%d")
+            return f"{name}-{since:%Y-%m-%d}"
         else:
             return name
 
@@ -391,7 +391,7 @@ class Project:
         # Generate the target file name
         if "%" in archive_dir:
             archive_dir = month.strftime(archive_dir)
-        pathname = os.path.join(archive_dir, month.strftime("%Y%m-") + self.name + ".egt")
+        pathname = os.path.join(archive_dir, f"{month:%Y%m}-{self.name}.egt")
 
         next_month = (month + datetime.timedelta(days=40)).replace(day=1)
         return next_month, self._create_archive(pathname, month, next_month)
@@ -407,7 +407,7 @@ class Project:
             raise RuntimeError("Placeholders in archive-dir not supported for single-file archives")
         last_day = end - datetime.timedelta(days=1)
         pathname = os.path.join(
-            archive_dir, self.name + start.strftime("_%Y-%m-%d_to_") + last_day.strftime("%Y-%m-%d") + ".egt"
+            archive_dir, f"{self.name}_{start:%Y-%m-%d}_to_{last_day:%Y-%m-%d}.egt"
         )
 
         return end, self._create_archive(pathname, start, end)

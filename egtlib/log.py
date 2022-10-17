@@ -254,7 +254,7 @@ class Entry(EntryBase):
             until = self.until
 
         td = until - self.begin
-        return (td.days * 86400 + td.seconds) / 60
+        return (td.days * 86400 + td.seconds) // 60
 
     @property
     def formatted_duration(self):
