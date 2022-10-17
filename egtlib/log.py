@@ -126,8 +126,8 @@ class EntryBase:
         raise RuntimeError("parse called on EntryBase instead of the real class")
 
     @classmethod
-    def is_start_line(cls, line: str):
-        return False
+    def is_start_line(cls, line: str) -> Optional[re.Match]:
+        return None
 
 
 @LogParser.register_entry_type
@@ -165,7 +165,7 @@ class Timebase(EntryBase):
         return cls(line, dt)
 
     @classmethod
-    def is_start_line(cls, line: str):
+    def is_start_line(cls, line: str) -> Optional[re.Match]:
         """
         Check if the next line looks like the start of a log block
         """
@@ -214,7 +214,7 @@ class Entry(EntryBase):
         return self.begin
 
     @property
-    def is_open(self):
+    def is_open(self) -> bool:
         """
         Check if this log entry is still been edited
         """
@@ -241,7 +241,7 @@ class Entry(EntryBase):
         return self
 
     @property
-    def duration(self):
+    def duration(self) -> int:
         """
         Return the duration in minutes
         """
@@ -257,13 +257,13 @@ class Entry(EntryBase):
         return (td.days * 86400 + td.seconds) // 60
 
     @property
-    def formatted_duration(self):
+    def formatted_duration(self) -> str:
         return format_duration(self.duration)
 
-    def print_lead_timeref(self, file):
+    def print_lead_timeref(self, file: Optional[TextIO] = None):
         print(self.begin.year, file=file)
 
-    def print(self, file=sys.stdout, project: Optional["project.Project"] = None):
+    def print(self, file: TextIO = sys.stdout, project: Optional["project.Project"] = None):
         mo = self.re_entry.match(self.head)
         if not mo:
             raise RuntimeError("Header line was parsed right during parsing, and not during printing")
@@ -338,7 +338,7 @@ class Entry(EntryBase):
         return cls(begin, until, head, body, fullday, tags)
 
     @classmethod
-    def is_start_line(cls, line: str):
+    def is_start_line(cls, line: str) -> Optional[re.Match]:
         """
         Check if the next line looks like the start of a log block
         """
@@ -382,12 +382,12 @@ class Command(EntryBase):
         res._sync_body(project)
         return res
 
-    def print_lead_timeref(self, file):
+    def print_lead_timeref(self, file: Optional[TextIO] = None):
         raise RuntimeError(
             "Cannot output a log with a Command as the very first element, without a previous time reference"
         )
 
-    def print(self, file=sys.stdout):
+    def print(self, file: TextIO = sys.stdout):
         print(self.head, file=file)
         for line in self.body:
             print(line, file=file)
@@ -408,7 +408,7 @@ class Command(EntryBase):
         return cls(head, body, start)
 
     @classmethod
-    def is_start_line(cls, line: str):
+    def is_start_line(cls, line: str) -> Optional[re.Match]:
         """
         Check if the next line looks like the start of a log block
         """
@@ -453,7 +453,7 @@ class Log:
         self._entries: List[EntryBase] = []
 
     @property
-    def entries(self):
+    def entries(self) -> Generator[Entry, None, None]:
         """
         Generate all the Entry entries of this log
         """
@@ -463,7 +463,7 @@ class Log:
             yield e
 
     @property
-    def first_entry(self):
+    def first_entry(self) -> Optional[Entry]:
         """
         Return the first Entry of the log
         """
@@ -474,7 +474,7 @@ class Log:
         return None
 
     @property
-    def last_entry(self):
+    def last_entry(self) -> Optional[Entry]:
         """
         Return the last Entry of the log
         """
@@ -484,7 +484,7 @@ class Log:
             return e
         return None
 
-    def detach_entries(self, since, until):
+    def detach_entries(self, since: datetime.date, until: datetime.date) -> List[EntryBase]:
         """
         Remove from the log the entries that go between the first Entry within
         the given interval and the last Entry within the given interval
@@ -501,7 +501,7 @@ class Log:
                 else:
                     last = idx
 
-        if first is None:
+        if first is None or last is None:
             return []
 
         # If we removed Entry entries making two Timebase entries consecutive,
@@ -529,7 +529,7 @@ class Log:
                 res[tag] += duration
         return res
 
-    def sync(self, today=None):
+    def sync(self, today: datetime.date = None):
         """
         Sync log contents with git or any other activity data sources
         """
@@ -553,7 +553,7 @@ class Log:
         else:
             self.project.meta.unset("parse-errors")
 
-    def print(self, file=sys.stdout, today=None):
+    def print(self, file: TextIO = sys.stdout, today: Optional[datetime.date] = None):
         """
         Write the log as a project log section to the given output file.
 
@@ -568,7 +568,7 @@ class Log:
         return True
 
     @classmethod
-    def is_start_line(cls, line: str):
+    def is_start_line(cls, line: str) -> Optional[re.Match]:
         """
         Check if the next line looks like the start of a log block
         """
