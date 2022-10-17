@@ -65,6 +65,7 @@ def run_check(*args, **kw):
 class TestLinters(unittest.TestCase):
     """ensure that the tree is pep8 clean"""
 
+    @unittest.skipIf("SKIP_FLAKE8" in os.environ, "SKIP_FLAKE8 is set in the environment")
     def test_flake8_clean(self):
         self.assertEqual(run_check("flake8", basedir), 0)
 
