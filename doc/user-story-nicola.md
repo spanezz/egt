@@ -34,13 +34,13 @@ The corresponding egt-files for the first project in each group, could look some
 Name: p.holidays.journey
 
 2021:
-01 December:
+2021-12-01:
   - Fixed date with partner: 2022-02-10 - 2022-02-14
   - searched for possible hotels
-05 December:
+2021-12-05:
   - discussed hotels with partner
   - booked The Nice Hotel
-10 December:
+2021-12-10:
   - booked train tickets
 
 todo:
@@ -59,11 +59,11 @@ Hotels
 Name: w.manager
 
 2021:
-06. December:
+2021-12-06:
   - Meeting:
     - holidays from 2021-12-21 - 2022-01-03 granted
     - discussed state of dinner
-13 December:
+2021-12-13:
   - Mail from manager: remaining meetings of this year cancelled
 
 todo:
@@ -82,14 +82,14 @@ Topics
 Name: a.board.2022-01
 
 2021:
-01 December:
+2021-12-01:
   - Mail to board members with survey for meeting date:
     https://survey.example.com/my-board-meeting
-08 December:
+2021-12-08:
   - Reminder to board members
     - please answer survey
     - please send me agenda items
-14 December:
+2021-12-14:
   - Meeting date fixed: 2022-01-20
   - Mail to board: meeting date
 
@@ -106,7 +106,9 @@ Agenda
 ```
 
 Notes:
-  * I group projects by name, using `.` as a level-separator. This allows to apply filters like `project:w` in taskwarrior to limit the task list to work related tasks.
+  * I group projects by name, using `.` as a level-separator. This allows to filter projects in egt and taskwarrior.
+    e.g: to print a list of work related projects only, use `egt list w.*` and `task list project:w`
+  * I prefere ISO-dates so I have `date-format = %Y-%m-%d` in my config file.
   * I have a todo-section after the log with next steps.
   * I rely on `egt`'s taskwarrior integration to keep track of individual todos and make heavy use of the `wait:` and `due:` dates.
   * I keep notes related to a project below the todo-section. (Until they grow big enough to put them into a separate file.)
@@ -162,24 +164,34 @@ Work-Cylce
 To illustrate the way I work with this setup, let's look at project `w.manager`.
   * I am at work and taskwarrior informs me about the pending task number 14 'confirm meeting from 2022-01-03'.
     * I send an email to my manager asking to confirm the next meeting.
+    * I annotate task 14: `task 14 an mail sent to manager`
     * I modify the dates of task 14: `task 14 mo due:1w wait:1w`
-    * I open `manager.egt`: `egt edit w.manager`  
-      and add a note:  
-      ```
-      +
-        - mail sent to manager: please confirm 2022-01-03
-      ```
-    * When I save and quit the file, `egt annotate` will turn the `+` into a proper date
   * The next day, I get a great feedback from a customer about Project A
-    * I add an item in the topics section of `manger.egt`, so I remember to tell my manager about the feedback.
+    * I open `manager.egt`: `egt edit w.manager`  
+      and immediately save the file, this adds (due to config: `sync-tw-annotations = true`):  
+      ```
+      2021-12-14:
+        - confirm meeting from 2022-01-03: mail sent to manager  
+      ```
+      below the log section. If needed I modify this entry and then join it with the log.
+    * then I add an item in the topics section of `manger.egt`, so I remember to tell my manager about the feedback.
   * Another 3 days later my manager confirms the meeting
     * I open `manager.egt`
     * I immediately save the file and `egt annotate` will update the task number of my waiting task. The number changed due to other tasks being completed in the meantime. It's now task number 9.
     * In a separate terminal I run `task 9 done`
-    * I save `manager.egt` again and let `egt annotate` pick up on the completed task.
-    * I move the completed task into the log section, save the file and quit the editor
+    * I save `manager.egt` again and let `egt annotate` create the corresponding log-line.
+    * I join the new line with the log section, save the file and quit the editor
   * On 2022-01-03 I meet my manager.
     * I open `manger.egt`
     * I discuss the listed topics with my manager
-    * and add new log-entries or tasks as appropriate.
+    * and add new log-entries or tasks as appropriate. e.g:
+      ```
+      +
+        - Meeting:
+          - State of Projects discussed: prioritize project B
+          - ...
+      ```
+      when I save and quit, `egt annotate` will turn the `+` into a proper date
 
+From time to time I run `egt summary --task` and check for projects with no further tasks.
+These I either archive or add a new task.
