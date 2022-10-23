@@ -2,11 +2,12 @@ Source: egt
 Section: misc
 Priority: optional
 Maintainer: Enrico Zini <enrico@debian.org>
-Build-Depends-Indep: python3-setuptools, python3-all, debhelper (>= 9), dh-python, help2man, python3, bash-completion (>= 1:1.0-1~)
-Standards-Version: 3.9.1.0
-#Vcs-Git: git://git.debian.org/git/collab-maint/apt-xapian-index.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/apt-xapian-index.git
-#Homepage: http://www.enricozini.org/sw/apt-xapian-index/
+Build-Depends-Indep: python3-setuptools, python3-all, debhelper (>= 13), dh-python, help2man, python3, bash-completion (>= 1:1.0-1~)
+Standards-Version: 4.6.1
+Rules-Requires-Root: no
+Vcs-Git: https://github.com/spanezz/egt.git
+Vcs-Browser: https://github.com/spanezz/egt
+Homepage: https://github.com/spanezz/egt
 
 Package: python3-egtlib
 Section: python
