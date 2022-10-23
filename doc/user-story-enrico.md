@@ -52,3 +52,6 @@ and unstructured way of a text file does not require me to organise thoughts
 before I jot them down, so I can do it without losing the main stream of
 thoughts. I have not found to this day a better way to do it, and I find being
 able to do this absolutely invaluable.
+
+If I'm unsure what I'd like to focus on next, on my many fronts, I run `egt
+next` to get the first todo list line for all my projects.
