@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import os.path
-from distutils.core import setup
+from setuptools import setup
 
 with open(os.path.join(os.path.dirname(sys.argv[0]), 'egt'), "rt") as fd:
     for line in fd:
