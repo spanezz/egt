@@ -1,9 +1,14 @@
-import unittest
-from .utils import ProjectTestMixin
-from egtlib import Project
+from __future__ import annotations
+
+import datetime
 import io
 import os
-import datetime
+import unittest
+
+from egtlib import Project
+from egtlib.config import Config
+
+from .utils import ProjectTestMixin
 
 
 class TestLog(ProjectTestMixin, unittest.TestCase):
@@ -18,8 +23,8 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 print("Lang: {}".format(lang), file=fd)
             print("Tags: testtag1, testtag2", file=fd)
             print(file=fd)
-            for l in log_lines:
-                print(l, file=fd)
+            for line in log_lines:
+                print(line, file=fd)
             print(file=fd)
             print("hypothetic plans", file=fd)
 
@@ -27,7 +32,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         with open(self.projectfile, "wt") as fd:
             print("Name: testprj", file=fd)
             print("", file=fd)
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.load()
         self.assertEqual(len(proj.log._entries), 0)
 
@@ -45,7 +50,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - implemented day logs",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.load()
         proj.log._entries.pop(0)
         self.assertEqual(len(proj.log._entries), 2)
@@ -66,7 +71,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - tested things",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.load()
         self.assertEqual(len(proj.log._entries), 2)
 
@@ -87,11 +92,11 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - implemented day logs",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        from egtlib.log import Timebase, Entry
+        from egtlib.log import Entry, Timebase
 
         self.assertEqual(len(proj.log._entries), 3)
         self.assertIsInstance(proj.log._entries[0], Timebase)
@@ -139,11 +144,11 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - new day entry",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        from egtlib.log import Timebase, Entry, Command
+        from egtlib.log import Command, Entry, Timebase
 
         self.assertEqual(len(proj.log._entries), 4)
         self.assertIsInstance(proj.log._entries[0], Timebase)
@@ -222,11 +227,11 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             ],
             lang="it",
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        from egtlib.log import Timebase, Entry
+        from egtlib.log import Entry, Timebase
 
         self.assertEqual(len(proj.log._entries), 3)
         self.assertIsInstance(proj.log._entries[0], Timebase)
@@ -273,11 +278,11 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             ],
             lang="fr",
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        from egtlib.log import Timebase, Entry
+        from egtlib.log import Entry, Timebase
 
         self.assertEqual(len(proj.log._entries), 3)
         self.assertIsInstance(proj.log._entries[0], Timebase)
@@ -319,22 +324,22 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             " - implemented day logs",
         ]
         self.write_project(lines + ["15 march:", " - localized"])
-        proj_default = Project(self.projectfile, statedir=self.workdir.name)
+        proj_default = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj_default.load()
         self.assertEqual(proj_default.log._entries[3].begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 marzo:", " - localized"], lang="it")
-        proj_it = Project(self.projectfile, statedir=self.workdir.name)
+        proj_it = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj_it.load()
         self.assertEqual(proj_it.log._entries[3].begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 mars:", " - localized"], lang="fr")
-        proj_fr = Project(self.projectfile, statedir=self.workdir.name)
+        proj_fr = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj_fr.load()
         self.assertEqual(proj_fr.log._entries[3].begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 march:", " - localized"])
-        proj_default1 = Project(self.projectfile, statedir=self.workdir.name)
+        proj_default1 = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj_default1.load()
         self.assertEqual(proj_default1.log._entries[3].begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
@@ -403,7 +408,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - implemented day logs",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.load()
 
         self.assertEqual(proj.log._entries[1].tags, ["tag1", "tag2"])

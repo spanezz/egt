@@ -1,12 +1,17 @@
-# coding: utf8
-import unittest
-from .utils import ProjectTestMixin
-from egtlib import Project
-import io
-import os
-import json
+from __future__ import annotations
+
 import datetime
+import io
+import json
+import os
+import unittest
+
 from dateutil.tz import tzlocal
+
+from egtlib import Project
+from egtlib.config import Config
+
+from .utils import ProjectTestMixin
 
 
 class TestTasks(ProjectTestMixin, unittest.TestCase):
@@ -38,7 +43,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
                 "body line3",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
@@ -105,7 +110,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
                         "body line3",
                     ]
                 )
-                proj = Project(self.projectfile, statedir=self.workdir.name)
+                proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
                 proj.body.force_load_tw(config_filename=self.taskrc)
                 proj.load()
 
@@ -141,7 +146,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
                 "body line2",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
@@ -214,7 +219,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
                 "body line3",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
@@ -298,7 +303,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         tw = None
 
         # Load the project and see
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 

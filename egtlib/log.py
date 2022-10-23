@@ -363,8 +363,8 @@ class Command(EntryBase):
         return None
 
     def sync(self, project: "project.Project", today: datetime.date):
-        date_format = project.config.get("config", "date-format") + ":"
-        datetime_format = date_format + " " + project.config.get("config", "time-format") + "-"
+        date_format = project.config.date_format + ":"
+        datetime_format = date_format + " " + project.config.time_format + "-"
         if self.start is None:
             begin = datetime.datetime.combine(today, datetime.time(0))
             until = begin + datetime.timedelta(days=1)

@@ -1,5 +1,7 @@
-# coding: utf8
+from __future__ import annotations
+
 import unittest
+
 from egtlib.egt import ProjectFilter
 from egtlib.project import Project
 

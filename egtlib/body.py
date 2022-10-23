@@ -188,7 +188,7 @@ class Body:
 
     def __init__(self, project: "project.Project"):
         self.project = project
-        self.date_format = self.project.config.get("config", "date-format")
+        self.date_format = self.project.config.date_format
 
         # Line number in the project file where the body starts
         self._lineno: Optional[int] = None
@@ -315,7 +315,7 @@ class Body:
         new = []
         for tw_task in self.tw.filter_tasks({"project.is": self.project.name}):
             uuid = str(tw_task["uuid"])
-            if self.project.config.getboolean("config", "sync-tw-annotations"):
+            if self.project.config.sync_tw_annotations:
                 self._sync_annotations(tw_task)
             # handle completed and deleted tasks
             if tw_task["id"] == 0 and uuid not in old_uuids:

@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import datetime
 import json
 import logging
 import os.path
 import subprocess
 import sys
-from configparser import ConfigParser
 from typing import Any, List, Optional, Set, TextIO, Tuple, cast
 
 from .body import Body
@@ -12,6 +13,7 @@ from .lang import set_locale
 from .log import Log
 from .meta import Meta
 from .utils import atomic_writer, format_duration, stream_output, today
+from .config import Config
 
 log = logging.getLogger(__name__)
 
@@ -60,16 +62,7 @@ class Project:
     * A free-text body (body.Body)
     """
 
-    def __init__(self, abspath: str, statedir: Optional[str] = None, config: Optional[ConfigParser] = None):
-        if config is None:
-            # TODO: refactor to single location (`commands.Command.__init__`)
-            config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
-            config["config"] = {
-                "date-format": "%d %B",
-                "time-format": "%H:%M",
-                "sync-tw-annotations": "True",
-                "summary-columns": "name, tags, logs, hours, last",
-            }
+    def __init__(self, abspath: str, *, config: Config, statedir: Optional[str] = None):
         self.config = config
         self.statedir = statedir
         self.abspath = abspath
@@ -139,7 +132,7 @@ class Project:
 
     @classmethod
     def mock(self, abspath: str, name: Optional[str] = None, path: Optional[str] = None, tags=None, config=None):
-        p = Project(abspath, config=config)
+        p = Project(abspath, config=config if config is not None else Config())
         if path is not None:
             p.default_path = path
         if name is not None:

@@ -1,9 +1,14 @@
-import unittest
-from .utils import ProjectTestMixin
-from egtlib import Project
+from __future__ import annotations
+
+import datetime
 import io
 import os
-import datetime
+import unittest
+
+from egtlib import Project
+from egtlib.config import Config
+
+from .utils import ProjectTestMixin
 
 
 class TestAnnotate(ProjectTestMixin, unittest.TestCase):
@@ -19,7 +24,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
                 for line in text:
                     print(line, file=fd)
 
-        proj = Project(self.projectfile, statedir=self.workdir.name)
+        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import io
 import logging
@@ -5,16 +7,14 @@ import os
 import shutil
 import sys
 import typing
-from configparser import ConfigParser
 from contextlib import contextmanager
 from typing import Type
-
-import xdg
 
 import egtlib
 from egtlib.utils import HoursCol, LastEntryCol, SummaryCol, TaskStatCol, format_td
 
 from . import cli
+from .config import Config
 
 log = logging.getLogger(__name__)
 
@@ -31,28 +31,7 @@ class EgtCommand(cli.Command):
     def __init__(self, args):
         super().__init__(args)
         self.args = args
-        self.config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
-        self.config["config"] = {
-            "date-format": "%d %B",
-            "time-format": "%H:%M",
-            "sync-tw-annotations": "True",
-            "summary-columns": "name, tags, logs, hours, last",
-        }
-        old_cfg = os.path.expanduser("~/.egt.conf")
-        new_cfg = os.path.join(xdg.XDG_CONFIG_HOME, "egt")
-        if os.path.isfile(new_cfg):
-            if os.path.isfile(old_cfg):
-                log.warn(
-                    "Config file exists in old an new location.\n"
-                    "%s used\n"
-                    "%s will be ignored (remove to get rid of this message)\n",
-                    new_cfg,
-                    old_cfg,
-                )
-        elif os.path.isfile(old_cfg):
-            os.rename(old_cfg, new_cfg)
-            log.info("Config file %s moved to new location %s", old_cfg, new_cfg)
-        self.config.read([new_cfg])
+        self.config = Config(load=True)
 
     def make_egt(self, filter: typing.List[str] = []):
         return egtlib.Egt(config=self.config, filter=filter, show_archived=self.args.archived)
@@ -161,9 +140,7 @@ class Summary(ProjectsCommand):
             "last": LastEntryCol("Last entry", "r"),
         }
         active_cols = []
-        raw_cols = self.config.get("config", "summary-columns")
-        for raw in raw_cols.split(","):
-            col = raw.strip().lower()
+        for col in self.config.summary_columns:
             if col in COLUMNS:
                 active_cols.append(COLUMNS[col])
                 active_cols[-1].init_data()
@@ -515,7 +492,7 @@ class Backup(ProjectsCommand):
     """
 
     def main(self):
-        out = self.config.get("config", "backup-output", fallback=None)
+        out = self.config.backup_output
         e = self.make_egt()
         if out:
             out = datetime.datetime.now().strftime(out)

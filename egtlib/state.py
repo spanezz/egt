@@ -1,4 +1,5 @@
-import configparser
+from __future__ import annotations
+
 import json
 import logging
 import os.path
@@ -9,6 +10,7 @@ from xdg import BaseDirectory
 from .project import Project
 from .scan import scan
 from .utils import atomic_writer
+from .config import Config
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +52,7 @@ class State:
             return
 
     @classmethod
-    def rescan(cls, dirs: List[str], statedir: str = None, config: configparser.ConfigParser = None) -> None:
+    def rescan(cls, dirs: List[str], *, config: Config, statedir: str = None) -> None:
         """
         Rebuild the state looking for files in the given directories.
 

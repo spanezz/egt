@@ -1,12 +1,16 @@
-# coding: utf8
-import unittest
-from unittest import mock
-from io import StringIO
-from .utils import ProjectTestMixin
+from __future__ import annotations
+
 import os
-from egtlib.state import State
-from egtlib.commands import Completion
+import unittest
+from io import StringIO
+from unittest import mock
+
 import egtlib
+from egtlib.commands import Completion
+from egtlib.config import Config
+from egtlib.state import State
+
+from .utils import ProjectTestMixin
 
 body_p = """Name: test
 
@@ -40,7 +44,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
             fd.write(body_p2)
 
     def test_scan(self):
-        State.rescan([self.workdir.name], statedir=self.workdir.name)
+        State.rescan([self.workdir.name], statedir=self.workdir.name, config=Config())
         state = State()
         state.load(self.workdir.name)
         self.assertIn("test", state.projects)
@@ -49,8 +53,8 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(len(state.projects), 3)
 
     def test_list(self):
-        State.rescan([self.workdir.name], statedir=self.workdir.name)
-        egt = egtlib.Egt(config=None, statedir=self.workdir.name)
+        State.rescan([self.workdir.name], statedir=self.workdir.name, config=Config())
+        egt = egtlib.Egt(config=Config(), statedir=self.workdir.name)
         names = set(p.name for p in egt.projects)
         self.assertIn("test", names)
         self.assertIn("p1", names)
@@ -62,8 +66,8 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
             {"cmd": "projects", "res": ["p1", "p2", "test"]},
             {"cmd": "tags", "res": ["bar", "blubb", "foo"]},
         ]
-        State.rescan([self.workdir.name], statedir=self.workdir.name)
-        egt = egtlib.Egt(config=None, statedir=self.workdir.name)
+        State.rescan([self.workdir.name], statedir=self.workdir.name, config=Config())
+        egt = egtlib.Egt(config=Config(), statedir=self.workdir.name)
         with mock.patch("egtlib.cli.Command.setup_logging"):
             for subtest in subtests:
                 with self.subTest(config=subtest["cmd"]):
@@ -88,8 +92,8 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     # TODO: test_serve
 
     def test_backup(self):
-        State.rescan([self.workdir.name], statedir=self.workdir.name)
-        egt = egtlib.Egt(config=None, statedir=self.workdir.name)
+        State.rescan([self.workdir.name], statedir=self.workdir.name, config=Config())
+        egt = egtlib.Egt(config=Config(), statedir=self.workdir.name)
         tarfname = os.path.join(self.workdir.name, "backup.tar")
         with open(tarfname, "wb") as fd:
             egt.backup(fd)

@@ -2,7 +2,6 @@ import datetime
 import logging
 import re
 import sys
-from configparser import RawConfigParser
 from typing import Any, BinaryIO, Dict, List, Optional, Set, TextIO
 
 import taskw
@@ -10,6 +9,7 @@ import taskw
 from .project import Project
 from .state import State
 from .utils import intervals_intersect
+from .config import Config
 
 log = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ class ProjectFilter:
 class Egt:
     def __init__(
         self,
-        config: Optional[RawConfigParser] = None,
+        config: Config,
         filter: List[str] = [],
         show_archived: bool = False,
         statedir: str = None,
@@ -187,16 +187,8 @@ class Egt:
         """
         Guess tags from the project file pathname
         """
-        if self.config is None:
-            return set()
-        if "autotag" not in self.config:
-            return set()
-        autotags = self.config["autotag"]
-        if autotags is None:
-            return set()
-
         tags: Set[str] = set()
-        for tag, regexp in autotags.items():
+        for tag, regexp in self.config.autotag_rules:
             if re.search(regexp, abspath):
                 tags.add(tag)
         return tags
