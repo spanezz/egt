@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import datetime
 import inspect
 import re
 import sys
-from collections import OrderedDict
-from typing import Dict, List, Optional, TextIO
+from typing import Any, Dict, List, Optional, Set, TextIO
 
 from .parse import Lines
 from .utils import format_duration
@@ -24,10 +24,58 @@ class Meta:
         self._lineno: Optional[int] = None
 
         # Dict mapping lowercase field names to their string values
-        self._raw = OrderedDict()
+        self._raw: Dict[str, str] = {}
 
         # Set of tags for the project
-        self.tags = set()
+        self.tags: Set[str] = set()
+
+    @property
+    def lang(self) -> Optional[str]:
+        """
+        Return the default language
+        """
+        return self._raw.get("lang")
+
+    @property
+    def name(self) -> Optional[str]:
+        """
+        Return the project name
+        """
+        return self._raw.get("name")
+
+    @property
+    def path(self) -> Optional[str]:
+        """
+        Path of the project if it is not in the same directory as the .egt file
+        """
+        return self._raw.get("path")
+
+    @property
+    def archived(self) -> bool:
+        """
+        True if the project is archived
+        """
+        return self._raw.get("archived", "false").lower() in ("true", "yes")
+
+    @property
+    def start_date(self) -> Optional[datetime.date]:
+        """
+        Return the explicit begin date of this project
+        """
+        if (since_str := self._raw.get("start-date", None)) is not None:
+            return datetime.datetime.strptime(since_str, "%Y-%m-%d").date()
+        else:
+            return None
+
+    @property
+    def end_date(self) -> Optional[datetime.date]:
+        """
+        Return the explicit end date of this project
+        """
+        if (since_str := self._raw.get("end-date", None)) is not None:
+            return datetime.datetime.strptime(since_str, "%Y-%m-%d").date()
+        else:
+            return None
 
     def copy(self):
         """
@@ -44,14 +92,14 @@ class Meta:
         """
         return name.lower() in self._raw
 
-    def get(self, name: str, *args) -> str:
+    def get(self, name: str, default: Any = None) -> Any:
         """
         Get a metadata element by name, optionally with a default.
         """
         name = name.lower()
         if hasattr(self, name):
             return getattr(self, name)
-        return self._raw.get(name, *args)
+        return self._raw.get(name, default)
 
     def set(self, name: str, value: str) -> None:
         """

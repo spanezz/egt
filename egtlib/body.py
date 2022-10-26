@@ -49,6 +49,7 @@ class Task(BodyEntry):
         self.indent = indent
         # Taskwarrior task dict (None means no mapping attempted yet)
         self.set_twtask(task)
+        self.id: Optional[int]
         if isinstance(id, int):
             # Whether the task is new and needs to be created in TaskWarrior
             self.is_new = False
@@ -109,7 +110,7 @@ class Task(BodyEntry):
         id, task = self.body.tw.get_task(uuid=newtask["id"])
         self.set_twtask(task)
         self.id = self.task["id"]
-        self.is_new = None
+        self.is_new = False
 
     def resolve_task(self):
         """

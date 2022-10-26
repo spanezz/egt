@@ -138,7 +138,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("new task", ["tag", "testtag1"], project="testprj")
         tw.task_add("new parent task", project="testprj", depends=[new_task["uuid"]])
-        tw = None
+        del tw
 
         self.write_project(
             [
@@ -193,7 +193,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
 
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
-        tw = None
+        del tw
 
         egt_id = new_task["id"] + 10
 
@@ -300,7 +300,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
 
         # Mark the task as done
         tw.task_done(uuid=new_task["uuid"])
-        tw = None
+        del tw
 
         # Load the project and see
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())

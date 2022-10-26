@@ -44,19 +44,19 @@ def run_check(*args, **kw):
     stdout = stdout.decode("utf-8")
     stderr = stderr.decode("utf-8")
     count = 0
-    for l in stdout.split("\n"):
-        if not l:
+    for line in stdout.split("\n"):
+        if not line:
             continue
-        if should_ignore(l):
+        if should_ignore(line):
             continue
-        print("I:{}:{}".format(args[0], l))
+        print("I:{}:{}".format(args[0], line))
         count += 1
-    for l in stderr.split("\n"):
-        if not l:
+    for line in stderr.split("\n"):
+        if not line:
             continue
-        if should_ignore(l):
+        if should_ignore(line):
             continue
-        print("W:{}:{}".format(args[0], l))
+        print("W:{}:{}".format(args[0], line))
         count += 1
     p.wait()
     return count
@@ -72,4 +72,5 @@ class TestLinters(unittest.TestCase):
     @unittest.skipIf("SKIP_MYPY" in os.environ, "SKIP_MYPY is set in the environment")
     def test_mypy_clean(self):
         stubs_dir = os.path.join(basedir, "stubs")
-        self.assertEqual(run_check("mypy", basedir, "--no-error-summary", extra_env={"MYPYPATH": stubs_dir}), 0)
+        self.assertEqual(run_check("mypy", basedir, "--check-untyped-defs", "--no-error-summary",
+                         extra_env={"MYPYPATH": stubs_dir}), 0)

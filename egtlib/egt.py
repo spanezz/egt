@@ -138,6 +138,9 @@ class ProjectFilter:
 
 
 class Egt:
+    """
+    Collection of parsed .egt files as Project objects
+    """
     def __init__(
         self,
         config: Config,
@@ -154,7 +157,7 @@ class Egt:
         # It is built lazily when needed, and is None when not yet built.
         self._projects: Optional[Dict[str, Project]] = None
 
-    def load_project(self, fname: str, project_fd: TextIO = None) -> Optional[Project]:
+    def load_project(self, fname: str, project_fd: Optional[TextIO] = None) -> Optional[Project]:
         """
         Return a Project object given its file name.
 

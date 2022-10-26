@@ -85,7 +85,7 @@ class Project:
         """
         Set the current locale to the one specified in the project header
         """
-        set_locale(self.meta.get("lang"))
+        set_locale(self.meta.lang)
 
     @property
     def state(self) -> ProjectState:
@@ -95,7 +95,7 @@ class Project:
 
     @property
     def name(self) -> str:
-        name = self.meta.get("name", self.default_name)
+        name = self.meta.name or self.default_name
         if not self.archived:
             return name
 
@@ -109,7 +109,7 @@ class Project:
 
     @property
     def path(self) -> str:
-        return self.meta.get("path", self.default_path)
+        return self.meta.path or self.default_path
 
     @property
     def mtime(self) -> float:
@@ -166,7 +166,7 @@ class Project:
             return
         elif self.log.is_start_line(first_line):
             log.debug("%s:%d: parsing log", lines.fname, lines.lineno)
-            self.log.parse(lines, lang=self.meta.get("lang", None))
+            self.log.parse(lines, lang=self.meta.lang)
             lines.skip_empty_lines()
 
         # Parse body
@@ -176,10 +176,10 @@ class Project:
         # Allow to group archived projects with the same name.
         # Compute it separately to skip the archieve name mangling performed by
         # the name property on archived project names
-        self.group = self.meta.get("name", self.default_name)
+        self.group = self.meta.name or self.default_name
 
         # Quick access to 'archive' meta attribute
-        if self.meta.get("archived", "false").lower() in ("true", "yes"):
+        if self.meta.archived:
             self.archived = True
 
     def print(self, out: TextIO, today: Optional[datetime.date] = None):
@@ -242,15 +242,15 @@ class Project:
         If Start-date and End-date are provided in the metadata, return those.
         Else infer them from the first or last log entries.
         """
-        if (since_str := self.meta.get("start-date", None)) is not None:
-            since = datetime.datetime.strptime(since_str, "%Y-%m-%d").date()
+        if (date := self.meta.start_date):
+            since = date
         elif (e := self.log.first_entry) is not None:
             since = e.begin.date()
         else:
             since = today()
 
-        if (until_str := self.meta.get("end-date", None)) is not None:
-            until = datetime.datetime.strptime(until_str, "%Y-%m-%d").date()
+        if (date := self.meta.end_date):
+            until = date
         elif (e := self.log.last_entry) is not None:
             until = e.until.date() if e.until is not None else today()
         else:
