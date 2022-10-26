@@ -227,8 +227,7 @@ class Body:
 
         # Get everything until we reach the end of file
         for line in lines.rest():
-            mo = self.re_task.match(line)
-            if mo is not None:
+            if (mo := self.re_task.match(line)):
                 task = Task(self, **mo.groupdict())
                 self.content.append(task)
                 self.tasks.append(task)
