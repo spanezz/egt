@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import datetime
 import io
 import logging
@@ -22,18 +23,18 @@ log = logging.getLogger(__name__)
 COMMANDS: typing.List[Type["cli.Command"]] = []
 
 
-def register(c: Type["cli.Command"]):
+def register(c: Type["cli.Command"]) -> Type["cli.Command"]:
     COMMANDS.append(c)
     return c
 
 
 class EgtCommand(cli.Command):
-    def __init__(self, args):
+    def __init__(self, args: argparse.Namespace):
         super().__init__(args)
         self.args = args
         self.config = Config(load=True)
 
-    def make_egt(self, filter: typing.List[str] = []):
+    def make_egt(self, filter: typing.List[str] = []) -> egtlib.Egt:
         return egtlib.Egt(config=self.config, filter=filter, show_archived=self.args.archived)
 
     @classmethod
@@ -134,7 +135,7 @@ class Summary(ProjectsCommand):
         COLUMNS = {
             "name": SummaryCol("Name", "l", lambda p: p.name),
             "tags": SummaryCol("Tags", "l", lambda p: " ".join(sorted(p.tags))),
-            "logs": SummaryCol("Logs", "r", lambda p: len(list(p.log.entries))),
+            "logs": SummaryCol("Logs", "r", lambda p: str(len(list(p.log.entries)))),
             "tasks": TaskStatCol("Tasks", "r", projs),
             "hours": HoursCol("Hrs", "c"),
             "last": LastEntryCol("Last entry", "r"),

@@ -31,7 +31,7 @@ class LogParser:
         cls.ENTRY_TYPES.append(c)
         return c
 
-    def log_parse_error(self, lineno, msg):
+    def log_parse_error(self, lineno: int, msg: str):
         self.errors.append("line {}: {}".format(lineno + 1, msg))
 
     def parse_date(self, s: str):
@@ -95,7 +95,7 @@ class EntryBase:
         """
         raise NotImplementedError("reference_time called on EntryBase")
 
-    def print_lead_timeref(self, file):
+    def print_lead_timeref(self, file: Optional[TextIO] = None):
         """
         Assuming this is the first entry of the log being printed, print a time
         reference before the entry if it is needed to be able to reparse the
@@ -423,7 +423,7 @@ class LogPrinter:
         self.last_reference_time: Optional[datetime.datetime] = None
         self.archived = archived
 
-    def print(self, entry: EntryBase):
+    def print(self, entry: EntryBase) -> None:
         if not self.has_time_ref:
             entry.print_lead_timeref(self.file)
             self.has_time_ref = True
@@ -432,7 +432,7 @@ class LogPrinter:
         if reftime is not None:
             self.last_reference_time = reftime
 
-    def done(self):
+    def done(self) -> None:
         if self.archived:
             return
         this_year = self.today.year

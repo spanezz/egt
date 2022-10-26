@@ -1,6 +1,9 @@
+from __future__ import annotations
+
+import argparse
 import logging
 import sys
-from typing import Optional
+from typing import Any, Optional
 
 try:
     import coloredlogs
@@ -10,7 +13,7 @@ except ModuleNotFoundError:
     HAS_COLOREDLOGS = False
 
 
-def _get_first_docstring_line(obj):
+def _get_first_docstring_line(obj: Any) -> Optional[str]:
     try:
         return obj.__doc__.split("\n")[1].strip()
     except (AttributeError, IndexError):
@@ -32,13 +35,13 @@ class Command:
 
     NAME: Optional[str] = None
 
-    def __init__(self, args):
+    def __init__(self, args: argparse.Namespace):
         if self.NAME is None:
             self.NAME = self.__class__.__name__.lower()
         self.args = args
         self.setup_logging()
 
-    def setup_logging(self):
+    def setup_logging(self) -> None:
         FORMAT = "%(asctime)-15s %(levelname)s %(name)s %(message)s"
         if self.args.debug:
             level = logging.DEBUG

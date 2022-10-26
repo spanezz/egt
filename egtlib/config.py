@@ -26,7 +26,7 @@ class Config:
         if load:
             self.load()
 
-    def load(self):
+    def load(self) -> None:
         """
         Load configuration from the user's home directory
         """

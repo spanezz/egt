@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import shlex
-from typing import Dict, List, Optional, TextIO
+from typing import Any, Dict, List, Optional, TextIO, Union
 
 import taskw
 
@@ -42,7 +42,13 @@ class Task(BodyEntry):
     re_attribute = re.compile(r"^(?P<key>[^:]+):(?P<val>[^:]+)$")
     task_attributes = ["start", "due", "until", "wait", "scheduled", "priority"]
 
-    def __init__(self, body, id, indent="", text=None, task=None):
+    def __init__(
+            self,
+            body: "Body",
+            id: Union[int, str],
+            indent: str = "",
+            text: Optional[str] = None,
+            task=None) -> None:
         # Body object owning this Task
         self.body = body
         # Indentation at the beginning of the lines
@@ -89,7 +95,7 @@ class Task(BodyEntry):
             self.attributes = attributes
 
             # TODO Not handling dependencies from egt yet
-            self.depends = set()
+            self.depends: set[int] = set()
         else:
             raise ValueError("One of text or task must be provided")
 
@@ -148,14 +154,13 @@ class Task(BodyEntry):
         # it can be indicated when serializing
         self.is_orphan = True
 
-    def set_twtask(self, task):
+    def set_twtask(self, task) -> None:
         self.task = task
         self.depends = set()
         if task:
             if "depends" in task:
                 depends_uuids = set(task["depends"])
                 self.depends = set(self.body.tw.get_task(uuid=t)[0] for t in depends_uuids)
-        return
 
     def print(self, file):
         res = []

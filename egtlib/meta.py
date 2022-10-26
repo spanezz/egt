@@ -19,7 +19,7 @@ class Meta:
 
     re_meta_head = re.compile(r"^\w.*:")
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Line number in the project file where the metadata start
         self._lineno: Optional[int] = None
 

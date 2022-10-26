@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import fcntl
 import os
@@ -6,7 +8,10 @@ import select
 import subprocess
 import tempfile
 from collections import defaultdict
-from typing import IO
+from typing import IO, TYPE_CHECKING, Callable, Optional, Sequence
+
+if TYPE_CHECKING:
+    import egtlib
 
 
 def today() -> datetime.date:
@@ -57,7 +62,11 @@ def intervals_intersect(p1s, p1e, p2s, p2e):
 
 
 class SummaryCol:
-    def __init__(self, label, align, func=None):
+    def __init__(
+            self,
+            label: str,
+            align: str,
+            func: Optional[Callable[[egtlib.Project], str]] = None):
         self.label = label
         self.align = align
         self._func = func
@@ -65,14 +74,18 @@ class SummaryCol:
     def init_data(self):
         pass
 
-    def func(self, p):
-        return self._func(p)
+    def func(self, p: egtlib.Project) -> str:
+        if self._func:
+            return self._func(p)
+        else:
+            return ""
 
 
 class TaskStatCol(SummaryCol):
-    def __init__(self, label, align, projs):
+    def __init__(self, label: str, align: str, projs: Sequence[egtlib.Project]):
         super().__init__(label, align)
-        self.task_stats = defaultdict(int)
+        self.task_stats: dict[str, int] = defaultdict(int)
+        self._proj: Optional[egtlib.Project]
         try:
             self._proj = projs[0]
         except IndexError:
