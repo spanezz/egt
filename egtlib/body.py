@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import shlex
-from typing import Any, Dict, List, Optional, TextIO, Union
+from typing import Dict, List, Optional, TextIO, Union
 
 import taskw
 
