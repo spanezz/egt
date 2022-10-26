@@ -4,9 +4,11 @@ import datetime
 import io
 import os
 import unittest
+from typing import cast
 
 from egtlib import Project
 from egtlib.config import Config
+from egtlib.log import Entry, EntryBase, Timebase, Command
 
 from .utils import ProjectTestMixin
 
@@ -79,6 +81,18 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         proj.log.print(file=out, today=datetime.date(2016, 6, 1))
         self.assertEqual(out.getvalue(), "2015\n" "15 march: 9:00-12:00 3h\n" " - tested things\n" "2016\n")
 
+    def assertEntryIsTimebase(self, entry: EntryBase) -> Timebase:
+        self.assertIsInstance(entry, Timebase)
+        return cast(Timebase, entry)
+
+    def assertEntryIsEntry(self, entry: EntryBase) -> Entry:
+        self.assertIsInstance(entry, Entry)
+        return cast(Entry, entry)
+
+    def assertEntryIsCommand(self, entry: EntryBase) -> Command:
+        self.assertIsInstance(entry, Command)
+        return cast(Command, entry)
+
     def testParse(self):
         """
         Test creation of new taskwarrior tasks from a project file
@@ -96,27 +110,25 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        from egtlib.log import Entry, Timebase
-
         self.assertEqual(len(proj.log._entries), 3)
-        self.assertIsInstance(proj.log._entries[0], Timebase)
-        self.assertIsInstance(proj.log._entries[1], Entry)
-        self.assertIsInstance(proj.log._entries[2], Entry)
-        self.assertEqual(proj.log._entries[0].dt, datetime.datetime(2015, 1, 1))
 
-        entry = proj.log._entries[1]
-        self.assertEqual(entry.begin, datetime.datetime(2015, 3, 15, 9))
-        self.assertEqual(entry.until, datetime.datetime(2015, 3, 15, 12))
-        self.assertEqual(entry.head, "15 march: 9:00-12:00")
-        self.assertEqual(entry.body, [" - tested things"])
-        self.assertEqual(entry.fullday, False)
+        e0 = self.assertEntryIsTimebase(proj.log._entries[0])
+        self.assertEqual(e0.dt, datetime.datetime(2015, 1, 1))
 
-        entry = proj.log._entries[2]
-        self.assertEqual(entry.begin, datetime.datetime(2015, 3, 16, 0))
-        self.assertEqual(entry.until, datetime.datetime(2015, 3, 17, 0))
-        self.assertEqual(entry.head, "16 march:")
-        self.assertEqual(entry.body, [" - implemented day logs"])
-        self.assertEqual(entry.fullday, True)
+        e1 = self.assertEntryIsEntry(proj.log._entries[1])
+        e2 = self.assertEntryIsEntry(proj.log._entries[2])
+
+        self.assertEqual(e1.begin, datetime.datetime(2015, 3, 15, 9))
+        self.assertEqual(e1.until, datetime.datetime(2015, 3, 15, 12))
+        self.assertEqual(e1.head, "15 march: 9:00-12:00")
+        self.assertEqual(e1.body, [" - tested things"])
+        self.assertEqual(e1.fullday, False)
+
+        self.assertEqual(e2.begin, datetime.datetime(2015, 3, 16, 0))
+        self.assertEqual(e2.until, datetime.datetime(2015, 3, 17, 0))
+        self.assertEqual(e2.head, "16 march:")
+        self.assertEqual(e2.body, [" - implemented day logs"])
+        self.assertEqual(e2.fullday, True)
 
         with io.StringIO() as out:
             proj.log.print(out, today=datetime.date(2015, 6, 1))
@@ -148,57 +160,55 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        from egtlib.log import Command, Entry, Timebase
-
         self.assertEqual(len(proj.log._entries), 4)
-        self.assertIsInstance(proj.log._entries[0], Timebase)
-        self.assertIsInstance(proj.log._entries[1], Entry)
-        self.assertIsInstance(proj.log._entries[2], Command)
-        self.assertIsInstance(proj.log._entries[3], Command)
-        self.assertEqual(proj.log._entries[0].dt, datetime.datetime(2015, 1, 1))
+        e0 = self.assertEntryIsTimebase(proj.log._entries[0])
+        e1 = self.assertEntryIsEntry(proj.log._entries[1])
+        e2 = self.assertEntryIsCommand(proj.log._entries[2])
+        e3 = self.assertEntryIsCommand(proj.log._entries[3])
 
-        self.assertEqual(proj.log._entries[1].begin, datetime.datetime(2015, 3, 15, 9))
-        self.assertEqual(proj.log._entries[1].until, datetime.datetime(2015, 3, 15, 12))
-        self.assertEqual(proj.log._entries[1].head, "15 march: 9:00-12:00")
-        self.assertEqual(proj.log._entries[1].body, [" - tested things"])
+        self.assertEqual(e0.dt, datetime.datetime(2015, 1, 1))
 
-        new_entry_dt2 = datetime.datetime.combine(datetime.datetime.today(), datetime.time(8, 0, 0))
-        self.assertEqual(proj.log._entries[2].start, datetime.time(8, 0))
-        self.assertEqual(proj.log._entries[2].head, "8:00")
-        self.assertEqual(proj.log._entries[2].body, [" - new entry"])
+        self.assertEqual(e1.begin, datetime.datetime(2015, 3, 15, 9))
+        self.assertEqual(e1.until, datetime.datetime(2015, 3, 15, 12))
+        self.assertEqual(e1.head, "15 march: 9:00-12:00")
+        self.assertEqual(e1.body, [" - tested things"])
 
-        new_entry_dt3 = datetime.datetime.combine(datetime.datetime.today(), datetime.time(0))
-        self.assertEqual(proj.log._entries[3].start, None)
-        self.assertEqual(proj.log._entries[3].head, "+")
-        self.assertEqual(proj.log._entries[3].body, [" - new day entry"])
+        self.assertEqual(e2.start, datetime.time(8, 0))
+        self.assertEqual(e2.head, "8:00")
+        self.assertEqual(e2.body, [" - new entry"])
+
+        self.assertEqual(e3.start, None)
+        self.assertEqual(e3.head, "+")
+        self.assertEqual(e3.body, [" - new day entry"])
 
         proj.log.sync()
 
         self.assertEqual(len(proj.log._entries), 4)
-        self.assertIsInstance(proj.log._entries[0], Timebase)
-        self.assertIsInstance(proj.log._entries[1], Entry)
-        self.assertIsInstance(proj.log._entries[2], Entry)
-        self.assertIsInstance(proj.log._entries[3], Entry)
-        self.assertEqual(proj.log._entries[0].dt, datetime.datetime(2015, 1, 1))
+        f0 = self.assertEntryIsTimebase(proj.log._entries[0])
+        f1 = self.assertEntryIsEntry(proj.log._entries[1])
+        f2 = self.assertEntryIsEntry(proj.log._entries[2])
+        f3 = self.assertEntryIsEntry(proj.log._entries[3])
 
-        self.assertEqual(proj.log._entries[1].begin, datetime.datetime(2015, 3, 15, 9))
-        self.assertEqual(proj.log._entries[1].until, datetime.datetime(2015, 3, 15, 12))
-        self.assertEqual(proj.log._entries[1].head, "15 march: 9:00-12:00")
-        self.assertEqual(proj.log._entries[1].body, [" - tested things"])
+        self.assertEqual(f0.dt, datetime.datetime(2015, 1, 1))
+
+        self.assertEqual(f1.begin, datetime.datetime(2015, 3, 15, 9))
+        self.assertEqual(f1.until, datetime.datetime(2015, 3, 15, 12))
+        self.assertEqual(f1.head, "15 march: 9:00-12:00")
+        self.assertEqual(f1.body, [" - tested things"])
 
         new_entry_dt2 = datetime.datetime.combine(datetime.datetime.today(), datetime.time(8, 0, 0))
-        self.assertEqual(proj.log._entries[2].begin, new_entry_dt2)
-        self.assertEqual(proj.log._entries[2].until, None)
-        self.assertEqual(proj.log._entries[2].head, new_entry_dt2.strftime("%d %B: %H:%M-"))
-        self.assertEqual(proj.log._entries[2].body, [" - new entry"])
-        self.assertEqual(proj.log._entries[2].fullday, False)
+        self.assertEqual(f2.begin, new_entry_dt2)
+        self.assertEqual(f2.until, None)
+        self.assertEqual(f2.head, new_entry_dt2.strftime("%d %B: %H:%M-"))
+        self.assertEqual(f2.body, [" - new entry"])
+        self.assertEqual(f2.fullday, False)
 
         new_entry_dt3 = datetime.datetime.combine(datetime.datetime.today(), datetime.time(0))
-        self.assertEqual(proj.log._entries[3].begin, new_entry_dt3)
-        self.assertEqual(proj.log._entries[3].until, new_entry_dt3 + datetime.timedelta(days=1))
-        self.assertEqual(proj.log._entries[3].head, new_entry_dt3.strftime("%d %B:"))
-        self.assertEqual(proj.log._entries[3].body, [" - new day entry"])
-        self.assertEqual(proj.log._entries[3].fullday, True)
+        self.assertEqual(f3.begin, new_entry_dt3)
+        self.assertEqual(f3.until, new_entry_dt3 + datetime.timedelta(days=1))
+        self.assertEqual(f3.head, new_entry_dt3.strftime("%d %B:"))
+        self.assertEqual(f3.body, [" - new day entry"])
+        self.assertEqual(f3.fullday, True)
 
         with io.StringIO() as out:
             proj.log.print(out)
@@ -231,27 +241,25 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        from egtlib.log import Entry, Timebase
-
         self.assertEqual(len(proj.log._entries), 3)
-        self.assertIsInstance(proj.log._entries[0], Timebase)
-        self.assertIsInstance(proj.log._entries[1], Entry)
-        self.assertIsInstance(proj.log._entries[2], Entry)
-        self.assertEqual(proj.log._entries[0].dt, datetime.datetime(2015, 1, 1))
 
-        entry = proj.log._entries[1]
-        self.assertEqual(entry.begin, datetime.datetime(2015, 3, 15, 9))
-        self.assertEqual(entry.until, datetime.datetime(2015, 3, 15, 12))
-        self.assertEqual(entry.head, "15 marzo: 9:00-12:00")
-        self.assertEqual(entry.body, [" - tested things"])
-        self.assertEqual(entry.fullday, False)
+        e0 = self.assertEntryIsTimebase(proj.log._entries[0])
+        e1 = self.assertEntryIsEntry(proj.log._entries[1])
+        e2 = self.assertEntryIsEntry(proj.log._entries[2])
 
-        entry = proj.log._entries[2]
-        self.assertEqual(entry.begin, datetime.datetime(2015, 3, 16, 0))
-        self.assertEqual(entry.until, datetime.datetime(2015, 3, 17, 0))
-        self.assertEqual(entry.head, "16 marzo:")
-        self.assertEqual(entry.body, [" - implemented day logs"])
-        self.assertEqual(entry.fullday, True)
+        self.assertEqual(e0.dt, datetime.datetime(2015, 1, 1))
+
+        self.assertEqual(e1.begin, datetime.datetime(2015, 3, 15, 9))
+        self.assertEqual(e1.until, datetime.datetime(2015, 3, 15, 12))
+        self.assertEqual(e1.head, "15 marzo: 9:00-12:00")
+        self.assertEqual(e1.body, [" - tested things"])
+        self.assertEqual(e1.fullday, False)
+
+        self.assertEqual(e2.begin, datetime.datetime(2015, 3, 16, 0))
+        self.assertEqual(e2.until, datetime.datetime(2015, 3, 17, 0))
+        self.assertEqual(e2.head, "16 marzo:")
+        self.assertEqual(e2.body, [" - implemented day logs"])
+        self.assertEqual(e2.fullday, True)
 
         with io.StringIO() as out:
             proj.log.print(out, today=datetime.date(2015, 6, 1))
@@ -282,27 +290,25 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         proj.body.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
-        from egtlib.log import Entry, Timebase
-
         self.assertEqual(len(proj.log._entries), 3)
-        self.assertIsInstance(proj.log._entries[0], Timebase)
-        self.assertIsInstance(proj.log._entries[1], Entry)
-        self.assertIsInstance(proj.log._entries[2], Entry)
-        self.assertEqual(proj.log._entries[0].dt, datetime.datetime(2015, 1, 1))
 
-        entry = proj.log._entries[1]
-        self.assertEqual(entry.begin, datetime.datetime(2015, 3, 15, 9))
-        self.assertEqual(entry.until, datetime.datetime(2015, 3, 15, 12))
-        self.assertEqual(entry.head, "15 mars: 9:00-12:00")
-        self.assertEqual(entry.body, [" - tested things"])
-        self.assertEqual(entry.fullday, False)
+        e0 = self.assertEntryIsTimebase(proj.log._entries[0])
+        e1 = self.assertEntryIsEntry(proj.log._entries[1])
+        e2 = self.assertEntryIsEntry(proj.log._entries[2])
 
-        entry = proj.log._entries[2]
-        self.assertEqual(entry.begin, datetime.datetime(2015, 3, 16, 0))
-        self.assertEqual(entry.until, datetime.datetime(2015, 3, 17, 0))
-        self.assertEqual(entry.head, "16 mars:")
-        self.assertEqual(entry.body, [" - implemented day logs"])
-        self.assertEqual(entry.fullday, True)
+        self.assertEqual(e0.dt, datetime.datetime(2015, 1, 1))
+
+        self.assertEqual(e1.begin, datetime.datetime(2015, 3, 15, 9))
+        self.assertEqual(e1.until, datetime.datetime(2015, 3, 15, 12))
+        self.assertEqual(e1.head, "15 mars: 9:00-12:00")
+        self.assertEqual(e1.body, [" - tested things"])
+        self.assertEqual(e1.fullday, False)
+
+        self.assertEqual(e2.begin, datetime.datetime(2015, 3, 16, 0))
+        self.assertEqual(e2.until, datetime.datetime(2015, 3, 17, 0))
+        self.assertEqual(e2.head, "16 mars:")
+        self.assertEqual(e2.body, [" - implemented day logs"])
+        self.assertEqual(e2.fullday, True)
 
         with io.StringIO() as out:
             proj.log.print(out, today=datetime.date(2015, 6, 1))
@@ -326,22 +332,27 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.write_project(lines + ["15 march:", " - localized"])
         proj_default = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj_default.load()
-        self.assertEqual(proj_default.log._entries[3].begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
+
+        e = self.assertEntryIsEntry(proj_default.log._entries[3])
+        self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 marzo:", " - localized"], lang="it")
         proj_it = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj_it.load()
-        self.assertEqual(proj_it.log._entries[3].begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
+        e = self.assertEntryIsEntry(proj_default.log._entries[3])
+        self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 mars:", " - localized"], lang="fr")
         proj_fr = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj_fr.load()
-        self.assertEqual(proj_fr.log._entries[3].begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
+        e = self.assertEntryIsEntry(proj_default.log._entries[3])
+        self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 march:", " - localized"])
         proj_default1 = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj_default1.load()
-        self.assertEqual(proj_default1.log._entries[3].begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
+        e = self.assertEntryIsEntry(proj_default.log._entries[3])
+        self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         proj_default.log.sync(today=datetime.date(2016, 6, 1))
         proj_it.log.sync(today=datetime.date(2016, 6, 1))
@@ -411,8 +422,10 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
         proj.load()
 
-        self.assertEqual(proj.log._entries[1].tags, ["tag1", "tag2"])
-        self.assertEqual(proj.log._entries[2].tags, ["tag2"])
+        e1 = self.assertEntryIsEntry(proj.log._entries[1])
+        e2 = self.assertEntryIsEntry(proj.log._entries[2])
+        self.assertEqual(e1.tags, ["tag1", "tag2"])
+        self.assertEqual(e2.tags, ["tag2"])
 
         with io.StringIO() as out:
             proj.log.print(out, today=datetime.date(2015, 6, 1))
@@ -425,7 +438,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(body_lines[3], "16 march: +tag2")
         self.assertEqual(body_lines[4], " - implemented day logs")
 
-        proj.log._entries[1].tags.append("tag3")
+        e1.tags.append("tag3")
 
         with io.StringIO() as out:
             proj.log.print(out, today=datetime.date(2015, 6, 1))
