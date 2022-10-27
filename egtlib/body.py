@@ -11,6 +11,9 @@ class BodyEntry:
     """
     Base class for elements that compose a project body
     """
+    def __init__(self, indent: str):
+        # Indentation at the beginning of the lines
+        self.indent = indent
 
     def print(self, file: Optional[TextIO] = None) -> None:
         raise NotImplementedError("print has been called on raw BodyEntry object")
@@ -22,7 +25,7 @@ class Line(BodyEntry):
     """
 
     def __init__(self, indent: str, line: str):
-        self.indent = indent
+        super().__init__(indent=indent)
         self.line = line
 
     def print(self, file: Optional[TextIO] = None) -> None:

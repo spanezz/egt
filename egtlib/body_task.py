@@ -27,10 +27,9 @@ class Task(BodyEntry):
             indent: str = "",
             text: Optional[str] = None,
             task=None) -> None:
+        super().__init__(indent=indent)
         # Body object owning this Task
         self.body = body
-        # Indentation at the beginning of the lines
-        self.indent = indent
         # Taskwarrior task dict (None means no mapping attempted yet)
         self.set_twtask(task)
         self.id: Optional[int]
