@@ -39,6 +39,28 @@ class EmptyLine(BodyEntry):
         return "EmptyLine()"
 
 
+class BulletListLine(BodyEntry):
+    """
+    One line with a bullet point
+    """
+    def __init__(self, indent: str, bullet: str, line: str):
+        super().__init__(indent=indent)
+        self.bullet = bullet
+        self.line = line
+
+    def is_empty(self) -> bool:
+        return False
+
+    def get_content(self) -> str:
+        return self.line
+
+    def __repr__(self):
+        return f"BulletListLine({self.line!r})"
+
+    def print(self, file: Optional[TextIO] = None) -> None:
+        print(self.indent + self.bullet + self.line, file=file)
+
+
 class Line(BodyEntry):
     """
     One line of text
@@ -65,6 +87,7 @@ class Body:
     """
 
     re_task = re.compile(r"^(?P<indent>\s*)t(?P<id>\d*)\s+(?P<text>.+)$")
+    re_bullet_line = re.compile(r"^(?P<indent>\s*)(?P<bullet>[-*+]\s+)(?P<line>.*)$")
     re_line = re.compile(r"^(?P<indent>\s*)(?P<line>.*)$")
 
     def __init__(self, project: "project.Project"):
@@ -86,6 +109,8 @@ class Body:
         for line in lines.rest():
             if (mo := self.re_task.match(line)):
                 self.content.append(self.tasks.create_task(**mo.groupdict()))
+            elif (mo := self.re_bullet_line.match(line)):
+                self.content.append(BulletListLine(**mo.groupdict()))
             elif (mo := self.re_line.match(line)):
                 if mo.group("line"):
                     self.content.append(Line(**mo.groupdict()))
