@@ -19,6 +19,17 @@ class BodyEntry:
         raise NotImplementedError("print has been called on raw BodyEntry object")
 
 
+class EmptyLine(BodyEntry):
+    """
+    One empty line
+    """
+    def print(self, file: Optional[TextIO] = None) -> None:
+        print(self.indent, file=file)
+
+    def __repr__(self):
+        return "EmptyLine()"
+
+
 class Line(BodyEntry):
     """
     One line of text
@@ -32,7 +43,7 @@ class Line(BodyEntry):
         print(self.indent + self.line, file=file)
 
     def __repr__(self):
-        return "Line({})".format(repr(self.line))
+        return f"Line({self.line!r})"
 
 
 class Body:
@@ -64,7 +75,10 @@ class Body:
             if (mo := self.re_task.match(line)):
                 self.content.append(self.tasks.create_task(**mo.groupdict()))
             elif (mo := self.re_line.match(line)):
-                self.content.append(Line(**mo.groupdict()))
+                if mo.group("line"):
+                    self.content.append(Line(**mo.groupdict()))
+                else:
+                    self.content.append(EmptyLine(mo.group("indent")))
 
         self.tasks.post_parse_hook()
 
