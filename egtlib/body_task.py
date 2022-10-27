@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import re
 import shlex
 from typing import TYPE_CHECKING, Dict, List, Optional, TextIO, Union
@@ -81,6 +82,9 @@ class Task(BodyEntry):
 
     def is_empty(self) -> bool:
         return False
+
+    def get_date(self) -> Optional[datetime.date]:
+        return None
 
     def get_content(self) -> str:
         res = []
@@ -247,7 +251,9 @@ class Tasks:
                 continue
             self._known_annotations.append(entry)
             date = annotation.entry.date().strftime(self.date_format)
-            line = Line("  ", "- {desc}: {annot}".format(desc=task["description"], annot=annotation))
+            line = Line(
+                indent="  ",
+                line="- {task['description']}: {annotation}")
             self.new_log(date, line)
 
     def _sync_completed(self, task) -> None:
@@ -257,11 +263,8 @@ class Tasks:
         if task["status"] == "completed":
             date = task["modified"].date().strftime(self.date_format)
             line = Line(
-                "  ",
-                "- [completed] {desc}".format(
-                    desc=task["description"],
-                )
-            )
+                indent="  ",
+                line=f"- [completed] {task['description']}")
             self.new_log(date, line)
 
     def sync_tasks(self, modify_state=True) -> None:
@@ -324,15 +327,15 @@ class Tasks:
         # If we created new task-content, prepend it to self.tasks and self.content
         if new:
             self.tasks[0:0] = new
-            self.body.content[0:0] = new + [EmptyLine("")]
+            self.body.content[0:0] = new + [EmptyLine(indent="")]
 
         # If we created new log-content, prepend it to self.content
         if self._new_log:
             content: List[BodyEntry] = []
             for key, lines in sorted(self._new_log.items()):
-                content.append(Line("", key + ":"))
+                content.append(Line(indent="", line=key + ":"))
                 content += lines
-            content.append(EmptyLine(""))
+            content.append(EmptyLine(indent=""))
             self.body.content[0:0] = content
 
         # Rebuild state and save it

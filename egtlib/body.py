@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import re
 from typing import List, Optional, TextIO
 
@@ -11,15 +12,18 @@ class BodyEntry:
     """
     Base class for elements that compose a project body
     """
-    def __init__(self, indent: str):
+    def __init__(self, *, indent: str):
         # Indentation at the beginning of the lines
         self.indent = indent
 
     def is_empty(self) -> bool:
-        raise NotImplementedError(f"{self.__class__.__name__} has been called on raw BodyEntry object")
+        raise NotImplementedError(f"{self.__class__.__name__}.is_empty() has been called on raw BodyEntry object")
+
+    def get_date(self) -> Optional[datetime.date]:
+        raise NotImplementedError(f"{self.__class__.__name__}.get_date() has been called on raw BodyEntry object")
 
     def get_content(self) -> str:
-        raise NotImplementedError(f"{self.__class__.__name__} has been called on raw BodyEntry object")
+        raise NotImplementedError(f"{self.__class__.__name__}.get_content() has been called on raw BodyEntry object")
 
     def print(self, file: Optional[TextIO] = None) -> None:
         print(self.indent + self.get_content(), file=file)
@@ -32,6 +36,9 @@ class EmptyLine(BodyEntry):
     def is_empty(self) -> bool:
         return True
 
+    def get_date(self) -> Optional[datetime.date]:
+        return None
+
     def get_content(self) -> str:
         return ""
 
@@ -39,45 +46,60 @@ class EmptyLine(BodyEntry):
         return "EmptyLine()"
 
 
-class BulletListLine(BodyEntry):
+class LineEntry(BodyEntry):
+    """
+    An entry with a line of text
+    """
+    re_date = re.compile(r"^(\d{4}-\d{2}-\d{2}:\s*)(.*)$")
+
+    def __init__(self, *, indent: str, line: str):
+        super().__init__(indent=indent)
+        self.date_str: Optional[str]
+        self.date: Optional[datetime.date]
+
+        if (mo := self.re_date.match(line)):
+            self.date_str = mo.group(1)
+            self.date = datetime.datetime.strptime(self.date_str[:10], "%Y-%m-%d")
+            self.line = mo.group(2)
+        else:
+            self.date_str = None
+            self.date = None
+            self.line = line
+
+    def is_empty(self) -> bool:
+        return False
+
+    def get_date(self) -> Optional[datetime.date]:
+        return self.date
+
+    def get_content(self) -> str:
+        if self.date_str:
+            return self.date_str + self.line
+        else:
+            return self.line
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.get_content()!r})"
+
+
+class BulletListLine(LineEntry):
     """
     One line with a bullet point
     """
     def __init__(self, indent: str, bullet: str, line: str):
-        super().__init__(indent=indent)
+        super().__init__(indent=indent, line=line)
         self.bullet = bullet
-        self.line = line
-
-    def is_empty(self) -> bool:
-        return False
-
-    def get_content(self) -> str:
-        return self.line
-
-    def __repr__(self):
-        return f"BulletListLine({self.line!r})"
 
     def print(self, file: Optional[TextIO] = None) -> None:
-        print(self.indent + self.bullet + self.line, file=file)
+        print(self.indent + self.bullet + self.get_content(), file=file)
 
 
-class Line(BodyEntry):
+class Line(LineEntry):
     """
     One line of text
     """
-
-    def __init__(self, indent: str, line: str):
-        super().__init__(indent=indent)
-        self.line = line
-
-    def is_empty(self) -> bool:
-        return False
-
-    def get_content(self) -> str:
-        return self.line
-
-    def __repr__(self):
-        return f"Line({self.line!r})"
+    def print(self, file: Optional[TextIO] = None) -> None:
+        print(self.indent + self.get_content(), file=file)
 
 
 class Body:
@@ -115,7 +137,7 @@ class Body:
                 if mo.group("line"):
                     self.content.append(Line(**mo.groupdict()))
                 else:
-                    self.content.append(EmptyLine(mo.group("indent")))
+                    self.content.append(EmptyLine(indent=mo.group("indent")))
 
         self.tasks.post_parse_hook()
 
