@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import taskw
 
-from .body import BodyEntry, Line
+from .body import BodyEntry, Line, EmptyLine
 
 if TYPE_CHECKING:
     from .body import Body
@@ -317,7 +317,7 @@ class Tasks:
         # If we created new task-content, prepend it to self.tasks and self.content
         if new:
             self.tasks[0:0] = new
-            self.body.content[0:0] = new + [Line("", "")]
+            self.body.content[0:0] = new + [EmptyLine("")]
 
         # If we created new log-content, prepend it to self.content
         if self._new_log:
@@ -325,7 +325,7 @@ class Tasks:
             for key, lines in sorted(self._new_log.items()):
                 content.append(Line("", key + ":"))
                 content += lines
-            content.append(Line("", ""))
+            content.append(EmptyLine(""))
             self.body.content[0:0] = content
 
         # Rebuild state and save it
