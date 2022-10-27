@@ -26,6 +26,7 @@ class Fail(BaseException):
 
     No stack trace is printed.
     """
+    pass
 
 
 class Command:
