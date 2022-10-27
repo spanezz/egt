@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import re
 import shlex
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
-# import taskw
+import taskw
 
-from .body import BodyEntry
+from .body import BodyEntry, Line
 
 if TYPE_CHECKING:
     from .body import Body
@@ -22,7 +22,7 @@ class Task(BodyEntry):
 
     def __init__(
             self,
-            body: "Body",
+            body: Body,
             id: Union[int, str],
             indent: str = "",
             text: Optional[str] = None,
@@ -88,10 +88,11 @@ class Task(BodyEntry):
             return
         tags = self.body.project.tags | self.tags
         # the following lines are a workaround for https://github.com/ralphbean/taskw/issues/111
-        self.body.tw._marshal = False
-        newtask = self.body.tw.task_add(self.desc, project=self.body.project.name, tags=sorted(tags), **self.attributes)
-        self.body.tw._marshal = True
-        id, task = self.body.tw.get_task(uuid=newtask["id"])
+        self.body.tasks.tw._marshal = False
+        newtask = self.body.tasks.tw.task_add(
+            self.desc, project=self.body.project.name, tags=sorted(tags), **self.attributes)
+        self.body.tasks.tw._marshal = True
+        id, task = self.body.tasks.tw.get_task(uuid=newtask["id"])
         self.set_twtask(task)
         self.id = self.task["id"]
         self.is_new = False
@@ -113,7 +114,7 @@ class Task(BodyEntry):
             ids = tasks.get("ids", None)
             uuid = ids.get(str(self.id), None)
             if uuid is not None:
-                id, task = self.body.tw.get_task(uuid=uuid)
+                id, task = self.body.tasks.tw.get_task(uuid=uuid)
                 if task:
                     self.set_twtask(task)
                     self.id = task["id"] if task["id"] != 0 else None
@@ -123,7 +124,7 @@ class Task(BodyEntry):
                     return
 
         # Looking up by uuid failed, try looking up by description
-        id, task = self.body.tw.get_task(description=self.desc)
+        id, task = self.body.tasks.tw.get_task(description=self.desc)
         if task:
             self.set_twtask(task)
             return
@@ -138,7 +139,7 @@ class Task(BodyEntry):
         if task:
             if "depends" in task:
                 depends_uuids = set(task["depends"])
-                self.depends = set(self.body.tw.get_task(uuid=t)[0] for t in depends_uuids)
+                self.depends = set(self.body.tasks.tw.get_task(uuid=t)[0] for t in depends_uuids)
 
     def print(self, file):
         res = []
@@ -160,3 +161,181 @@ class Task(BodyEntry):
         if self.depends:
             res.append("depends:" + ",".join(str(t) for t in sorted(self.depends)))
         print(self.indent + " ".join(res), file=file)
+
+
+class Tasks:
+    """
+    Handle tasks in a Project Body
+    """
+    def __init__(self, body: Body):
+        self.body = body
+
+        self.date_format = self.body.project.config.date_format
+
+        # Just the Task entries, for easy access
+        self.tasks: List[Task] = []
+
+        # Storage for handling annotations
+        self._new_log: Dict[str, List[Line]] = {}
+        self._known_annotations: List[List[str]] = []  # using list instead of tuple due to json constraints
+
+        # Taskwarrior interface, loaded lazily
+        self._tw: Optional[taskw.TaskWarrior] = None
+
+    def __getitem__(self, index: int) -> Task:
+        return self.tasks.__getitem__(index)
+
+    def __len__(self) -> int:
+        return self.tasks.__len__()
+
+    def force_load_tw(self, **kw):
+        """
+        Force lazy loading of TaskWarrior object, possibly with custom extra
+        arguments.
+
+        This is used in tests to instantiate TaskWarrior objects pointing to
+        the test TaskWarrior configuration.
+        """
+        self._tw = taskw.TaskWarrior(marshal=True, **kw)
+
+    @property
+    def tw(self) -> taskw.TaskWarrior:
+        if self._tw is None:
+            self._tw = taskw.TaskWarrior(marshal=True)
+        return self._tw
+
+    def create_task(self, **kw) -> Task:
+        """
+        Create a Task
+        """
+        task = Task(self.body, **kw)
+        self.tasks.append(task)
+        return task
+
+    def post_parse_hook(self) -> None:
+        """
+        Function called after the body is parsed
+        """
+        # load known annotations from state file
+        known_annotations = self.body.project.state.get("annotations")
+        if known_annotations:
+            self._known_annotations = known_annotations
+
+    def new_log(self, date, line):
+        try:
+            self._new_log[date].append(line)
+        except KeyError:
+            self._new_log[date] = [line]
+
+    def _sync_annotations(self, task) -> None:
+        """
+        Sync annotations between task and TaskWarrior
+        """
+        try:
+            annotations = task["annotations"]
+        except KeyError:
+            return
+        for annotation in annotations:
+            entry = [str(task["uuid"]), annotation.entry.isoformat()]  # isoformat as used internally only
+            if entry in self._known_annotations:
+                continue
+            self._known_annotations.append(entry)
+            date = annotation.entry.date().strftime(self.date_format)
+            line = Line("  - {desc}: {annot}".format(desc=task["description"], annot=annotation))
+            self.new_log(date, line)
+
+    def _sync_completed(self, task) -> None:
+        """
+        Add log line for completed tasks
+        """
+        if task["status"] == "completed":
+            date = task["modified"].date().strftime(self.date_format)
+            line = Line(
+                "  - [completed] {desc}".format(
+                    desc=task["description"],
+                )
+            )
+            self.new_log(date, line)
+
+    def sync_tasks(self, modify_state=True) -> None:
+        """
+        Sync the tasks in the body with TaskWarrior
+
+        modify_state:
+            run updates that will modify the state
+              - create new tasks not present in taskwarrior yet
+              - store updated uuids and annotations
+            if true, the body must be written back to the project file
+
+        """
+        # Load task information from TaskWarrior, for tasks that are already in
+        # TaskWarrior
+        for t in self.tasks:
+            t.resolve_task()
+
+        if modify_state:
+            # Iterate self.tasks creating new tasks in taskwarrior
+            for t in self.tasks:
+                if t.is_new:
+                    t.create()
+
+        # Load UUIDs of tasks known to have been completed or deleted
+        try:
+            old_uuids = set(self.body.project.state.get("tasks")["old_uuids"])
+        except (TypeError, KeyError):
+            old_uuids = set()
+
+        # Collect known UUIDs (old tasks + tasks in project-file)
+        known_uuids = old_uuids.copy()
+        for t in self.tasks:
+            if t.task is None:
+                continue
+            known_uuids.add(str(t.task["uuid"]))
+
+        # Process all tasks known to taskwarrior
+        new = []
+        for tw_task in self.tw.filter_tasks({"project.is": self.body.project.name}):
+            uuid = str(tw_task["uuid"])
+            if self.body.project.config.sync_tw_annotations:
+                self._sync_annotations(tw_task)
+            # handle completed and deleted tasks
+            if tw_task["id"] == 0 and uuid not in old_uuids:
+                self._sync_completed(tw_task)
+                old_uuids.add(uuid)
+                continue
+            # handle reactivated tasks
+            if uuid in old_uuids and tw_task["id"] != 0:
+                old_uuids.remove(uuid)
+                known_uuids.remove(uuid)
+            # skip tasks that exist in project-file already
+            if uuid in known_uuids:
+                continue
+            # Add remaining Taskwarrior tasks to project-file
+            task = Task(self.body, tw_task["id"], task=tw_task)
+            new.append(task)
+
+        # If we created new task-content, prepend it to self.tasks and self.content
+        if new:
+            self.tasks[0:0] = new
+            self.body.content[0:0] = new + [Line("")]
+
+        # If we created new log-content, prepend it to self.content
+        if self._new_log:
+            content = []
+            for key, lines in sorted(self._new_log.items()):
+                content.append(Line(key + ":"))
+                content += lines
+            content.append(Line(""))
+            self.body.content[0:0] = content
+
+        # Rebuild state and save it
+        if modify_state:
+            ids = {}
+            for t in self.tasks:
+                if t.is_orphan:
+                    continue
+                if t.id is None:
+                    continue
+                ids[t.id] = str(t.task["uuid"])
+            self.body.project.state.set("tasks", {"ids": ids, "old_uuids": list(old_uuids)})
+            self.body.project.state.set("annotations", self._known_annotations)

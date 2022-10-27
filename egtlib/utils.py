@@ -94,9 +94,9 @@ class TaskStatCol(SummaryCol):
     def init_data(self):
         if self._proj is None:
             return
-        tasks = self._proj.body.tw.filter_tasks({"status": "pending"})
+        tasks = self._proj.body.tasks.tw.filter_tasks({"status": "pending"})
         # could not figure out how to do this in one go
-        tasks += self._proj.body.tw.filter_tasks({"status": "waiting"})
+        tasks += self._proj.body.tasks.tw.filter_tasks({"status": "waiting"})
         for task in tasks:
             try:
                 self.task_stats[task["project"]] += 1

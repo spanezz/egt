@@ -44,7 +44,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
             ]
         )
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.force_load_tw(config_filename=self.taskrc)
+        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         self.assertEqual(len(proj.body.content), 4)
@@ -60,7 +60,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(task.tags, {"tag"})
         self.assertFalse(task.is_orphan)
 
-        proj.body.sync_tasks()
+        proj.body.tasks.sync_tasks()
 
         self.assertIsNotNone(task.task)
         self.assertFalse(task.is_new)
@@ -111,7 +111,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
                     ]
                 )
                 proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-                proj.body.force_load_tw(config_filename=self.taskrc)
+                proj.body.tasks.force_load_tw(config_filename=self.taskrc)
                 proj.load()
 
                 task = proj.body.tasks[0]
@@ -121,7 +121,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
                 self.assertEqual(task.desc, "new test task")
                 self.assertEqual(task.attributes, {key: value})
 
-                proj.body.sync_tasks()
+                proj.body.tasks.sync_tasks()
 
                 self.assertIsNotNone(task.task)
                 self.assertFalse(task.is_new)
@@ -147,13 +147,13 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
             ]
         )
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.force_load_tw(config_filename=self.taskrc)
+        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         self.assertEqual(len(proj.body.content), 2)
         self.assertEqual(len(proj.body.tasks), 0)
 
-        proj.body.sync_tasks()
+        proj.body.tasks.sync_tasks()
 
         self.assertEqual(len(proj.body.content), 5)
         self.assertEqual(len(proj.body.tasks), 2)
@@ -220,7 +220,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
             ]
         )
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.force_load_tw(config_filename=self.taskrc)
+        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         self.assertEqual(len(proj.body.content), 3)
@@ -235,7 +235,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(task.tags, set())
         self.assertFalse(task.is_orphan)
 
-        proj.body.sync_tasks()
+        proj.body.tasks.sync_tasks()
 
         self.assertEqual(len(proj.body.tasks), 1)
         self.assertEqual(task, proj.body.tasks[0])
@@ -304,7 +304,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
 
         # Load the project and see
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.force_load_tw(config_filename=self.taskrc)
+        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         self.assertEqual(len(proj.body.content), 3)
@@ -319,7 +319,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(task.tags, set())
         self.assertFalse(task.is_orphan)
 
-        proj.body.sync_tasks()
+        proj.body.tasks.sync_tasks()
 
         self.assertEqual(len(proj.body.tasks), 1)
         self.assertEqual(task, proj.body.tasks[0])

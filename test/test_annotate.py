@@ -25,7 +25,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
                     print(line, file=fd)
 
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.force_load_tw(config_filename=self.taskrc)
+        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         proj.annotate(today=today)

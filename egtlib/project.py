@@ -422,7 +422,7 @@ class Project:
         """
         Sync project with taskwarrior
         """
-        self.body.sync_tasks(modify_state=modify_state)
+        self.body.tasks.sync_tasks(modify_state=modify_state)
 
     def annotate(self, today: Optional[datetime.date] = None):
         """
