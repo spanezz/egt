@@ -522,7 +522,12 @@ class Next(ProjectsCommand):
         projects = sorted(egt.projects, key=lambda p: -p.mtime)
         now = datetime.datetime.today()
         for p in projects:
-            if not p.body.content:
+            entry = None
+            for entry in p.body.content:
+                if entry.is_empty():
+                    continue
+                break
+            if not entry:
                 continue
             with io.StringIO() as fd:
                 p.body.content[0].print(file=fd)

@@ -15,14 +15,20 @@ class BodyEntry:
         # Indentation at the beginning of the lines
         self.indent = indent
 
+    def is_empty(self) -> bool:
+        raise NotImplementedError(f"{self.__class__.__name__} has been called on raw BodyEntry object")
+
     def print(self, file: Optional[TextIO] = None) -> None:
-        raise NotImplementedError("print has been called on raw BodyEntry object")
+        raise NotImplementedError(f"{self.__class__.__name__} has been called on raw BodyEntry object")
 
 
 class EmptyLine(BodyEntry):
     """
     One empty line
     """
+    def is_empty(self) -> bool:
+        return True
+
     def print(self, file: Optional[TextIO] = None) -> None:
         print(self.indent, file=file)
 
@@ -38,6 +44,9 @@ class Line(BodyEntry):
     def __init__(self, indent: str, line: str):
         super().__init__(indent=indent)
         self.line = line
+
+    def is_empty(self) -> bool:
+        return False
 
     def print(self, file: Optional[TextIO] = None) -> None:
         print(self.indent + self.line, file=file)

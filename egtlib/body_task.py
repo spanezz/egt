@@ -79,6 +79,9 @@ class Task(BodyEntry):
         # If True, then we lost the mapping with TaskWarrior
         self.is_orphan = False
 
+    def is_empty(self) -> bool:
+        return False
+
     def create(self):
         """
         Create the task in TaskWarrior
