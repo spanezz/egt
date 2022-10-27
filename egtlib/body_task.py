@@ -241,7 +241,7 @@ class Tasks:
                 continue
             self._known_annotations.append(entry)
             date = annotation.entry.date().strftime(self.date_format)
-            line = Line("  - {desc}: {annot}".format(desc=task["description"], annot=annotation))
+            line = Line("  ", "- {desc}: {annot}".format(desc=task["description"], annot=annotation))
             self.new_log(date, line)
 
     def _sync_completed(self, task) -> None:
@@ -251,7 +251,8 @@ class Tasks:
         if task["status"] == "completed":
             date = task["modified"].date().strftime(self.date_format)
             line = Line(
-                "  - [completed] {desc}".format(
+                "  ",
+                "- [completed] {desc}".format(
                     desc=task["description"],
                 )
             )
@@ -317,15 +318,15 @@ class Tasks:
         # If we created new task-content, prepend it to self.tasks and self.content
         if new:
             self.tasks[0:0] = new
-            self.body.content[0:0] = new + [Line("")]
+            self.body.content[0:0] = new + [Line("", "")]
 
         # If we created new log-content, prepend it to self.content
         if self._new_log:
             content = []
             for key, lines in sorted(self._new_log.items()):
-                content.append(Line(key + ":"))
+                content.append(Line("", key + ":"))
                 content += lines
-            content.append(Line(""))
+            content.append(Line("", ""))
             self.body.content[0:0] = content
 
         # Rebuild state and save it

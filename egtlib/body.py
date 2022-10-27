@@ -21,11 +21,12 @@ class Line(BodyEntry):
     One line of text
     """
 
-    def __init__(self, line: str):
+    def __init__(self, indent: str, line: str):
+        self.indent = indent
         self.line = line
 
     def print(self, file: Optional[TextIO] = None) -> None:
-        print(self.line, file=file)
+        print(self.indent + self.line, file=file)
 
     def __repr__(self):
         return "Line({})".format(repr(self.line))
@@ -38,6 +39,7 @@ class Body:
     """
 
     re_task = re.compile(r"^(?P<indent>\s*)t(?P<id>\d*)\s+(?P<text>.+)$")
+    re_line = re.compile(r"^(?P<indent>\s*)(?P<line>.*)$")
 
     def __init__(self, project: "project.Project"):
         from .body_task import Tasks
@@ -58,8 +60,8 @@ class Body:
         for line in lines.rest():
             if (mo := self.re_task.match(line)):
                 self.content.append(self.tasks.create_task(**mo.groupdict()))
-            else:
-                self.content.append(Line(line))
+            elif (mo := self.re_line.match(line)):
+                self.content.append(Line(**mo.groupdict()))
 
         self.tasks.post_parse_hook()
 
