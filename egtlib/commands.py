@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import io
 import logging
 import os
 import shutil
@@ -529,9 +528,7 @@ class Next(ProjectsCommand):
                 break
             if not entry:
                 continue
-            with io.StringIO() as fd:
-                p.body.content[0].print(file=fd)
-                text = fd.getvalue().strip()
+            text = p.body.content[0].get_content().strip()
             age = now - datetime.datetime.fromtimestamp(p.mtime)
             table.add_row((p.name, format_td(age), text))
 

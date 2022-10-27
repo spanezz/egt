@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import re
 import shlex
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, TextIO, Union
 
 import taskw
 
-from .body import BodyEntry, Line, EmptyLine
+from .body import BodyEntry, EmptyLine, Line
 
 if TYPE_CHECKING:
     from .body import Body
@@ -82,6 +82,31 @@ class Task(BodyEntry):
     def is_empty(self) -> bool:
         return False
 
+    def get_content(self) -> str:
+        res = []
+        if self.is_orphan:
+            res.append("- [orphan]")
+        elif self.task and self.task["id"] == 0:
+            res.append("-")
+        elif self.id is None:
+            res.append("t")
+        else:
+            res.append("t{}".format(self.id))
+        if self.task:
+            if self.task["status"] == "completed":
+                return ""
+            res.append("[{:%Y-%m-%d %H:%M} {}]".format(self.task["modified"], self.task["status"]))
+        res.append(self.desc)
+        bl = self.body.project.tags
+        res.extend("+" + t for t in sorted(self.tags) if t not in bl)
+        if self.depends:
+            res.append("depends:" + ",".join(str(t) for t in sorted(self.depends)))
+        return " ".join(res)
+
+    def print(self, file: Optional[TextIO] = None) -> None:
+        if (content := self.get_content()):
+            print(self.indent + content, file=file)
+
     def create(self):
         """
         Create the task in TaskWarrior
@@ -142,27 +167,6 @@ class Task(BodyEntry):
             if "depends" in task:
                 depends_uuids = set(task["depends"])
                 self.depends = set(self.body.tasks.tw.get_task(uuid=t)[0] for t in depends_uuids)
-
-    def print(self, file):
-        res = []
-        if self.is_orphan:
-            res.append("- [orphan]")
-        elif self.task and self.task["id"] == 0:
-            res.append("-")
-        elif self.id is None:
-            res.append("t")
-        else:
-            res.append("t{}".format(self.id))
-        if self.task:
-            if self.task["status"] == "completed":
-                return
-            res.append("[{:%Y-%m-%d %H:%M} {}]".format(self.task["modified"], self.task["status"]))
-        res.append(self.desc)
-        bl = self.body.project.tags
-        res.extend("+" + t for t in sorted(self.tags) if t not in bl)
-        if self.depends:
-            res.append("depends:" + ",".join(str(t) for t in sorted(self.depends)))
-        print(self.indent + " ".join(res), file=file)
 
 
 class Tasks:
@@ -324,7 +328,7 @@ class Tasks:
 
         # If we created new log-content, prepend it to self.content
         if self._new_log:
-            content = []
+            content: List[BodyEntry] = []
             for key, lines in sorted(self._new_log.items()):
                 content.append(Line("", key + ":"))
                 content += lines

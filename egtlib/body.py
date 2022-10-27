@@ -18,8 +18,11 @@ class BodyEntry:
     def is_empty(self) -> bool:
         raise NotImplementedError(f"{self.__class__.__name__} has been called on raw BodyEntry object")
 
-    def print(self, file: Optional[TextIO] = None) -> None:
+    def get_content(self) -> str:
         raise NotImplementedError(f"{self.__class__.__name__} has been called on raw BodyEntry object")
+
+    def print(self, file: Optional[TextIO] = None) -> None:
+        print(self.indent + self.get_content(), file=file)
 
 
 class EmptyLine(BodyEntry):
@@ -29,8 +32,8 @@ class EmptyLine(BodyEntry):
     def is_empty(self) -> bool:
         return True
 
-    def print(self, file: Optional[TextIO] = None) -> None:
-        print(self.indent, file=file)
+    def get_content(self) -> str:
+        return ""
 
     def __repr__(self):
         return "EmptyLine()"
@@ -48,8 +51,8 @@ class Line(BodyEntry):
     def is_empty(self) -> bool:
         return False
 
-    def print(self, file: Optional[TextIO] = None) -> None:
-        print(self.indent + self.line, file=file)
+    def get_content(self) -> str:
+        return self.line
 
     def __repr__(self):
         return f"Line({self.line!r})"
