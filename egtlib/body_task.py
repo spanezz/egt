@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import re
 import shlex
-from typing import TYPE_CHECKING, Dict, List, Optional, TextIO, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, TextIO, Union, cast
 
 import taskw
 
@@ -79,6 +79,12 @@ class Task(BodyEntry):
 
         # If True, then we lost the mapping with TaskWarrior
         self.is_orphan = False
+
+    def __eq__(self, other: object) -> bool:
+        if not super().__eq__(other):
+            return False
+        o = cast(Task, other)
+        return self.task == o.task and self.id == o.id and self.is_orphan == o.is_orphan
 
     def is_empty(self) -> bool:
         return False

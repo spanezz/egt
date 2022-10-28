@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import re
-from typing import List, Optional, TextIO
+from typing import cast, List, Optional, TextIO
 
 from . import project
 from .parse import Lines
@@ -28,6 +28,12 @@ class BodyEntry:
     def print(self, file: Optional[TextIO] = None) -> None:
         print(self.indent + self.get_content(), file=file)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, self.__class__):
+            return False
+        o = cast(BodyEntry, other)
+        return self.indent == o.indent
+
 
 class EmptyLine(BodyEntry):
     """
@@ -43,7 +49,7 @@ class EmptyLine(BodyEntry):
         return ""
 
     def __repr__(self):
-        return "EmptyLine()"
+        return f"EmptyLine(indent={self.indent!r})"
 
 
 class LineEntry(BodyEntry):
@@ -79,7 +85,14 @@ class LineEntry(BodyEntry):
             return self.line
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.get_content()!r})"
+        return (f"{self.__class__.__name__}("
+                f"indent={self.indent!r}, date_str={self.date_str!r}, line={self.get_content()!r})")
+
+    def __eq__(self, other: object) -> bool:
+        if not super().__eq__(other):
+            return False
+        o = cast(LineEntry, other)
+        return self.date_str == o.date_str and self.line == o.line
 
 
 class BulletListLine(LineEntry):
@@ -92,6 +105,17 @@ class BulletListLine(LineEntry):
 
     def print(self, file: Optional[TextIO] = None) -> None:
         print(self.indent + self.bullet + self.get_content(), file=file)
+
+    def __eq__(self, other: object) -> bool:
+        if not super().__eq__(other):
+            return False
+        o = cast(BulletListLine, other)
+        return self.bullet == o.bullet
+
+    def __repr__(self):
+        return (f"{self.__class__.__name__}("
+                f"indent={self.indent!r}, bullet={self.bullet!r},"
+                f" date_str={self.date_str!r}, line={self.get_content()!r})")
 
 
 class Line(LineEntry):
