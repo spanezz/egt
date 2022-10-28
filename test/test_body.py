@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+from egtlib import body
 from .utils import ProjectTestMixin
 
 
@@ -22,3 +23,30 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
             body=[]
         )
         self.assertEqual(proj.body.content, [])
+
+    def test_lines(self):
+        proj = self.project(
+            body=["first line", "", "second line", "* third line"]
+        )
+        self.assertEqual(proj.body.content, [
+            body.Line(indent="", line="first line"),
+            body.EmptyLine(indent=""),
+            body.Line(indent="", line="second line"),
+            body.BulletListLine(indent="", bullet="* ", line="third line"),
+        ])
+
+    def test_indent(self):
+        proj = self.project(
+            body=[
+                "first line",
+                "  ",
+                "  second line",
+                "  * third line"]
+        )
+        self.assertEqual(proj.body.content, [
+            body.Line(indent="", line="first line"),
+            # Right spaces are stripped by the parser
+            body.EmptyLine(indent=""),
+            body.Line(indent="  ", line="second line"),
+            body.BulletListLine(indent="  ", bullet="* ", line="third line"),
+        ])
