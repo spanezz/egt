@@ -6,46 +6,36 @@ import json
 import os
 import unittest
 
+import taskw
 from dateutil.tz import tzlocal
-
-from egtlib import Project
-from egtlib.config import Config
 
 from .utils import ProjectTestMixin
 
 
 class TestTasks(ProjectTestMixin, unittest.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.projectfile = os.path.join(self.workdir.name, ".egt")
+    DEFAULT_META = {
+        "Name": "testprj",
+        "Tags": "testtag1, testtag2",
+    }
 
-    def write_project(self, body_lines):
-        with open(self.projectfile, "wt") as fd:
-            print("Name: testprj", file=fd)
-            print("Tags: testtag1, testtag2", file=fd)
-            print(file=fd)
-            print("2016", file=fd)
-            print("15 march: 9:30-", file=fd)
-            print(" - wrote more unit tests", file=fd)
-            print(file=fd)
-            for line in body_lines:
-                print(line, file=fd)
+    DEFAULT_LOG = [
+        "2016",
+        "15 march: 9:30-",
+        " - wrote more unit tests",
+    ]
 
     def testCreateFromEgt(self):
         """
         Test creation of new taskwarrior tasks from a project file
         """
-        self.write_project(
-            [
+        proj = self.project(
+            body=[
                 "body line1",
                 "t new parent task",
                 "  t new taskwarrior task +tag",
                 "body line3",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
-        proj.load()
 
         self.assertEqual(len(proj.body.content), 4)
         self.assertEqual(len(proj.body.tasks), 2)
@@ -103,16 +93,13 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         for key, value, data in test_attributes:
             attr = "{}:{}".format(key, value)
             with self.subTest(config=attr):
-                self.write_project(
-                    [
+                proj = self.project(
+                    body=[
                         "body line1",
                         "t new test task " + attr,
                         "body line3",
                     ]
                 )
-                proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-                proj.body.tasks.force_load_tw(config_filename=self.taskrc)
-                proj.load()
 
                 task = proj.body.tasks[0]
                 self.assertIsNone(task.task)
@@ -133,22 +120,18 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         """
         Test import of new taskwarrior tasks in egt
         """
-        import taskw
 
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("new task", ["tag", "testtag1"], project="testprj")
         tw.task_add("new parent task", project="testprj", depends=[new_task["uuid"]])
         del tw
 
-        self.write_project(
-            [
+        proj = self.project(
+            body=[
                 "body line1",
                 "body line2",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
-        proj.load()
 
         self.assertEqual(len(proj.body.content), 2)
         self.assertEqual(len(proj.body.tasks), 0)
@@ -189,7 +172,6 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         """
         Test handling of tasks present both in taskwarrior and in egt
         """
-        import taskw
 
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
@@ -212,16 +194,13 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
                 indent=1,
             )
 
-        self.write_project(
-            [
+        proj = self.project(
+            body=[
                 "body line1",
                 " t{} foo the bar".format(egt_id),
                 "body line3",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
-        proj.load()
 
         self.assertEqual(len(proj.body.content), 3)
         self.assertEqual(len(proj.body.tasks), 1)
@@ -268,7 +247,6 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         Test handling of tasks present both in taskwarrior and in egt, when a
         task is marked done on taskwarrior
         """
-        import taskw
 
         tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
         new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
@@ -290,22 +268,18 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
                 indent=1,
             )
 
-        self.write_project(
-            [
-                "body line1",
-                " t{} foo the bar".format(egt_id),
-                "body line3",
-            ]
-        )
-
         # Mark the task as done
         tw.task_done(uuid=new_task["uuid"])
         del tw
 
         # Load the project and see
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
-        proj.load()
+        proj = self.project(
+            body=[
+                "body line1",
+                " t{} foo the bar".format(egt_id),
+                "body line3",
+            ]
+        )
 
         self.assertEqual(len(proj.body.content), 3)
         self.assertEqual(len(proj.body.tasks), 1)

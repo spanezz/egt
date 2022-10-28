@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import re
 import shlex
-from typing import TYPE_CHECKING, Dict, List, Optional, TextIO, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, TextIO, Union, cast
 
 import taskw
 
@@ -23,7 +23,7 @@ class Task(BodyEntry):
 
     def __init__(
             self,
-            body: Body,
+            body: Body, *,
             id: Union[int, str],
             indent: str = "",
             text: Optional[str] = None,
@@ -79,6 +79,12 @@ class Task(BodyEntry):
 
         # If True, then we lost the mapping with TaskWarrior
         self.is_orphan = False
+
+    def __eq__(self, other: object) -> bool:
+        if not super().__eq__(other):
+            return False
+        o = cast(Task, other)
+        return self.task == o.task and self.id == o.id and self.is_orphan == o.is_orphan
 
     def is_empty(self) -> bool:
         return False
@@ -253,7 +259,8 @@ class Tasks:
             date = annotation.entry.date().strftime(self.date_format)
             line = Line(
                 indent="  ",
-                line="- {task['description']}: {annotation}")
+                bullet="- ",
+                text="{task['description']}: {annotation}")
             self.new_log(date, line)
 
     def _sync_completed(self, task) -> None:
@@ -264,7 +271,8 @@ class Tasks:
             date = task["modified"].date().strftime(self.date_format)
             line = Line(
                 indent="  ",
-                line=f"- [completed] {task['description']}")
+                bullet="- ",
+                text=f"[completed] {task['description']}")
             self.new_log(date, line)
 
     def sync_tasks(self, modify_state=True) -> None:
@@ -321,7 +329,7 @@ class Tasks:
             if uuid in known_uuids:
                 continue
             # Add remaining Taskwarrior tasks to project-file
-            task = Task(self.body, tw_task["id"], task=tw_task)
+            task = Task(self.body, id=tw_task["id"], task=tw_task)
             new.append(task)
 
         # If we created new task-content, prepend it to self.tasks and self.content
@@ -333,7 +341,7 @@ class Tasks:
         if self._new_log:
             content: List[BodyEntry] = []
             for key, lines in sorted(self._new_log.items()):
-                content.append(Line(indent="", line=key + ":"))
+                content.append(Line(indent="", text=key + ":"))
                 content += lines
             content.append(EmptyLine(indent=""))
             self.body.content[0:0] = content

@@ -18,7 +18,7 @@ from .config import Config
 log = logging.getLogger(__name__)
 
 
-class ProjectState(object):
+class ProjectState:
     def __init__(self, project: "Project"):
         statedir = project.statedir
         if statedir is None:
