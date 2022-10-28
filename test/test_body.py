@@ -32,7 +32,7 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
             body.Line(indent="", text="first line"),
             body.EmptyLine(indent=""),
             body.Line(indent="", text="second line"),
-            body.BulletListLine(indent="", bullet="* ", text="third line"),
+            body.Line(indent="", bullet="* ", text="third line"),
         ])
 
     def test_indent(self):
@@ -48,7 +48,7 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
             # Right spaces are stripped by the parser
             body.EmptyLine(indent=""),
             body.Line(indent="  ", text="second line"),
-            body.BulletListLine(indent="  ", bullet="* ", text="third line"),
+            body.Line(indent="  ", bullet="* ", text="third line"),
         ])
 
     def test_paragraph(self):
@@ -62,6 +62,6 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(proj.body.content, [
             body.Line(indent="", text="first line"),
             body.EmptyLine(),
-            body.BulletListLine(indent=" ", bullet="* ", text="second line"),
+            body.Line(indent=" ", bullet="* ", text="second line"),
             body.Line(indent="   ", text="third line"),
         ])

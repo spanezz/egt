@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, TextIO, Union, cast
 
 import taskw
 
-from .body import BodyEntry, EmptyLine, Line, BulletListLine
+from .body import BodyEntry, EmptyLine, Line
 
 if TYPE_CHECKING:
     from .body import Body
@@ -257,7 +257,7 @@ class Tasks:
                 continue
             self._known_annotations.append(entry)
             date = annotation.entry.date().strftime(self.date_format)
-            line = BulletListLine(
+            line = Line(
                 indent="  ",
                 bullet="- ",
                 text="{task['description']}: {annotation}")
@@ -269,7 +269,7 @@ class Tasks:
         """
         if task["status"] == "completed":
             date = task["modified"].date().strftime(self.date_format)
-            line = BulletListLine(
+            line = Line(
                 indent="  ",
                 bullet="- ",
                 text=f"[completed] {task['description']}")
