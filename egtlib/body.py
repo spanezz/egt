@@ -12,7 +12,7 @@ class BodyEntry:
     """
     Base class for elements that compose a project body
     """
-    def __init__(self, *, indent: str):
+    def __init__(self, *, indent: str = ""):
         # Indentation at the beginning of the lines
         self.indent = indent
 
@@ -58,7 +58,7 @@ class LineEntry(BodyEntry):
     """
     re_date = re.compile(r"^(\d{4}-\d{2}-\d{2}:\s*)(.*)$")
 
-    def __init__(self, *, indent: str, text: str):
+    def __init__(self, *, indent: str = "", text: str):
         super().__init__(indent=indent)
         self.date_str: Optional[str]
         self.date: Optional[datetime.date]
@@ -99,7 +99,7 @@ class BulletListLine(LineEntry):
     """
     One line with a bullet point
     """
-    def __init__(self, indent: str, bullet: str, text: str):
+    def __init__(self, *, indent: str = "", bullet: str, text: str):
         super().__init__(indent=indent, text=text)
         self.bullet = bullet
 

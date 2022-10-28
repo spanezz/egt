@@ -23,7 +23,7 @@ class Task(BodyEntry):
 
     def __init__(
             self,
-            body: Body,
+            body: Body, *,
             id: Union[int, str],
             indent: str = "",
             text: Optional[str] = None,
@@ -329,7 +329,7 @@ class Tasks:
             if uuid in known_uuids:
                 continue
             # Add remaining Taskwarrior tasks to project-file
-            task = Task(self.body, tw_task["id"], task=tw_task)
+            task = Task(self.body, id=tw_task["id"], task=tw_task)
             new.append(task)
 
         # If we created new task-content, prepend it to self.tasks and self.content
