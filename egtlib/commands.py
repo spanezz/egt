@@ -8,13 +8,14 @@ import shutil
 import sys
 import typing
 from contextlib import contextmanager
-from typing import Type
+from typing import Optional, Tuple, Type
 
 import egtlib
 from egtlib.utils import HoursCol, LastEntryCol, SummaryCol, TaskStatCol, format_td
 
 from . import cli
 from .config import Config
+from .body import BodyEntry
 
 log = logging.getLogger(__name__)
 
@@ -507,6 +508,20 @@ class Next(ProjectsCommand):
     """
     Show the top of the notes of the most recent .egt files
     """
+    def get_lead_entries(self, project: egtlib.Project) -> Tuple[Optional[BodyEntry], Optional[BodyEntry]]:
+        first: Optional[BodyEntry] = None
+        second: Optional[BodyEntry] = None
+        for entry in project.body.content:
+            if entry.is_empty():
+                continue
+            if first is None:
+                first = entry
+                continue
+
+            if len(entry.indent) > len(first.indent) and entry.indent.startswith(first.indent):
+                second = entry
+            break
+        return first, second
 
     def main(self):
         from texttable import Texttable
@@ -520,16 +535,13 @@ class Next(ProjectsCommand):
         egt = self.make_egt()
         now = datetime.datetime.today()
         projects = []
-        for p in egt.projects:
-            entry = None
-            for entry in p.body.content:
-                if entry.is_empty():
-                    continue
-                break
+        for project in egt.projects:
+            # Find the first two non-empty entries
+            entry, next_entry = self.get_lead_entries(project)
             if not entry:
                 continue
 
-            mtime = datetime.datetime.fromtimestamp(p.mtime)
+            mtime = datetime.datetime.fromtimestamp(project.mtime)
 
             # Get the project time or due date timestamp
             if entry.get_content().startswith("# "):
@@ -547,8 +559,15 @@ class Next(ProjectsCommand):
                 # Sort by age
                 sort_key = (0, now - mtime, "")
 
-            text = p.body.content[0].get_content().strip()
-            projects.append((sort_key, p, text))
+            text = entry.get_content()
+            if next_entry:
+                if not text.endswith(":"):
+                    text += ": "
+                else:
+                    text += " "
+                text += next_entry.get_content()
+
+            projects.append((sort_key, project, text))
 
         projects.sort()
 
