@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, TextIO, Union, cast
 
 import taskw
 
-from .body import BodyEntry, EmptyLine, Line
+from .body import BodyEntry, EmptyLine, Line, BulletListLine
 
 if TYPE_CHECKING:
     from .body import Body
@@ -257,9 +257,10 @@ class Tasks:
                 continue
             self._known_annotations.append(entry)
             date = annotation.entry.date().strftime(self.date_format)
-            line = Line(
+            line = BulletListLine(
                 indent="  ",
-                line="- {task['description']}: {annotation}")
+                bullet="- ",
+                text="{task['description']}: {annotation}")
             self.new_log(date, line)
 
     def _sync_completed(self, task) -> None:
@@ -268,9 +269,10 @@ class Tasks:
         """
         if task["status"] == "completed":
             date = task["modified"].date().strftime(self.date_format)
-            line = Line(
+            line = BulletListLine(
                 indent="  ",
-                line=f"- [completed] {task['description']}")
+                bullet="- ",
+                text=f"[completed] {task['description']}")
             self.new_log(date, line)
 
     def sync_tasks(self, modify_state=True) -> None:
@@ -339,7 +341,7 @@ class Tasks:
         if self._new_log:
             content: List[BodyEntry] = []
             for key, lines in sorted(self._new_log.items()):
-                content.append(Line(indent="", line=key + ":"))
+                content.append(Line(indent="", text=key + ":"))
                 content += lines
             content.append(EmptyLine(indent=""))
             self.body.content[0:0] = content

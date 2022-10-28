@@ -29,10 +29,10 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
             body=["first line", "", "second line", "* third line"]
         )
         self.assertEqual(proj.body.content, [
-            body.Line(indent="", line="first line"),
+            body.Line(indent="", text="first line"),
             body.EmptyLine(indent=""),
-            body.Line(indent="", line="second line"),
-            body.BulletListLine(indent="", bullet="* ", line="third line"),
+            body.Line(indent="", text="second line"),
+            body.BulletListLine(indent="", bullet="* ", text="third line"),
         ])
 
     def test_indent(self):
@@ -44,9 +44,9 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
                 "  * third line"]
         )
         self.assertEqual(proj.body.content, [
-            body.Line(indent="", line="first line"),
+            body.Line(indent="", text="first line"),
             # Right spaces are stripped by the parser
             body.EmptyLine(indent=""),
-            body.Line(indent="  ", line="second line"),
-            body.BulletListLine(indent="  ", bullet="* ", line="third line"),
+            body.Line(indent="  ", text="second line"),
+            body.BulletListLine(indent="  ", bullet="* ", text="third line"),
         ])

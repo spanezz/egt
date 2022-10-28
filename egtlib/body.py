@@ -58,19 +58,19 @@ class LineEntry(BodyEntry):
     """
     re_date = re.compile(r"^(\d{4}-\d{2}-\d{2}:\s*)(.*)$")
 
-    def __init__(self, *, indent: str, line: str):
+    def __init__(self, *, indent: str, text: str):
         super().__init__(indent=indent)
         self.date_str: Optional[str]
         self.date: Optional[datetime.date]
 
-        if (mo := self.re_date.match(line)):
+        if (mo := self.re_date.match(text)):
             self.date_str = mo.group(1)
             self.date = datetime.datetime.strptime(self.date_str[:10], "%Y-%m-%d")
-            self.line = mo.group(2)
+            self.text = mo.group(2)
         else:
             self.date_str = None
             self.date = None
-            self.line = line
+            self.text = text
 
     def is_empty(self) -> bool:
         return False
@@ -80,27 +80,27 @@ class LineEntry(BodyEntry):
 
     def get_content(self) -> str:
         if self.date_str:
-            return self.date_str + self.line
+            return self.date_str + self.text
         else:
-            return self.line
+            return self.text
 
     def __repr__(self):
         return (f"{self.__class__.__name__}("
-                f"indent={self.indent!r}, date_str={self.date_str!r}, line={self.get_content()!r})")
+                f"indent={self.indent!r}, date_str={self.date_str!r}, text={self.text!r})")
 
     def __eq__(self, other: object) -> bool:
         if not super().__eq__(other):
             return False
         o = cast(LineEntry, other)
-        return self.date_str == o.date_str and self.line == o.line
+        return self.date_str == o.date_str and self.text == o.text
 
 
 class BulletListLine(LineEntry):
     """
     One line with a bullet point
     """
-    def __init__(self, indent: str, bullet: str, line: str):
-        super().__init__(indent=indent, line=line)
+    def __init__(self, indent: str, bullet: str, text: str):
+        super().__init__(indent=indent, text=text)
         self.bullet = bullet
 
     def print(self, file: Optional[TextIO] = None) -> None:
@@ -115,7 +115,7 @@ class BulletListLine(LineEntry):
     def __repr__(self):
         return (f"{self.__class__.__name__}("
                 f"indent={self.indent!r}, bullet={self.bullet!r},"
-                f" date_str={self.date_str!r}, line={self.get_content()!r})")
+                f" date_str={self.date_str!r}, text={self.text!r})")
 
 
 class Line(LineEntry):
@@ -133,8 +133,8 @@ class Body:
     """
 
     re_task = re.compile(r"^(?P<indent>\s*)t(?P<id>\d*)\s+(?P<text>.+)$")
-    re_bullet_line = re.compile(r"^(?P<indent>\s*)(?P<bullet>[-*+]\s+)(?P<line>.*)$")
-    re_line = re.compile(r"^(?P<indent>\s*)(?P<line>.*)$")
+    re_bullet_line = re.compile(r"^(?P<indent>\s*)(?P<bullet>[-*+]\s+)(?P<text>.*)$")
+    re_line = re.compile(r"^(?P<indent>\s*)(?P<text>.*)$")
 
     def __init__(self, project: "project.Project"):
         from .body_task import Tasks
@@ -158,7 +158,7 @@ class Body:
             elif (mo := self.re_bullet_line.match(line)):
                 self.content.append(BulletListLine(**mo.groupdict()))
             elif (mo := self.re_line.match(line)):
-                if mo.group("line"):
+                if mo.group("text"):
                     self.content.append(Line(**mo.groupdict()))
                 else:
                     self.content.append(EmptyLine(indent=mo.group("indent")))
