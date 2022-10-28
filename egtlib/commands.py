@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import io
 import logging
 import os
 import shutil
@@ -519,16 +518,47 @@ class Next(ProjectsCommand):
         table.add_row(("Name", "Age", "First entry"))
 
         egt = self.make_egt()
-        projects = sorted(egt.projects, key=lambda p: -p.mtime)
         now = datetime.datetime.today()
-        for p in projects:
-            if not p.body.content:
+        projects = []
+        for p in egt.projects:
+            entry = None
+            for entry in p.body.content:
+                if entry.is_empty():
+                    continue
+                break
+            if not entry:
                 continue
-            with io.StringIO() as fd:
-                p.body.content[0].print(file=fd)
-                text = fd.getvalue().strip()
-            age = now - datetime.datetime.fromtimestamp(p.mtime)
-            table.add_row((p.name, format_td(age), text))
+
+            mtime = datetime.datetime.fromtimestamp(p.mtime)
+
+            # Get the project time or due date timestamp
+            if entry.get_content().startswith("# "):
+                # If the first line is a heading, then there is no now&next
+                # section
+                sort_key = (1, now - mtime, "")
+            elif (date := entry.get_date()):
+                # Sort by due date
+                ts = datetime.datetime.combine(date, datetime.time(0))
+                if ts > now:
+                    sort_key = (0, ts - now, "+")
+                else:
+                    sort_key = (0, ts - now, "")
+            else:
+                # Sort by age
+                sort_key = (0, now - mtime, "")
+
+            text = p.body.content[0].get_content().strip()
+            projects.append((sort_key, p, text))
+
+        projects.sort()
+
+        for (part, age, sign), project, text in projects:
+            if part == 0:
+                fmt_age = sign + format_td(age)
+            else:
+                fmt_age = "(" + format_td(age) + ")"
+
+            table.add_row((project.name, fmt_age, text))
 
         print(table.draw())
 

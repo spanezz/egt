@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import datetime
 import re
 import shlex
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, TextIO, Union
 
 import taskw
 
-from .body import BodyEntry, Line
+from .body import BodyEntry, EmptyLine, Line
 
 if TYPE_CHECKING:
     from .body import Body
@@ -27,10 +28,9 @@ class Task(BodyEntry):
             indent: str = "",
             text: Optional[str] = None,
             task=None) -> None:
+        super().__init__(indent=indent)
         # Body object owning this Task
         self.body = body
-        # Indentation at the beginning of the lines
-        self.indent = indent
         # Taskwarrior task dict (None means no mapping attempted yet)
         self.set_twtask(task)
         self.id: Optional[int]
@@ -79,6 +79,37 @@ class Task(BodyEntry):
 
         # If True, then we lost the mapping with TaskWarrior
         self.is_orphan = False
+
+    def is_empty(self) -> bool:
+        return False
+
+    def get_date(self) -> Optional[datetime.date]:
+        return None
+
+    def get_content(self) -> str:
+        res = []
+        if self.is_orphan:
+            res.append("- [orphan]")
+        elif self.task and self.task["id"] == 0:
+            res.append("-")
+        elif self.id is None:
+            res.append("t")
+        else:
+            res.append("t{}".format(self.id))
+        if self.task:
+            if self.task["status"] == "completed":
+                return ""
+            res.append("[{:%Y-%m-%d %H:%M} {}]".format(self.task["modified"], self.task["status"]))
+        res.append(self.desc)
+        bl = self.body.project.tags
+        res.extend("+" + t for t in sorted(self.tags) if t not in bl)
+        if self.depends:
+            res.append("depends:" + ",".join(str(t) for t in sorted(self.depends)))
+        return " ".join(res)
+
+    def print(self, file: Optional[TextIO] = None) -> None:
+        if (content := self.get_content()):
+            print(self.indent + content, file=file)
 
     def create(self):
         """
@@ -140,27 +171,6 @@ class Task(BodyEntry):
             if "depends" in task:
                 depends_uuids = set(task["depends"])
                 self.depends = set(self.body.tasks.tw.get_task(uuid=t)[0] for t in depends_uuids)
-
-    def print(self, file):
-        res = []
-        if self.is_orphan:
-            res.append("- [orphan]")
-        elif self.task and self.task["id"] == 0:
-            res.append("-")
-        elif self.id is None:
-            res.append("t")
-        else:
-            res.append("t{}".format(self.id))
-        if self.task:
-            if self.task["status"] == "completed":
-                return
-            res.append("[{:%Y-%m-%d %H:%M} {}]".format(self.task["modified"], self.task["status"]))
-        res.append(self.desc)
-        bl = self.body.project.tags
-        res.extend("+" + t for t in sorted(self.tags) if t not in bl)
-        if self.depends:
-            res.append("depends:" + ",".join(str(t) for t in sorted(self.depends)))
-        print(self.indent + " ".join(res), file=file)
 
 
 class Tasks:
@@ -241,7 +251,9 @@ class Tasks:
                 continue
             self._known_annotations.append(entry)
             date = annotation.entry.date().strftime(self.date_format)
-            line = Line("  - {desc}: {annot}".format(desc=task["description"], annot=annotation))
+            line = Line(
+                indent="  ",
+                line="- {task['description']}: {annotation}")
             self.new_log(date, line)
 
     def _sync_completed(self, task) -> None:
@@ -251,10 +263,8 @@ class Tasks:
         if task["status"] == "completed":
             date = task["modified"].date().strftime(self.date_format)
             line = Line(
-                "  - [completed] {desc}".format(
-                    desc=task["description"],
-                )
-            )
+                indent="  ",
+                line=f"- [completed] {task['description']}")
             self.new_log(date, line)
 
     def sync_tasks(self, modify_state=True) -> None:
@@ -317,15 +327,15 @@ class Tasks:
         # If we created new task-content, prepend it to self.tasks and self.content
         if new:
             self.tasks[0:0] = new
-            self.body.content[0:0] = new + [Line("")]
+            self.body.content[0:0] = new + [EmptyLine(indent="")]
 
         # If we created new log-content, prepend it to self.content
         if self._new_log:
-            content = []
+            content: List[BodyEntry] = []
             for key, lines in sorted(self._new_log.items()):
-                content.append(Line(key + ":"))
+                content.append(Line(indent="", line=key + ":"))
                 content += lines
-            content.append(Line(""))
+            content.append(EmptyLine(indent=""))
             self.body.content[0:0] = content
 
         # Rebuild state and save it
