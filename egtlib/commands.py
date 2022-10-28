@@ -518,7 +518,8 @@ class Next(ProjectsCommand):
                 first = entry
                 continue
 
-            if len(entry.indent) > len(first.indent) and entry.indent.startswith(first.indent):
+            first_indent = first.indent + (' ' * len(first.bullet))
+            if len(entry.indent) > len(first_indent) and entry.indent.startswith(first_indent):
                 second = entry
             break
         return first, second
