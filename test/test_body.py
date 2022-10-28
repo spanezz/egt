@@ -65,3 +65,18 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
             body.Line(indent=" ", bullet="* ", text="second line"),
             body.Line(indent="   ", text="third line"),
         ])
+
+    def test_date(self):
+        proj = self.project(
+            body=[
+                "2022-10-01: first line",
+                "  ",
+                " * 2022-10-15:  second line",
+                "   2022-10-30: third line"]
+        )
+        self.assertEqual(proj.body.content, [
+            body.Line(indent="", date="2022-10-01: ", text="first line"),
+            body.EmptyLine(),
+            body.Line(indent=" ", bullet="* ", date="2022-10-15:  ", text="second line"),
+            body.Line(indent="   ", date="2022-10-30: ", text="third line"),
+        ])
