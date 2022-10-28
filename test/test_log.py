@@ -107,7 +107,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             ]
         )
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.force_load_tw(config_filename=self.taskrc)
+        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         self.assertEqual(len(proj.log._entries), 3)
@@ -157,7 +157,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             ]
         )
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.force_load_tw(config_filename=self.taskrc)
+        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         self.assertEqual(len(proj.log._entries), 4)
@@ -238,7 +238,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             lang="it",
         )
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.force_load_tw(config_filename=self.taskrc)
+        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         self.assertEqual(len(proj.log._entries), 3)
@@ -287,7 +287,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             lang="fr",
         )
         proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
-        proj.body.force_load_tw(config_filename=self.taskrc)
+        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
         self.assertEqual(len(proj.log._entries), 3)
