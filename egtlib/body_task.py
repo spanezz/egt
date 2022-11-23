@@ -260,7 +260,7 @@ class Tasks:
             line = Line(
                 indent="  ",
                 bullet="- ",
-                text="{task['description']}: {annotation}")
+                text=f"{task['description']}: {annotation}")
             self.new_log(date, line)
 
     def _sync_completed(self, task) -> None:
