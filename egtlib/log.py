@@ -27,11 +27,6 @@ class LogParser:
         # Log of parse errors
         self.errors: list[str] = []
 
-    @classmethod
-    def register_entry_type(cls, c: type[EntryBase]) -> type[EntryBase]:
-        cls.ENTRY_TYPES.append(c)
-        return c
-
     def log_parse_error(self, lineno: int, msg: str) -> None:
         self.errors.append(f"line {lineno + 1}: {msg}")
 
@@ -60,6 +55,23 @@ class LogParser:
                 self.log_parse_error(self.lines.lineno, "log parse stops at unrecognised line " + repr(line))
                 break
 
+    def parse_tags(self, lineno: int, notes: str) -> list[str]:
+        """Parse tags at the end of an entry head line."""
+        tags: list[str] = []
+        if notes:
+            for note in notes.split():
+                if note[0] == "+":
+                    tags.append(note[1:])
+                elif note[0] == "[":
+                    # Ignore project name
+                    pass
+                elif note[0].isdigit():
+                    # Ignore hour count
+                    pass
+                else:
+                    self.log_parse_error(entry_lineno, f"unrecognised annotation {repr(note)}")
+        return tags
+
 
 def parsetime(s: str) -> datetime.time:
     """
@@ -81,6 +93,10 @@ class EntryBase:
             self.body = []
         else:
             self.body = body
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        LogParser.ENTRY_TYPES.append(cls)
 
     def sync(self, project: project.Project, today: datetime.date) -> Self:
         """
@@ -131,7 +147,6 @@ class EntryBase:
         return None
 
 
-@LogParser.register_entry_type
 class Timebase(EntryBase):
     """
     Log entry providing a time reference for the next log entries
@@ -173,7 +188,6 @@ class Timebase(EntryBase):
         return cls.re_timebase.match(line)
 
 
-@LogParser.register_entry_type
 class Entry(EntryBase):
     """
     Free text log entry with a time header
@@ -194,7 +208,7 @@ class Entry(EntryBase):
         self,
         begin: datetime.datetime,
         until: datetime.datetime | None,
-        head: str,
+        head: str | None,
         body: list[str],
         fullday: bool,
         tags: list[str] = [],
@@ -210,6 +224,9 @@ class Entry(EntryBase):
         self.fullday = fullday
         # Log entry tags
         self.tags = tags
+
+    def __repr__(self) -> str:
+        return f"Entry({self.begin!r}, {self.until!r}, {self.head!r}, {self.fullday!r}, {self.tags!r})"
 
     def reference_time(self) -> datetime.datetime | None:
         return self.begin
@@ -321,20 +338,7 @@ class Entry(EntryBase):
             fullday = True
 
         # Parse tags
-        tags: list[str] = []
-        notes = kw.get("notes")
-        if notes:
-            for note in notes.split():
-                if note[0] == "+":
-                    tags.append(note[1:])
-                elif note[0] == "[":
-                    # Ignore project name
-                    pass
-                elif note[0].isdigit():
-                    # Ignore hour count
-                    pass
-                else:
-                    logparser.log_parse_error(entry_lineno, f"unrecognised annotation {repr(note)}")
+        tags = logparser.parse_tags(entry_lineno, kw.get("notes"))
 
         return cls(begin, until, head, body, fullday, tags)
 
@@ -346,24 +350,48 @@ class Entry(EntryBase):
         return cls.re_entry.match(line)
 
 
-@LogParser.register_entry_type
 class Command(EntryBase):
     """
     Log entry with a user query, to be expanded with the query result
     """
 
-    re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})-?\s*\+?\s*$")
+    re_new_time = re.compile(
+        r"""
+        # Time interval
+        (?P<start>\d+:\d+)\s*
+        (?:-\s*
+          (?P<end>\d+:\d+)?\s*
+        )?
+        # Optional tags and project name
+        (?P<notes>
+          (?:
+            (?:\+\S+|\[[^]]+\]|\d+[a-z]+)\s*
+          )*
+        )
+        $
+        """,
+        re.X,
+    )
     re_new_day = re.compile(r"^\+\+?\s*$")
 
-    def __init__(self, head: str, body: list[str], start: datetime.time | None = None):
+    def __init__(
+        self,
+        head: str,
+        body: list[str],
+        start: datetime.time | None = None,
+        end: datetime.time | None = None,
+        tags: list[str] = [],
+    ):
         super().__init__(body)
         self.head = head
         self.start = start
+        self.end = end
+        self.tags = tags
 
     def reference_time(self) -> datetime.datetime | None:
         return None
 
-    def sync(self, project: project.Project, today: datetime.date):
+    def sync(self, project: project.Project, today: datetime.date) -> EntryBase:
         date_format = project.config.date_format + ":"
         datetime_format = date_format + " " + project.config.time_format + "-"
         if self.start is None:
@@ -376,25 +404,31 @@ class Command(EntryBase):
         else:
             begin = datetime.datetime.combine(today, self.start)
             head = begin.strftime(datetime_format)
-            res = Entry(begin, None, head, self.body, False)
+            if self.end is not None:
+                until = datetime.datetime.combine(today, self.end)
+                head += until.strftime(project.config.time_format)
+            else:
+                until = None
+            res = Entry(begin, until, head, self.body, False, tags=self.tags)
             if self.head.endswith("+"):
                 self.body.append(" +")
 
         res._sync_body(project)
         return res
 
-    def print_lead_timeref(self, file: IO[str] | None = None):
+    def print_lead_timeref(self, file: IO[str] | None = None) -> None:
         raise RuntimeError(
             "Cannot output a log with a Command as the very first element, without a previous time reference"
         )
 
-    def print(self, file: IO[str] = sys.stdout):
+    def print(self, file: IO[str] = sys.stdout) -> None:
         print(self.head, file=file)
         for line in self.body:
             print(line, file=file)
 
     @classmethod
     def parse(cls, logparser: LogParser, **kw: Any) -> Self:
+        entry_lineno = logparser.lines.lineno
         # Read entry head
         head = logparser.lines.next().rstrip()
 
@@ -406,7 +440,14 @@ class Command(EntryBase):
         if start is not None:
             start = parsetime(start)
 
-        return cls(head, body, start)
+        end = kw.get("end")
+        if end is not None:
+            end = parsetime(end)
+
+        # Parse tags
+        tags = logparser.parse_tags(entry_lineno, kw.get("notes"))
+
+        return cls(head, body, start, end, tags)
 
     @classmethod
     def is_start_line(cls, line: str) -> re.Match | None:

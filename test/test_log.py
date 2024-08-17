@@ -92,6 +92,14 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertIsInstance(entry, Command)
         return cast(Command, entry)
 
+    def assertProjLines(
+        self, proj: Project, lines: list[str], today: datetime.date = datetime.date(2015, 6, 1)
+    ) -> None:
+        with io.StringIO() as out:
+            proj.log.print(out, today=today)
+            body_lines = out.getvalue().splitlines()
+        self.assertEqual(body_lines, lines)
+
     def testParse(self) -> None:
         """
         Test creation of new taskwarrior tasks from a project file
@@ -129,16 +137,62 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(e2.body, [" - implemented day logs"])
         self.assertEqual(e2.fullday, True)
 
-        with io.StringIO() as out:
-            proj.log.print(out, today=datetime.date(2015, 6, 1))
-            body_lines = out.getvalue().splitlines()
+        self.assertProjLines(
+            proj,
+            [
+                "2015",
+                "15 march: 9:00-12:00 3h",
+                " - tested things",
+                "16 march:",
+                " - implemented day logs",
+            ],
+        )
 
-        self.assertEqual(len(body_lines), 5)
-        self.assertEqual(body_lines[0], "2015")
-        self.assertEqual(body_lines[1], "15 march: 9:00-12:00 3h")
-        self.assertEqual(body_lines[2], " - tested things")
-        self.assertEqual(body_lines[3], "16 march:")
-        self.assertEqual(body_lines[4], " - implemented day logs")
+    def assertExpandEntry(self, entry: str, today=datetime.date(2015, 6, 1)) -> tuple[Project, Entry]:
+        self.write_project(["2015", entry])
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
+        proj.load()
+        proj.log.sync(today=today)
+        entries = list(proj.log.entries)
+        self.assertEqual(len(entries), 1)
+        return proj, self.assertEntryIsEntry(entries[0])
+
+    def test_sync(self) -> None:
+        proj, entry = self.assertExpandEntry("8:00")
+        self.assertEqual(entry.begin, datetime.datetime(2015, 6, 1, 8, 0, 0))
+        self.assertIsNone(entry.until)
+        self.assertFalse(entry.tags)
+        self.assertProjLines(proj, ["2015", "01 June: 08:00-"])
+
+        proj, entry = self.assertExpandEntry("8:00-")
+        self.assertEqual(entry.begin, datetime.datetime(2015, 6, 1, 8, 0, 0))
+        self.assertIsNone(entry.until)
+        self.assertFalse(entry.tags)
+        self.assertProjLines(proj, ["2015", "01 June: 08:00-"])
+
+        proj, entry = self.assertExpandEntry("8:00-10:00")
+        self.assertEqual(entry.begin, datetime.datetime(2015, 6, 1, 8, 0, 0))
+        self.assertEqual(entry.until, datetime.datetime(2015, 6, 1, 10, 0, 0))
+        self.assertFalse(entry.tags)
+        self.assertProjLines(proj, ["2015", "01 June: 08:00-10:00 2h"])
+
+        proj, entry = self.assertExpandEntry("8:00 +tag")
+        self.assertEqual(entry.begin, datetime.datetime(2015, 6, 1, 8, 0, 0))
+        self.assertIsNone(entry.until)
+        self.assertEqual(entry.tags, ["tag"])
+        self.assertProjLines(proj, ["2015", "01 June: 08:00- +tag"])
+
+        proj, entry = self.assertExpandEntry("8:00- +tag")
+        self.assertEqual(entry.begin, datetime.datetime(2015, 6, 1, 8, 0, 0))
+        self.assertIsNone(entry.until)
+        self.assertEqual(entry.tags, ["tag"])
+        self.assertProjLines(proj, ["2015", "01 June: 08:00- +tag"])
+
+        proj, entry = self.assertExpandEntry("8:00-10:00 +tag")
+        self.assertEqual(entry.begin, datetime.datetime(2015, 6, 1, 8, 0, 0))
+        self.assertEqual(entry.until, datetime.datetime(2015, 6, 1, 10, 0, 0))
+        self.assertEqual(entry.tags, ["tag"])
+        self.assertProjLines(proj, ["2015", "01 June: 08:00-10:00 2h +tag"])
 
     def testParseNewRequest(self) -> None:
         """
