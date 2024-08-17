@@ -4,7 +4,7 @@ import datetime
 import re
 import sys
 from collections import Counter
-from typing import List, Optional, TextIO, Type
+from typing import TextIO
 from collections.abc import Generator
 
 import dateutil.parser
@@ -74,7 +74,7 @@ class EntryBase:
     Base class for log entries
     """
 
-    def __init__(self, body: list[str] = None):
+    def __init__(self, body: list[str] | None = None):
         # List of lines with the body of the log entry
         self.body: list[str]
         if body is None:
@@ -530,7 +530,7 @@ class Log:
                 res[tag] += duration
         return res
 
-    def sync(self, today: datetime.date = None):
+    def sync(self, today: datetime.date | None = None):
         """
         Sync log contents with git or any other activity data sources
         """
@@ -542,7 +542,7 @@ class Log:
             new_entries.append(e.sync(self.project, today=today))
         self._entries = new_entries
 
-    def parse(self, lines: Lines, lang: str = None):
+    def parse(self, lines: Lines, lang: str | None = None):
         self._lineno = lines.lineno
 
         log_parser = LogParser(lines, lang)

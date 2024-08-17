@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from contextlib import contextmanager
-from typing import Dict, Optional, Type
 
 import dateutil.parser
 
@@ -14,7 +13,7 @@ class Locale:
     Set the current locale, doing nothing if it is already set
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.current_locale: str | None = None
         self.cached_parserinfo: dict[str, type[dateutil.parser.parserinfo]] = {}
 

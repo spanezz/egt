@@ -1,2 +1,44 @@
 [tool.black]
 line-length = 120
+
+[tool.mypy]
+# https://mypy.readthedocs.io/en/latest/config_file.html
+mypy_path = "stubs"
+
+# Warn about casting an expression to its inferred type (inverse: --no-warn-redundant-casts)
+warn_redundant_casts = true
+
+# Warn about unneeded '# type: ignore' comments (inverse: --no-warn-unused-ignores)
+warn_unused_ignores = true
+
+# Warn about returning values of type Any from non-Any typed functions (inverse: --no-warn-return-any)
+warn_return_any = true
+
+# Warn about statements or expressions inferred to be unreachable (inverse: --no-warn-unreachable)
+warn_unreachable = true
+
+# Disallow defining functions without type annotations or with incomplete type annotations (inverse: --allow-untyped-defs)
+disallow_untyped_defs = true
+
+# Disallow defining functions with incomplete type annotations (inverse: --allow-incomplete-defs)
+disallow_incomplete_defs = true
+
+# Type check the interior of functions without type annotations (inverse: --no-check-untyped-defs)
+check_untyped_defs = true
+
+# Treat imports as private unless aliased (inverse: --implicit-reexport)
+no_implicit_reexport = true
+
+# Disallow decorating typed functions with untyped decorators (inverse: --allow-untyped-decorators)
+disallow_untyped_decorators = true
+
+# Strict mode; enables the following flags: --warn-unused-configs, --disallow-any-generics, --disallow-subclassing-any, --disallow-untyped-calls, --disallow-untyped-defs,
+# --disallow-incomplete-defs, --check-untyped-defs, --disallow-untyped-decorators, --warn-redundant-casts, --warn-unused-ignores, --warn-return-any, --no-implicit-
+# reexport, --strict-equality, --strict-concatenate
+strict = true
+
+packages = [
+    "egtlib",
+    "test",
+]
+

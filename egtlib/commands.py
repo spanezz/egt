@@ -8,10 +8,8 @@ import logging
 import os
 import shutil
 import sys
-import typing
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, Tuple, Type
 
 import egtlib
 from egtlib.utils import HoursCol, LastEntryCol, SummaryCol, TaskStatCol, format_td

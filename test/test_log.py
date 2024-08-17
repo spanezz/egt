@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import datetime
 import io
-import os
 import unittest
 from typing import cast
 

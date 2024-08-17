@@ -7,7 +7,7 @@ import os.path
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, List, Optional, Set, TextIO, Tuple, cast
+from typing import Any, Iterator, TextIO, cast
 
 from .body import Body
 from .lang import set_locale
@@ -109,7 +109,7 @@ class Project:
             return name
 
     @property
-    def path(self) -> str:
+    def path(self) -> Path:
         return self.meta.path or self.default_path
 
     @property
@@ -377,7 +377,7 @@ class Project:
         if "%" in archive_dir:
             raise RuntimeError("Placeholders in archive-dir not supported for single-file archives")
         last_day = end - datetime.timedelta(days=1)
-        pathname = os.path.join(archive_dir, f"{self.name}_{start:%Y-%m-%d}_to_{last_day:%Y-%m-%d}.egt")
+        pathname = Path(archive_dir) / f"{self.name}_{start:%Y-%m-%d}_to_{last_day:%Y-%m-%d}.egt"
 
         return end, self._create_archive(pathname, start, end)
 

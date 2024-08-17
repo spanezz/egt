@@ -4,7 +4,6 @@ import logging
 import os
 from configparser import ConfigParser
 from functools import cached_property
-from typing import List, Optional, Tuple
 
 import xdg
 

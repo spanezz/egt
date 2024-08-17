@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import re
-from typing import cast, List, Optional, TextIO
+from typing import cast, TextIO
 
 from . import project
 from .parse import Lines

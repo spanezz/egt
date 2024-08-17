@@ -4,7 +4,6 @@ import logging
 import os
 import os.path
 from pathlib import Path
-from typing import Set
 from collections.abc import Generator
 
 log = logging.getLogger(__name__)

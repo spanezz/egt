@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from typing import Any, Optional
+from typing import Any
 
 try:
     import coloredlogs
@@ -26,8 +26,6 @@ class Fail(BaseException):
 
     No stack trace is printed.
     """
-
-    pass
 
 
 class Command:

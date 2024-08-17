@@ -4,7 +4,8 @@ import datetime
 import inspect
 import re
 import sys
-from typing import Any, Dict, List, Optional, Set, TextIO
+from pathlib import Path
+from typing import Any, TextIO
 
 from .parse import Lines
 from .utils import format_duration
@@ -44,11 +45,15 @@ class Meta:
         return self._raw.get("name")
 
     @property
-    def path(self) -> str | None:
+    def path(self) -> Path | None:
         """
         Path of the project if it is not in the same directory as the .egt file
         """
-        return self._raw.get("path")
+        res = self._raw.get("path")
+        if res is None:
+            return None
+        else:
+            return Path(res)
 
     @property
     def archived(self) -> bool:

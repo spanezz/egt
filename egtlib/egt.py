@@ -3,7 +3,7 @@ import logging
 import re
 import sys
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, List, Optional, Set, TextIO
+from typing import Any, BinaryIO, TextIO
 
 import taskw
 
@@ -16,13 +16,13 @@ log = logging.getLogger(__name__)
 
 
 class WeeklyReport:
-    def __init__(self):
+    def __init__(self) -> None:
         self.projs: list["Project"] = []
 
     def add(self, p: Project) -> None:
         self.projs.append(p)
 
-    def report(self, end: datetime.date = None, days: int = 7) -> dict[str, Any]:
+    def report(self, end: datetime.date | None = None, days: int = 7) -> dict[str, Any]:
         if end is None:
             d_until = datetime.date.today()
         else:
@@ -235,7 +235,11 @@ class Egt:
         return self.load_project(Path(info["fname"]), project_fd=project_fd)
 
     def weekrpt(
-        self, tags: list[str] = None, end: datetime.date = None, days: int = 7, projs: list[Project] = None
+        self,
+        tags: list[str] = None,
+        end: datetime.date | None = None,
+        days: int = 7,
+        projs: list[Project] | None = None,
     ) -> dict[str, Any]:
         rep = WeeklyReport()
         if projs:

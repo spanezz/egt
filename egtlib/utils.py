@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 from collections import defaultdict
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 from collections.abc import Callable, Sequence
 
 if TYPE_CHECKING:
