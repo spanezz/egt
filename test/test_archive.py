@@ -14,21 +14,21 @@ from .utils import ProjectTestMixin
 class TestArchive(ProjectTestMixin, unittest.TestCase):
     def setUp(self):
         super().setUp()
-        self.projectfile = os.path.join(self.workdir.name, ".egt")
-        self.reportfile = os.path.join(self.workdir.name, "report.egt")
+        self.projectfile = self.workdir / ".egt"
+        self.reportfile = self.workdir / "report.egt"
 
     def archive(self, text, today=datetime.date(2019, 2, 1)):
-        with open(self.projectfile, "wt") as fd:
+        with self.projectfile.open("w") as fd:
             if isinstance(text, str):
                 fd.write(text)
             else:
                 for line in text:
                     print(line, file=fd)
 
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.load()
         proj.meta.set("Name", "test")
-        proj.meta.set("Archive-Dir", self.workdir.name)
+        proj.meta.set("Archive-Dir", self.workdir)
         with open(self.reportfile, "wt") as fd:
             return proj, proj.archive(cutoff=today.replace(day=1), report_fd=fd, combined=False)
 
@@ -50,13 +50,13 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
 
         self.assertEqual(len(archives), 1)
         arc = archives[0]
-        self.assertEqual(arc.abspath, os.path.join(self.workdir.name, "201901-test.egt"))
+        self.assertEqual(arc.abspath, self.workdir / "201901-test.egt")
 
         self.assertEqual(
             self.to_text(arc).splitlines(),
             [
                 "Name: test",
-                "Archive-Dir: " + self.workdir.name,
+                f"Archive-Dir: {self.workdir}",
                 "Archived: yes",
                 "Total: 2h",
                 "",
@@ -71,7 +71,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             self.to_text(proj).splitlines(),
             [
                 "Name: test",
-                "Archive-Dir: " + self.workdir.name,
+                f"Archive-Dir: {self.workdir}",
                 "",
                 "2019",
                 "01 february: 10:00-11:00 1h",
@@ -85,7 +85,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
                 [x.rstrip() for x in fd],
                 [
                     "Name: test",
-                    "Archive-Dir: " + self.workdir.name,
+                    f"Archive-Dir: {self.workdir}",
                     "Archived: yes",
                     "Total: 2h",
                     "",
@@ -113,12 +113,12 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(len(archives), 2)
 
         arc = archives[0]
-        self.assertEqual(arc.abspath, os.path.join(self.workdir.name, "201812-test.egt"))
+        self.assertEqual(arc.abspath, self.workdir / "201812-test.egt")
         self.assertEqual(
             self.to_text(arc).splitlines(),
             [
                 "Name: test",
-                "Archive-Dir: " + self.workdir.name,
+                f"Archive-Dir: {self.workdir}",
                 "Archived: yes",
                 "Total: 4h",
                 "",
@@ -130,12 +130,12 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
         )
 
         arc = archives[1]
-        self.assertEqual(arc.abspath, os.path.join(self.workdir.name, "201901-test.egt"))
+        self.assertEqual(arc.abspath, self.workdir / "201901-test.egt")
         self.assertEqual(
             self.to_text(arc).splitlines(),
             [
                 "Name: test",
-                "Archive-Dir: " + self.workdir.name,
+                f"Archive-Dir: {self.workdir}",
                 "Archived: yes",
                 "Total: 2h",
                 "",
@@ -150,7 +150,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             self.to_text(proj).splitlines(),
             [
                 "Name: test",
-                "Archive-Dir: " + self.workdir.name,
+                f"Archive-Dir: {self.workdir}",
                 "",
                 "2019",
                 "01 february: 10:00-11:00 1h",
@@ -164,7 +164,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
                 [x.rstrip() for x in fd],
                 [
                     "Name: test",
-                    "Archive-Dir: " + self.workdir.name,
+                    f"Archive-Dir: {self.workdir}",
                     "Archived: yes",
                     "Total: 4h",
                     "",
@@ -173,7 +173,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
                     " - worked",
                     "",
                     "Name: test",
-                    "Archive-Dir: " + self.workdir.name,
+                    f"Archive-Dir: {self.workdir}",
                     "Archived: yes",
                     "Total: 2h",
                     "",
@@ -199,13 +199,13 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
 
         self.assertEqual(len(archives), 1)
         arc = archives[0]
-        self.assertEqual(arc.abspath, os.path.join(self.workdir.name, "201901-test.egt"))
+        self.assertEqual(arc.abspath, self.workdir / "201901-test.egt")
 
         self.assertEqual(
             self.to_text(arc).splitlines(),
             [
                 "Name: test",
-                "Archive-Dir: " + self.workdir.name,
+                f"Archive-Dir: {self.workdir}",
                 "Archived: yes",
                 "Total:",
                 " *: 6h",
@@ -225,14 +225,14 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
 
         remainder = [
             "Name: test",
-            "Archive-Dir: " + self.workdir.name,
+            f"Archive-Dir: {self.workdir}",
             "",
             "2019",
             str(datetime.date.today().year),
             "",
         ]
         self.assertEqual(self.to_text(proj, today=None).splitlines(), remainder)
-        with open(proj.abspath, "rt") as fd:
+        with proj.abspath.open("r") as fd:
             self.assertEqual([x.rstrip() for x in fd], remainder)
 
     def test_no_old_data(self):
@@ -248,7 +248,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
 
         remainder = [
             "Name: test",
-            "Archive-Dir: " + self.workdir.name,
+            f"Archive-Dir: {self.workdir}",
             "",
             "2019",
             "01 february: 10:00-13:00 3h",
@@ -257,7 +257,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             "",
         ]
         self.assertEqual(self.to_text(proj, today=None).splitlines(), remainder)
-        with open(proj.abspath, "rt") as fd:
+        with proj.abspath.open("r") as fd:
             self.assertEqual([x.rstrip() for x in fd], remainder)
 
     def test_empty(self):
@@ -271,12 +271,12 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
 
         remainder = [
             "Name: test",
-            "Archive-Dir: " + self.workdir.name,
+            f"Archive-Dir: {self.workdir}",
             "",
             "2019",
             str(datetime.date.today().year),
             "",
         ]
         self.assertEqual(self.to_text(proj, today=None).splitlines(), remainder)
-        with open(proj.abspath, "rt") as fd:
+        with proj.abspath.open("r") as fd:
             self.assertEqual([x.rstrip() for x in fd], remainder)

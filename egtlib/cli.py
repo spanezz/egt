@@ -26,6 +26,7 @@ class Fail(BaseException):
 
     No stack trace is printed.
     """
+
     pass
 
 
@@ -37,10 +38,15 @@ class Command:
     NAME: Optional[str] = None
 
     def __init__(self, args: argparse.Namespace):
-        if self.NAME is None:
-            self.NAME = self.__class__.__name__.lower()
         self.args = args
         self.setup_logging()
+
+    @classmethod
+    def command_name(cls) -> str:
+        if cls.NAME is not None:
+            return cls.NAME
+        else:
+            return cls.__name__.lower()
 
     def setup_logging(self) -> None:
         FORMAT = "%(asctime)-15s %(levelname)s %(name)s %(message)s"
@@ -58,10 +64,8 @@ class Command:
 
     @classmethod
     def add_subparser(cls, subparsers):
-        if cls.NAME is None:
-            cls.NAME = cls.__name__.lower()
         parser = subparsers.add_parser(
-            cls.NAME,
+            cls.command_name(),
             help=_get_first_docstring_line(cls),
         )
         parser.set_defaults(command=cls)

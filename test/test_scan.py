@@ -1,13 +1,9 @@
 import unittest
 import os
-import os.path
+from pathlib import Path
 from egtlib import scan
 
-basedir = os.path.dirname(__file__)
-if not basedir:
-    basedir = os.getcwd()
-basedir = os.path.abspath(os.path.join(basedir, ".."))
-testdir = os.path.join(basedir, "test")
+testdir = Path(__file__).parent
 
 
 class TestScan(unittest.TestCase):
@@ -16,15 +12,16 @@ class TestScan(unittest.TestCase):
     """
 
     def test_scan(self):
-        res = sorted([x[len(testdir) + 10:] for x in scan(os.path.join(testdir, "testdata"))])
+        testdata = testdir / "testdata"
+        res = sorted(x.relative_to(testdata) for x in scan(testdata))
         self.assertEqual(
             res,
             [
-                "baz/egt",
-                "foo/.egt",
-                "gnu/.egt",
-                "onedir/foo.egt",
-                "onedir/wibble.egt",
-                "onedir/wobble.egt",
+                Path("baz/egt"),
+                Path("foo/.egt"),
+                Path("gnu/.egt"),
+                Path("onedir/foo.egt"),
+                Path("onedir/wibble.egt"),
+                Path("onedir/wobble.egt"),
             ],
         )

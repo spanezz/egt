@@ -69,7 +69,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertRegex(body_lines[2], r"^  t\d+ \[[^]]+\] new taskwarrior task \+tag$")
         self.assertEqual(body_lines[3], "body line3")
 
-        with open(os.path.join(self.workdir.name, "project-testprj.json"), "rt") as fd:
+        with (self.workdir / "project-testprj.json").open("r") as fd:
             state = json.load(fd)
         tasks = state["tasks"]
         ids = tasks["ids"]
@@ -161,7 +161,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(body_lines[3], "body line1")
         self.assertEqual(body_lines[4], "body line2")
 
-        with open(os.path.join(self.workdir.name, "project-testprj.json"), "rt") as fd:
+        with (self.workdir / "project-testprj.json").open("r") as fd:
             state = json.load(fd)
         tasks = state["tasks"]
         ids = tasks["ids"]
@@ -181,7 +181,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
 
         # Add the task to egt's state using a different number than taskwarrior
         # has
-        with open(os.path.join(self.workdir.name, "project-testprj.json"), "wt") as fd:
+        with (self.workdir / "project-testprj.json").open("w") as fd:
             json.dump(
                 {
                     "tasks": {
@@ -235,7 +235,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertRegex(body_lines[1], r"^ t\d+ \[[^]]+\] task \+tag$")
         self.assertEqual(body_lines[2], "body line3")
 
-        with open(os.path.join(self.workdir.name, "project-testprj.json"), "rt") as fd:
+        with (self.workdir / "project-testprj.json").open("r") as fd:
             state = json.load(fd)
         tasks = state["tasks"]
         ids = tasks["ids"]
@@ -255,7 +255,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
 
         # Add the task to egt's state using a different number than taskwarrior
         # has
-        with open(os.path.join(self.workdir.name, "project-testprj.json"), "wt") as fd:
+        with (self.workdir / "project-testprj.json").open("w") as fd:
             json.dump(
                 {
                     "tasks": {
@@ -316,7 +316,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(body_lines[3], "body line1")
         self.assertEqual(body_lines[4], "body line3")
 
-        with open(os.path.join(self.workdir.name, "project-testprj.json"), "rt") as fd:
+        with (self.workdir / "project-testprj.json").open("r") as fd:
             state = json.load(fd)
         tasks = state["tasks"]
         ids = tasks["ids"]

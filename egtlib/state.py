@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os.path
+from pathlib import Path
 from typing import Dict, List
 
 from xdg import BaseDirectory
@@ -15,6 +16,13 @@ from .config import Config
 log = logging.getLogger(__name__)
 
 
+class PathEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Path):
+            return obj.as_posix()
+        return json.JSONEncoder.default(self, obj)
+
+
 class State:
     """
     Cached information about known projects.
@@ -24,21 +32,21 @@ class State:
         # Map project names to ProjectInfo objects
         self.projects = {}
 
-    def load(self, statedir: str = None) -> None:
+    def load(self, statedir: Path | None = None) -> None:
         if statedir is None:
             statedir = self.get_state_dir()
 
-        statefile = os.path.join(statedir, "state.json")
-        if os.path.exists(statefile):
+        statefile = statedir / "state.json"
+        if statefile.exists():
             # Load state from JSON file
-            with open(statefile, "rt") as fd:
+            with statefile.open("r") as fd:
                 state = json.load(fd)
             self.projects = state["projects"]
             return
 
         # TODO: remove support for legacy format
-        statefile = os.path.join(statedir, "state")
-        if os.path.exists(statefile):
+        statefile = statedir / "state"
+        if statefile.exists():
             # Load state from legacy .ini file
             from configparser import RawConfigParser
 
@@ -52,7 +60,7 @@ class State:
             return
 
     @classmethod
-    def rescan(cls, dirs: List[str], *, config: Config, statedir: str = None) -> None:
+    def rescan(cls, dirs: List[Path], *, config: Config, statedir: Path | None = None) -> None:
         """
         Rebuild the state looking for files in the given directories.
 
@@ -92,15 +100,15 @@ class State:
         #     log.info("rm %s", name)
 
         # Commit the new project set
-        statefile = os.path.join(statedir, "state.json")
+        statefile = statedir / "state.json"
         with atomic_writer(statefile, "wt") as fd:
-            json.dump({"projects": projects}, fd, indent=1)
+            json.dump({"projects": projects}, fd, cls=PathEncoder, indent=1)
 
         # Clean up old version of state file
-        old_statefile = os.path.join(statedir, "state")
-        if os.path.exists(old_statefile):
+        old_statefile = statedir / "state"
+        if old_statefile.exists():
             log.warn("%s: legacy state file removed", old_statefile)
-            os.unlink(old_statefile)
+            old_statefile.unlink()
 
         # TODO: scan statedir removing project-$NAME.json files for all
         # projects that disappeared.
@@ -108,5 +116,5 @@ class State:
         log.debug("%s: new state written", statefile)
 
     @classmethod
-    def get_state_dir(cls) -> str:
-        return BaseDirectory.save_data_path("egt")
+    def get_state_dir(cls) -> Path:
+        return Path(BaseDirectory.save_data_path("egt"))

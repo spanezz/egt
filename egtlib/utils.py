@@ -9,6 +9,7 @@ import select
 import subprocess
 import tempfile
 from collections import defaultdict
+from pathlib import Path
 from typing import IO, TYPE_CHECKING, Callable, Optional, Sequence
 
 if TYPE_CHECKING:
@@ -24,18 +25,14 @@ def today() -> datetime.date:
 
 @contextlib.contextmanager
 def atomic_writer(
-        fname: str,
-        mode: str = "w+b",
-        chmod: Optional[int] = 0o664,
-        sync: bool = True,
-        use_umask: bool = False,
-        **kw):
+    path: Path, mode: str = "w+b", chmod: Optional[int] = 0o664, sync: bool = True, use_umask: bool = False, **kw
+):
     """
     open/tempfile wrapper to atomically write to a file, by writing its
     contents to a temporary file in the same directory, and renaming it at the
     end of the block if no exception has been raised.
 
-    :arg fname: name of the file to create
+    :arg path: path of the file to create
     :arg mode: passed to mkstemp/open
     :arg chmod: permissions of the resulting file
     :arg sync: if True, call fdatasync before renaming
@@ -49,25 +46,23 @@ def atomic_writer(
         os.umask(cur_umask)
         chmod &= ~cur_umask
 
-    dirname = os.path.dirname(fname)
-    if not os.path.isdir(dirname):
-        os.makedirs(dirname)
+    dirname = path.parent
+    dirname.mkdir(parents=True, exist_ok=True)
 
-    fd, abspath = tempfile.mkstemp(dir=dirname, text="b" not in mode, prefix=fname)
-    outfd = open(fd, mode, closefd=True, **kw)
-    try:
-        yield outfd
-        outfd.flush()
-        if sync:
-            os.fdatasync(fd)
-        if chmod is not None:
-            os.fchmod(fd, chmod)
-        os.rename(abspath, fname)
-    except Exception:
-        os.unlink(abspath)
-        raise
-    finally:
-        outfd.close()
+    fd, abspath_str = tempfile.mkstemp(dir=dirname, text="b" not in mode, prefix=path.as_posix())
+    abspath = Path(abspath_str)
+    with open(fd, mode, closefd=True, **kw) as outfd:
+        try:
+            yield outfd
+            outfd.flush()
+            if sync:
+                os.fdatasync(fd)
+            if chmod is not None:
+                os.fchmod(fd, chmod)
+            abspath.rename(path)
+        except Exception:
+            abspath.unlink()
+            raise
 
 
 def intervals_intersect(p1s, p1e, p2s, p2e):
@@ -82,11 +77,7 @@ def intervals_intersect(p1s, p1e, p2s, p2e):
 
 
 class SummaryCol:
-    def __init__(
-            self,
-            label: str,
-            align: str,
-            func: Optional[Callable[[egtlib.Project], str]] = None):
+    def __init__(self, label: str, align: str, func: Optional[Callable[[egtlib.Project], str]] = None):
         self.label = label
         self.align = align
         self._func = func
