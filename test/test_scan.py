@@ -10,7 +10,7 @@ class TestScan(unittest.TestCase):
     Test scan results
     """
 
-    def test_scan(self):
+    def test_scan(self) -> None:
         testdata = testdir / "testdata"
         res = sorted(x.relative_to(testdata) for x in scan(testdata))
         self.assertEqual(

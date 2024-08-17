@@ -12,7 +12,7 @@ class TestFilter(unittest.TestCase):
     Test ProjectFilter
     """
 
-    def test_name(self):
+    def test_name(self) -> None:
         f = ProjectFilter(["foo", "bar"])
 
         p = Project.mock(Path("foo/.egt"))
@@ -24,7 +24,7 @@ class TestFilter(unittest.TestCase):
         p = Project.mock(Path("baz/.egt"))
         self.assertFalse(f.matches(p))
 
-    def test_tags(self):
+    def test_tags(self) -> None:
         f = ProjectFilter(["+foo", "-bar"])
 
         p = Project.mock(Path("test/.egt"), name="foo", tags={"foo"})

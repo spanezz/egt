@@ -23,7 +23,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         " - wrote more unit tests",
     ]
 
-    def testCreateFromEgt(self):
+    def testCreateFromEgt(self) -> None:
         """
         Test creation of new taskwarrior tasks from a project file
         """
@@ -75,7 +75,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(len(ids), 2)
         self.assertEqual(ids[str(task.task["id"])], str(task.task["uuid"]))
 
-    def testCreateFromEgtWithAttributes(self):
+    def testCreateFromEgtWithAttributes(self) -> None:
         """
         Test creation of new taskwarrior tasks with attributes from a project file
         """
@@ -115,7 +115,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
                 self.assertEqual(task.task["description"], "new test task")
                 self.assertEqual(task.task[key], data)
 
-    def testCreateFromTW(self):
+    def testCreateFromTW(self) -> None:
         """
         Test import of new taskwarrior tasks in egt
         """
@@ -167,7 +167,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(len(ids), 2)
         self.assertEqual(ids[str(task.task["id"])], str(task.task["uuid"]))
 
-    def testSyncExisting(self):
+    def testSyncExisting(self) -> None:
         """
         Test handling of tasks present both in taskwarrior and in egt
         """
@@ -241,7 +241,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(len(ids), 1)
         self.assertEqual(ids[str(task.task["id"])], str(task.task["uuid"]))
 
-    def testSyncDone(self):
+    def testSyncDone(self) -> None:
         """
         Test handling of tasks present both in taskwarrior and in egt, when a
         task is marked done on taskwarrior

@@ -7,7 +7,8 @@ import os.path
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Iterator, TextIO, cast
+from typing import Any, IO, Self, cast
+from collections.abc import Iterator
 
 from .body import Body
 from .lang import set_locale
@@ -41,11 +42,15 @@ class ProjectState:
         self._state[name] = val
         self._save()
 
-    def _load(self) -> dict:
+    def _load(self) -> dict[str, Any]:
         if not self.abspath.exists():
             return {}
         with self.abspath.open("r") as fd:
-            return json.load(fd)
+            state = json.load(fd)
+            if not isinstance(state, dict):
+                log.error("%s: JSON data is not a dict: ignoring", self.abspath)
+                return {}
+            return state
 
     def _save(self) -> None:
         with atomic_writer(self.abspath, "wt") as fd:
@@ -124,7 +129,7 @@ class Project:
         return self.default_tags | self.meta.tags
 
     @classmethod
-    def from_file(self, path: Path, fd: TextIO | None = None, config=None):
+    def from_file(self, path: Path, fd: IO[str] | None = None, config=None) -> Project:
         # Default values, can be overridden by file metadata
         p = Project(path, config=config)
         # Load the actual data
@@ -132,7 +137,7 @@ class Project:
         return p
 
     @classmethod
-    def mock(self, abspath: Path, name: str | None = None, path: Path | None = None, tags=None, config=None):
+    def mock(self, abspath: Path, name: str | None = None, path: Path | None = None, tags=None, config=None) -> Self:
         p = Project(abspath, config=config if config is not None else Config())
         if path is not None:
             p.default_path = path
@@ -142,7 +147,7 @@ class Project:
             p.default_tags = tags
         return p
 
-    def load(self, fd: TextIO | None = None):
+    def load(self, fd: IO[str] | None = None):
         from .parse import Lines
 
         lines = Lines(self.abspath, fd=fd)
@@ -183,7 +188,7 @@ class Project:
         if self.meta.archived:
             self.archived = True
 
-    def print(self, out: TextIO, today: datetime.date | None = None):
+    def print(self, out: IO[str], today: datetime.date | None = None):
         """
         Serialize the whole project as a project file to the given file
         descriptor.
@@ -206,7 +211,7 @@ class Project:
         Save over the original source file
         """
         with atomic_writer(self.abspath, "wt") as fd:
-            self.print(cast(TextIO, fd), today)
+            self.print(cast(IO[str], fd), today)
 
     @property
     def last_updated(self) -> datetime.datetime | None:
@@ -381,7 +386,7 @@ class Project:
 
         return end, self._create_archive(pathname, start, end)
 
-    def archive(self, cutoff: datetime.date, report_fd: TextIO | None, save=True, combined=True) -> list[Project]:
+    def archive(self, cutoff: datetime.date, report_fd: IO[str] | None, save=True, combined=True) -> list[Project]:
         """
         Archive contents until the given cutoff date (excluded).
 

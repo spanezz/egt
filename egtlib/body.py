@@ -32,8 +32,7 @@ class BodyEntry:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, self.__class__):
             return False
-        o = cast(BodyEntry, other)
-        return self.indent == o.indent
+        return self.indent == other.indent
 
 
 class EmptyLine(BodyEntry):
@@ -50,7 +49,7 @@ class EmptyLine(BodyEntry):
     def get_content(self) -> str:
         return ""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"EmptyLine(indent={self.indent!r})"
 
 
@@ -88,7 +87,7 @@ class Line(BodyEntry):
         else:
             print(self.indent + self.bullet + self.text, file=file)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("
             f"indent={self.indent!r}, bullet={self.bullet!r},"

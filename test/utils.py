@@ -15,7 +15,7 @@ class ProjectTestMixin(TestCase):
     DEFAULT_LOG: Sequence[str] | None = None
     DEFAULT_BODY: Sequence[str] | None = None
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.workdir = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.taskrc = self.workdir / ".taskrc"
         with self.taskrc.open("w") as fd:

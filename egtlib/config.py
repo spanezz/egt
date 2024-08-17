@@ -97,7 +97,4 @@ class Config:
         if "autotag" not in self.config:
             return []
         autotags = self.config["autotag"]
-        if autotags is None:
-            return []
-
         return [(tag, regexp) for tag, regexp in autotags.items()]

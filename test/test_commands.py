@@ -34,7 +34,7 @@ tags: blubb, foo
 
 
 class TestCommands(ProjectTestMixin, unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.p = self.workdir / "p"
         self.p.mkdir()
@@ -48,7 +48,9 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.p2.mkdir()
         (self.p2 / ".egt").write_text(body_p2)
 
-    def build_command(self, command_cls: type[commands.EgtCommand] | str, *args: str, rescan: bool = True):
+    def build_command(
+        self, command_cls: type[commands.EgtCommand] | str, *args: str, rescan: bool = True
+    ) -> commands.EgtCommand:
         """Instantiate the EgtCommand class for the given command."""
         if rescan:
             State.rescan([self.workdir], statedir=self.workdir, config=Config())
@@ -91,7 +93,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
                 exit_code = e.code
         return exit_code, stdout_buf.getvalue(), stderr_buf.getvalue()
 
-    def test_scan(self):
+    def test_scan(self) -> None:
         State.rescan([self.workdir], statedir=self.workdir, config=Config())
         state = State()
         state.load(self.workdir)
@@ -100,7 +102,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertIn("p2", state.projects)
         self.assertEqual(len(state.projects), 3)
 
-    def test_list(self):
+    def test_list(self) -> None:
         State.rescan([self.workdir], statedir=self.workdir, config=Config())
         egt = egtlib.Egt(config=Config(), statedir=self.workdir)
         names = {p.name for p in egt.projects}
@@ -109,7 +111,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertIn("p2", names)
         self.assertEqual(len(names), 3)
 
-    def test_complete(self):
+    def test_complete(self) -> None:
         subtests = [
             {"cmd": "projects", "res": ["p1", "p2", "test"]},
             {"cmd": "tags", "res": ["bar", "blubb", "foo"]},
@@ -133,7 +135,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     # TODO: test_edit
     # TODO: test_grep
 
-    def test_mrconfig(self):
+    def test_mrconfig(self) -> None:
         (self.p1 / ".git").mkdir()
         (self.p2 / ".git").mkdir()
         self.maxDiff = None
@@ -156,7 +158,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     # TODO: test_archive
     # TODO: test_serve
 
-    def test_backup(self):
+    def test_backup(self) -> None:
         State.rescan([self.workdir], statedir=self.workdir, config=Config())
         egt = egtlib.Egt(config=Config(), statedir=self.workdir)
         tarfname = self.workdir / "backup.tar"

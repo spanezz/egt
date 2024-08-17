@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from .project import Project
 
 
-def run_editor(proj: Project):
+def run_editor(proj: Project) -> None:
     """
     Edit the .egt file for the give Project
     """
@@ -24,7 +24,7 @@ def run_editor(proj: Project):
     p.wait()
 
 
-def run_work_session(proj: Project, with_editor=True):
+def run_work_session(proj: Project, with_editor: bool = True) -> None:
     """
     Open a terminal on the working directory of the given project, optionally
     opening the project file in an editor inside the terminal

@@ -4,7 +4,7 @@ import datetime
 import re
 import sys
 from collections import Counter
-from typing import TextIO
+from typing import Any, IO, Self
 from collections.abc import Generator
 
 import dateutil.parser
@@ -28,14 +28,14 @@ class LogParser:
         self.errors: list[str] = []
 
     @classmethod
-    def register_entry_type(cls, c: type[EntryBase]):
+    def register_entry_type(cls, c: type[EntryBase]) -> type[EntryBase]:
         cls.ENTRY_TYPES.append(c)
         return c
 
-    def log_parse_error(self, lineno: int, msg: str):
+    def log_parse_error(self, lineno: int, msg: str) -> None:
         self.errors.append(f"line {lineno + 1}: {msg}")
 
-    def parse_date(self, s: str):
+    def parse_date(self, s: str) -> datetime.datetime | None:
         try:
             d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
         except (TypeError, ValueError):
@@ -74,7 +74,7 @@ class EntryBase:
     Base class for log entries
     """
 
-    def __init__(self, body: list[str] | None = None):
+    def __init__(self, body: list[str] | None = None) -> None:
         # List of lines with the body of the log entry
         self.body: list[str]
         if body is None:
@@ -82,7 +82,7 @@ class EntryBase:
         else:
             self.body = body
 
-    def sync(self, project: project.Project, today: datetime.date):
+    def sync(self, project: project.Project, today: datetime.date) -> Self:
         """
         When syncing logs, return the transformed version of this entry.
 
@@ -96,7 +96,7 @@ class EntryBase:
         """
         raise NotImplementedError("reference_time called on EntryBase")
 
-    def print_lead_timeref(self, file: TextIO | None = None):
+    def print_lead_timeref(self, file: IO[str] | None = None) -> None:
         """
         Assuming this is the first entry of the log being printed, print a time
         reference before the entry if it is needed to be able to reparse the
@@ -119,11 +119,11 @@ class EntryBase:
             body.append(lines.next())
         return body
 
-    def print(self, file=sys.stdout) -> None:
+    def print(self, file: IO[str] = sys.stdout) -> None:
         raise RuntimeError("print called on EntryBase instead of the real class")
 
     @classmethod
-    def parse(cls, logparser: LogParser, **kw):
+    def parse(cls, logparser: LogParser, **kw: Any) -> Self:
         raise RuntimeError("parse called on EntryBase instead of the real class")
 
     @classmethod
@@ -139,7 +139,7 @@ class Timebase(EntryBase):
 
     re_timebase = re.compile(r"^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
 
-    def __init__(self, line: str, dt: datetime.datetime):
+    def __init__(self, line: str, dt: datetime.datetime) -> None:
         super().__init__()
         self.line = line
         self.dt = dt
@@ -147,15 +147,15 @@ class Timebase(EntryBase):
     def reference_time(self) -> datetime.datetime | None:
         return self.dt
 
-    def print(self, file=sys.stdout):
+    def print(self, file: IO[str] = sys.stdout) -> None:
         print(self.line, file=file)
 
-    def print_lead_timeref(self, file):
+    def print_lead_timeref(self, file: IO[str] | None = None) -> None:
         # Nothing to do, since a timebase is a full time reference
         pass
 
     @classmethod
-    def parse(cls, logparser: LogParser, **kw):
+    def parse(cls, logparser: LogParser, **kw: Any) -> Self:
         val: str = kw["date"] or kw["year"]
         # Just parse the next line, storing it nowhere, but updating
         # the 'default' datetime context
@@ -198,7 +198,7 @@ class Entry(EntryBase):
         body: list[str],
         fullday: bool,
         tags: list[str] = [],
-    ):
+    ) -> None:
         super().__init__(body)
         # Datetime of beginning of log entry timespan
         self.begin = begin
@@ -261,10 +261,10 @@ class Entry(EntryBase):
     def formatted_duration(self) -> str:
         return format_duration(self.duration)
 
-    def print_lead_timeref(self, file: TextIO | None = None):
+    def print_lead_timeref(self, file: IO[str] | None = None):
         print(self.begin.year, file=file)
 
-    def print(self, file: TextIO = sys.stdout, project: project.Project | None = None):
+    def print(self, file: IO[str] = sys.stdout, project: project.Project | None = None):
         mo = self.re_entry.match(self.head)
         if not mo:
             raise RuntimeError("Header line was parsed right during parsing, and not during printing")
@@ -383,18 +383,18 @@ class Command(EntryBase):
         res._sync_body(project)
         return res
 
-    def print_lead_timeref(self, file: TextIO | None = None):
+    def print_lead_timeref(self, file: IO[str] | None = None):
         raise RuntimeError(
             "Cannot output a log with a Command as the very first element, without a previous time reference"
         )
 
-    def print(self, file: TextIO = sys.stdout):
+    def print(self, file: IO[str] = sys.stdout):
         print(self.head, file=file)
         for line in self.body:
             print(line, file=file)
 
     @classmethod
-    def parse(cls, logparser: LogParser, **kw):
+    def parse(cls, logparser: LogParser, **kw: Any) -> Self:
         # Read entry head
         head = logparser.lines.next().rstrip()
 
@@ -417,7 +417,7 @@ class Command(EntryBase):
 
 
 class LogPrinter:
-    def __init__(self, file: TextIO, today: datetime.date | None = None, archived: bool = False):
+    def __init__(self, file: IO[str], today: datetime.date | None = None, archived: bool = False):
         self.today: datetime.date = today if today is not None else utils.today()
         self.file = file
         self.has_time_ref = False
@@ -554,7 +554,7 @@ class Log:
         else:
             self.project.meta.unset("parse-errors")
 
-    def print(self, file: TextIO = sys.stdout, today: datetime.date | None = None):
+    def print(self, file: IO[str] = sys.stdout, today: datetime.date | None = None):
         """
         Write the log as a project log section to the given output file.
 

@@ -11,12 +11,12 @@ from .utils import ProjectTestMixin
 
 
 class TestArchive(ProjectTestMixin, unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.projectfile = self.workdir / ".egt"
         self.reportfile = self.workdir / "report.egt"
 
-    def archive(self, text, today=datetime.date(2019, 2, 1)):
+    def archive(self, text: str | list[str], today=datetime.date(2019, 2, 1)):
         with self.projectfile.open("w") as fd:
             if isinstance(text, str):
                 fd.write(text)
@@ -31,12 +31,12 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
         with open(self.reportfile, "wt") as fd:
             return proj, proj.archive(cutoff=today.replace(day=1), report_fd=fd, combined=False)
 
-    def to_text(self, proj, today=datetime.date(2019, 2, 1)):
+    def to_text(self, proj, today: datetime.date | None = datetime.date(2019, 2, 1)) -> str:
         with io.StringIO() as fd:
             proj.print(fd, today=today)
             return fd.getvalue()
 
-    def test_archive(self):
+    def test_archive(self) -> None:
         proj, archives = self.archive(
             [
                 "2019",
@@ -95,7 +95,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
                 ],
             )
 
-    def test_archive_multi(self):
+    def test_archive_multi(self) -> None:
         proj, archives = self.archive(
             [
                 "2018",
@@ -183,7 +183,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
                 ],
             )
 
-    def test_archive_tagged(self):
+    def test_archive_tagged(self) -> None:
         proj, archives = self.archive(
             [
                 "2019",
@@ -234,7 +234,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
         with proj.abspath.open("r") as fd:
             self.assertEqual([x.rstrip() for x in fd], remainder)
 
-    def test_no_old_data(self):
+    def test_no_old_data(self) -> None:
         proj, archives = self.archive(
             [
                 "2019",
@@ -259,7 +259,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
         with proj.abspath.open("r") as fd:
             self.assertEqual([x.rstrip() for x in fd], remainder)
 
-    def test_empty(self):
+    def test_empty(self) -> None:
         proj, archives = self.archive(
             [
                 "2019",

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 from xdg import BaseDirectory
 
@@ -15,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 class PathEncoder(json.JSONEncoder):
-    def default(self, obj):
+    def default(self, obj: Any) -> Any:
         if isinstance(obj, Path):
             return obj.as_posix()
         return json.JSONEncoder.default(self, obj)
@@ -26,9 +27,9 @@ class State:
     Cached information about known projects.
     """
 
-    def __init__(self):
-        # Map project names to ProjectInfo objects
-        self.projects = {}
+    def __init__(self) -> None:
+        # Map project names to loaded project information dicts
+        self.projects: dict[str, Any] = {}
 
     def load(self, statedir: Path | None = None) -> None:
         if statedir is None:

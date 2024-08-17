@@ -1,3 +1,4 @@
+from pathlib import Path
 import unittest
 from egtlib.meta import Meta
 from egtlib.parse import Lines
@@ -19,8 +20,8 @@ TEST_META_SHORT = "Name: test\n"
 
 
 class TestMeta(unittest.TestCase):
-    def test_parse(self):
-        lines = Lines("test/.egt", io.StringIO(TEST_META1))
+    def test_parse(self) -> None:
+        lines = Lines(Path("test/.egt"), io.StringIO(TEST_META1))
         meta = Meta()
         meta.parse(lines)
 
@@ -38,18 +39,18 @@ class TestMeta(unittest.TestCase):
         self.assertEqual(meta.tags, {"a", "b", "c"})
         self.assertEqual(lines.peek(), "2019")
 
-    def test_get(self):
+    def test_get(self) -> None:
         meta = Meta()
-        meta.parse(Lines("test/.egt", io.StringIO(TEST_META1)))
+        meta.parse(Lines(Path("test/.egt"), io.StringIO(TEST_META1)))
         self.assertEqual(meta.get("field"), "value")
         self.assertEqual(meta.get("lowercase"), "value1")
         self.assertEqual(meta.get("uppercase"), "value2")
         self.assertEqual(meta.get("multiline"), "foobar\n baz")
         self.assertEqual(meta.get("tags"), {"a", "b", "c"})
 
-    def test_set(self):
+    def test_set(self) -> None:
         meta = Meta()
-        meta.parse(Lines("test/.egt", io.StringIO(TEST_META_SHORT)))
+        meta.parse(Lines(Path("test/.egt"), io.StringIO(TEST_META_SHORT)))
 
         meta.set("Foo", "bar")
         self.assertEqual(meta.get("foo"), "bar")
@@ -72,14 +73,14 @@ class TestMeta(unittest.TestCase):
 
         out.seek(0)
         meta = Meta()
-        meta.parse(Lines("test/.egt", out))
+        meta.parse(Lines(Path("test/.egt"), out))
         self.assertEqual(meta.get("name"), "test")
         self.assertEqual(meta.get("foo"), "bar")
         self.assertEqual(meta.get("multiline"), "line1\nline2")
 
-    def test_print(self):
+    def test_print(self) -> None:
         meta = Meta()
-        meta.parse(Lines("test/.egt", io.StringIO(TEST_META1)))
+        meta.parse(Lines(Path("test/.egt"), io.StringIO(TEST_META1)))
         out = io.StringIO()
         meta.print(out)
         self.assertEqual(

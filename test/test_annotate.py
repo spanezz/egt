@@ -11,11 +11,11 @@ from .utils import ProjectTestMixin
 
 
 class TestAnnotate(ProjectTestMixin, unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.projectfile = self.workdir / ".egt"
 
-    def annotate(self, text, today=datetime.date(2019, 2, 1)):
+    def annotate(self, text: str | list[str], today: datetime.date = datetime.date(2019, 2, 1)) -> str:
         with self.projectfile.open("w") as fd:
             if isinstance(text, str):
                 fd.write(text)
@@ -32,18 +32,18 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
             proj.print(fd, today=today)
             return fd.getvalue()
 
-    def test_empty(self):
+    def test_empty(self) -> None:
         self.assertEqual(self.annotate(""), "2019\n\n")
 
-    def test_randomtext(self):
+    def test_randomtext(self) -> None:
         self.assertEqual(self.annotate("randomtext\n"), "2019\n\nrandomtext\n")
         self.assertEqual(self.annotate("\nrandomtext\n"), "2019\n\nrandomtext\n")
         self.assertEqual(self.annotate("\n\nrandomtext\n"), "2019\n\nrandomtext\n")
 
-    def test_meta_only(self):
+    def test_meta_only(self) -> None:
         self.assertEqual(self.annotate("Lang: it\n"), "Lang: it\n\n2019\n\n")
 
-    def test_parse_error(self):
+    def test_parse_error(self) -> None:
         res = self.annotate("Lang: it\n\n2019\n01 pippo:\n - error\n")
         self.assertEqual(
             res.splitlines(),
@@ -58,7 +58,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
             ],
         )
 
-    def test_parse_errors_fixed(self):
+    def test_parse_errors_fixed(self) -> None:
         res = self.annotate("Lang: it\nParse-Errors: foo\n\n2019\n01 marzo:\n - fixed\n")
         self.assertEqual(
             res.splitlines(),
@@ -72,7 +72,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
             ],
         )
 
-    def test_totals(self):
+    def test_totals(self) -> None:
         self.maxDiff = None
 
         res = self.annotate(

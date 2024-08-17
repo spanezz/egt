@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import re
 import shlex
-from typing import TYPE_CHECKING, TextIO, cast
+from typing import TYPE_CHECKING, Any, TextIO, cast
 
 import taskw
 
@@ -111,7 +111,7 @@ class Task(BodyEntry):
         if content := self.get_content():
             print(self.indent + content, file=file)
 
-    def create(self):
+    def create(self) -> None:
         """
         Create the task in TaskWarrior
         """
@@ -129,7 +129,7 @@ class Task(BodyEntry):
         self.id = self.task["id"]
         self.is_new = False
 
-    def resolve_task(self):
+    def resolve_task(self) -> None:
         """
         Resolve a task ID from a project file into a TaskWarrior task.
 
@@ -200,7 +200,7 @@ class Tasks:
     def __len__(self) -> int:
         return self.tasks.__len__()
 
-    def force_load_tw(self, **kw):
+    def force_load_tw(self, **kw: Any) -> None:
         """
         Force lazy loading of TaskWarrior object, possibly with custom extra
         arguments.
@@ -265,7 +265,7 @@ class Tasks:
             line = Line(indent="  ", bullet="- ", text=f"[completed] {task['description']}")
             self.new_log(date, line)
 
-    def sync_tasks(self, modify_state=True) -> None:
+    def sync_tasks(self, modify_state: bool = True) -> None:
         """
         Sync the tasks in the body with TaskWarrior
 

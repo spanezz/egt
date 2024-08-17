@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from contextlib import contextmanager
+from collections.abc import Iterator
 
 import dateutil.parser
 
@@ -38,7 +39,7 @@ class Locale:
                 log.warn("Cannot set locale %s: %s", locname, e)
 
     @contextmanager
-    def temp_set(self, lang: str):
+    def temp_set(self, lang: str) -> Iterator[None]:
         cur = self.current_locale
         self.set(lang)
         yield
@@ -81,7 +82,7 @@ class Locale:
                     (locale.nl_langinfo(locale.ABMON_12), locale.nl_langinfo(locale.MON_12)),
                 ]
 
-                def __init__(self, dayfirst=True, yearfirst=False):
+                def __init__(self, dayfirst: bool = True, yearfirst: bool = False) -> None:
                     # for non-us dates, set ``dayfirst`` by default
                     super().__init__(dayfirst=dayfirst, yearfirst=yearfirst)
 

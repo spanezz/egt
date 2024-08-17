@@ -10,7 +10,8 @@ import subprocess
 import tempfile
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, IO, Any
+from collections.abc import Iterator, Generator
 from collections.abc import Callable, Sequence
 
 if TYPE_CHECKING:
@@ -26,8 +27,8 @@ def today() -> datetime.date:
 
 @contextlib.contextmanager
 def atomic_writer(
-    path: Path, mode: str = "w+b", chmod: int | None = 0o664, sync: bool = True, use_umask: bool = False, **kw
-):
+    path: Path, mode: str = "w+b", chmod: int | None = 0o664, sync: bool = True, use_umask: bool = False, **kw: Any
+) -> Iterator[IO[Any]]:
     """
     open/tempfile wrapper to atomically write to a file, by writing its
     contents to a temporary file in the same directory, and renaming it at the
@@ -66,7 +67,7 @@ def atomic_writer(
             raise
 
 
-def intervals_intersect(p1s, p1e, p2s, p2e):
+def intervals_intersect(p1s, p1e, p2s, p2e) -> bool:
     """
     Return True if the two intervals intersect
     """
@@ -83,7 +84,7 @@ class SummaryCol:
         self.align = align
         self._func = func
 
-    def init_data(self):
+    def init_data(self) -> None:
         pass
 
     def func(self, p: egtlib.Project) -> str:
@@ -103,7 +104,7 @@ class TaskStatCol(SummaryCol):
         except IndexError:
             self._proj = None
 
-    def init_data(self):
+    def init_data(self) -> None:
         if self._proj is None:
             return
         tasks = self._proj.body.tasks.tw.filter_tasks({"status": "pending"})
@@ -115,21 +116,21 @@ class TaskStatCol(SummaryCol):
             except KeyError:
                 pass
 
-    def func(self, p):
+    def func(self, p: egtlib.Project) -> str:
         return str(self.task_stats[p.name])
 
 
 class HoursCol(SummaryCol):
-    def func(self, p):
+    def func(self, p: egtlib.Project) -> str:
         return format_duration(p.elapsed, tabular=True) if p.last_updated else "--"
 
 
 class LastEntryCol(SummaryCol):
-    def __init__(self, *args):
+    def __init__(self, *args: Any) -> None:
         super().__init__(*args)
         self.now = datetime.datetime.now()
 
-    def func(self, p):
+    def func(self, p: egtlib.Project) -> str:
         if p.last_updated:
             return format_td(self.now - p.last_updated, tabular=True) + " ago"
         else:
@@ -151,7 +152,7 @@ def format_duration(mins: int, tabular: bool = False) -> str:
             return f"{h}h"
 
 
-def format_td(td: datetime.timedelta, tabular=False) -> str:
+def format_td(td: datetime.timedelta, tabular: bool = False) -> str:
     """
     Format a timedelta object
     """
@@ -171,7 +172,7 @@ def format_td(td: datetime.timedelta, tabular=False) -> str:
             return f"{td.days} days"
 
 
-def stream_output(proc: subprocess.Popen):
+def stream_output(proc: subprocess.Popen) -> Generator[tuple[str, str | int], None, None]:
     """
     Take a subprocess.Popen object and generate its output, line by line,
     annotated with "stdout" or "stderr". At process termination it generates

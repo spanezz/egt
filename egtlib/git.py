@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 re_gitsha = re.compile(r"^\s+- \[git:(?P<sha>[a-f0-9]{4,})\]\s+")
 
 
-def collect_achievements(proj: project.Project, entry: Entry):
+def collect_achievements(proj: project.Project, entry: Entry) -> None:
     """
     Add to a log Entry one line for each commit that happened during the entry
     time span

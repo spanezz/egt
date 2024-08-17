@@ -13,11 +13,11 @@ from .utils import ProjectTestMixin
 
 
 class TestLog(ProjectTestMixin, unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.projectfile = self.workdir / ".egt"
 
-    def write_project(self, log_lines, lang=None):
+    def write_project(self, log_lines: list[str], lang: str | None = None) -> None:
         with self.projectfile.open("w") as fd:
             print("Name: testprj", file=fd)
             if lang is not None:
@@ -29,7 +29,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             print(file=fd)
             print("hypothetic plans", file=fd)
 
-    def testEmpty(self):
+    def testEmpty(self) -> None:
         with self.projectfile.open("w") as fd:
             print("Name: testprj", file=fd)
             print("", file=fd)
@@ -41,7 +41,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         proj.log.print(file=out, today=datetime.date(2018, 6, 1))
         self.assertEqual(out.getvalue(), "2018\n")
 
-    def testWritePartial(self):
+    def testWritePartial(self) -> None:
         self.write_project(
             [
                 "2015",
@@ -63,7 +63,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             "2015\n" "15 march: 9:00-12:00 3h\n" " - tested things\n" "16 march:\n" " - implemented day logs\n",
         )
 
-    def testWriteNewYear(self):
+    def testWriteNewYear(self) -> None:
         # TODO: mock year as 2016
         self.write_project(
             [
@@ -92,7 +92,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertIsInstance(entry, Command)
         return cast(Command, entry)
 
-    def testParse(self):
+    def testParse(self) -> None:
         """
         Test creation of new taskwarrior tasks from a project file
         """
@@ -140,7 +140,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(body_lines[3], "16 march:")
         self.assertEqual(body_lines[4], " - implemented day logs")
 
-    def testParseNewRequest(self):
+    def testParseNewRequest(self) -> None:
         """
         Test creation of new taskwarrior tasks from a project file
         """
@@ -222,7 +222,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(body_lines[5], new_entry_dt3.strftime("%d %B:"))
         self.assertEqual(body_lines[6], " - new day entry")
 
-    def testParseItalian(self):
+    def testParseItalian(self) -> None:
         """
         Test creation of new taskwarrior tasks from a project file
         """
@@ -271,7 +271,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(body_lines[3], "16 marzo:")
         self.assertEqual(body_lines[4], " - implemented day logs")
 
-    def testParseFrench(self):
+    def testParseFrench(self) -> None:
         """
         Test creation of new taskwarrior tasks from a project file
         """
@@ -320,7 +320,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(body_lines[3], "16 mars:")
         self.assertEqual(body_lines[4], " - implemented day logs")
 
-    def test_mixed_langs(self):
+    def test_mixed_langs(self) -> None:
         lines = [
             "2015",
             "9:00-",
@@ -405,7 +405,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 ],
             )
 
-    def testTags(self):
+    def testTags(self) -> None:
         """
         Test creation of new taskwarrior tasks from a project file
         """

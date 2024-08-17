@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from typing import Any
+from typing import Any, cast
 
 try:
     import coloredlogs
@@ -15,7 +15,7 @@ except ModuleNotFoundError:
 
 def _get_first_docstring_line(obj: Any) -> str | None:
     try:
-        return obj.__doc__.split("\n")[1].strip()
+        return cast(str, obj.__doc__.split("\n")[1].strip())
     except (AttributeError, IndexError):
         return None
 
@@ -61,7 +61,7 @@ class Command:
             logging.basicConfig(level=level, stream=sys.stderr, format=FORMAT)
 
     @classmethod
-    def add_subparser(cls, subparsers):
+    def add_subparser(cls, subparsers: argparse._SubParsersAction[Any]) -> argparse.ArgumentParser:
         parser = subparsers.add_parser(
             cls.command_name(),
             help=_get_first_docstring_line(cls),
@@ -78,4 +78,4 @@ class Command:
             action="store_true",
             help="debugging output",
         ),
-        return parser
+        return cast(argparse.ArgumentParser, parser)

@@ -210,7 +210,7 @@ class Egt:
         return sorted(self.loaded_projects.values(), key=lambda p: p.name)
 
     @property
-    def project_names(self):
+    def project_names(self) -> list[str]:
         return sorted(self.loaded_projects.keys())
 
     @property
@@ -236,7 +236,7 @@ class Egt:
 
     def weekrpt(
         self,
-        tags: list[str] = None,
+        tags: set[str] | None = None,
         end: datetime.date | None = None,
         days: int = 7,
         projs: list[Project] | None = None,

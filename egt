@@ -5,7 +5,7 @@ import sys
 VERSION = "0.4"
 
 
-def main():
+def main() -> int | None:
     parser = argparse.ArgumentParser(description="Enrico's getting things done")
     parser.add_argument("--version", action="version", version="%(prog)s " + VERSION)
     parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")

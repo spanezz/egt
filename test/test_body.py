@@ -18,11 +18,11 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
         " - wrote more unit tests",
     ]
 
-    def test_empty(self):
+    def test_empty(self) -> None:
         proj = self.project(body=[])
         self.assertEqual(proj.body.content, [])
 
-    def test_lines(self):
+    def test_lines(self) -> None:
         proj = self.project(body=["first line", "", "second line", "* third line"])
         self.assertEqual(
             proj.body.content,
@@ -34,7 +34,7 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
             ],
         )
 
-    def test_indent(self):
+    def test_indent(self) -> None:
         proj = self.project(body=["first line", "  ", "  second line", "  * third line"])
         self.assertEqual(
             proj.body.content,
@@ -47,7 +47,7 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
             ],
         )
 
-    def test_paragraph(self):
+    def test_paragraph(self) -> None:
         proj = self.project(body=["first line", "  ", " * second line", "   third line"])
         self.assertEqual(
             proj.body.content,
@@ -59,7 +59,7 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
             ],
         )
 
-    def test_date(self):
+    def test_date(self) -> None:
         proj = self.project(
             body=["2022-10-01: first line", "  ", " * 2022-10-15:  second line", "   2022-10-30: third line"]
         )
