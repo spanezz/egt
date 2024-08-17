@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import contextlib
 import fcntl
 import os
 import os.path
@@ -21,33 +22,52 @@ def today() -> datetime.date:
     return datetime.date.today()
 
 
-class atomic_writer(object):
+@contextlib.contextmanager
+def atomic_writer(
+        fname: str,
+        mode: str = "w+b",
+        chmod: Optional[int] = 0o664,
+        sync: bool = True,
+        use_umask: bool = False,
+        **kw):
     """
-    Atomically write to a file
+    open/tempfile wrapper to atomically write to a file, by writing its
+    contents to a temporary file in the same directory, and renaming it at the
+    end of the block if no exception has been raised.
+
+    :arg fname: name of the file to create
+    :arg mode: passed to mkstemp/open
+    :arg chmod: permissions of the resulting file
+    :arg sync: if True, call fdatasync before renaming
+    :arg use_umask: if True, apply umask to chmod
+
+    All the other arguments are passed to open
     """
 
-    def __init__(self, fname: str, mode: str, osmode: int = 0o644, sync: bool = True, **kw):
-        self.fname = fname
-        self.osmode = osmode
-        self.sync = sync
-        dirname = os.path.dirname(self.fname)
-        self.fd, self.abspath = tempfile.mkstemp(dir=dirname, text="b" not in mode)
-        self.outfd = open(self.fd, mode, closefd=True, **kw)
+    if chmod is not None and use_umask:
+        cur_umask = os.umask(0)
+        os.umask(cur_umask)
+        chmod &= ~cur_umask
 
-    def __enter__(self) -> IO:
-        return self.outfd
+    dirname = os.path.dirname(fname)
+    if not os.path.isdir(dirname):
+        os.makedirs(dirname)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if exc_type is None:
-            self.outfd.flush()
-            if self.sync:
-                os.fdatasync(self.fd)
-            os.fchmod(self.fd, self.osmode)
-            os.rename(self.abspath, self.fname)
-        else:
-            os.unlink(self.abspath)
-        self.outfd.close()
-        return False
+    fd, abspath = tempfile.mkstemp(dir=dirname, text="b" not in mode, prefix=fname)
+    outfd = open(fd, mode, closefd=True, **kw)
+    try:
+        yield outfd
+        outfd.flush()
+        if sync:
+            os.fdatasync(fd)
+        if chmod is not None:
+            os.fchmod(fd, chmod)
+        os.rename(abspath, fname)
+    except Exception:
+        os.unlink(abspath)
+        raise
+    finally:
+        outfd.close()
 
 
 def intervals_intersect(p1s, p1e, p2s, p2e):
