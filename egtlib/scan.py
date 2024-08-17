@@ -33,8 +33,6 @@ def scan(top: Path) -> Generator[Path, None, None]:
     """
     Generate the pathnames of all project files inside the given directory
     """
-    # TODO: remove after Path migration is complete
-    assert isinstance(top, Path)
     # inodes already visited
     seen: Set[int] = set()
     for root, dirs, files in os.walk(top, followlinks=True):

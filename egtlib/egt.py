@@ -168,9 +168,6 @@ class Egt:
         """
         from .project import Project
 
-        # TODO: remove after Path migration
-        assert isinstance(path, Path)
-
         if not Project.has_project(path):
             log.warning("project %s has disappeared: please rerun scan", path)
             return None

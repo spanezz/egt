@@ -68,9 +68,6 @@ class State:
         directory. If it is not None, it is the directory in which state is to
         be saved.
         """
-        # TODO: remove after Path migration is complete
-        assert all(isinstance(x, Path) for x in dirs)
-        assert statedir is None or isinstance(statedir, Path)
         if statedir is None:
             statedir = cls.get_state_dir()
 

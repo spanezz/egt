@@ -64,9 +64,6 @@ class Project:
     """
 
     def __init__(self, path: Path, *, config: Config, statedir: Path | None = None):
-        # TODO: remove after migration to Path is successful
-        assert isinstance(path, Path)
-        assert isinstance(statedir, Path) or statedir is None
         self.config = config
         self.statedir = statedir
         self.abspath = path
