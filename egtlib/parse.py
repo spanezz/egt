@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Generator, List, Optional, TextIO
 
 
@@ -8,15 +9,15 @@ class Lines:
     Access a text file line by line, with line numbers
     """
 
-    def __init__(self, pathname: str, fd: Optional[TextIO] = None):
+    def __init__(self, path: Path, fd: Optional[TextIO] = None):
         # File name being parsed
-        self.fname = pathname
+        self.path = path
         # Current line being parsed
         self.lineno = 0
         # Read the file, split in trimmed lines
         self.lines: List[str]
         if fd is None:
-            with open(self.fname, "rt") as fd:
+            with self.path.open("r") as fd:
                 self.lines = [x.rstrip() for x in fd]
         else:
             self.lines = [x.rstrip() for x in fd]

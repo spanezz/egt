@@ -2,6 +2,7 @@ import datetime
 import logging
 import re
 import sys
+from pathlib import Path
 from typing import Any, BinaryIO, Dict, List, Optional, Set, TextIO
 
 import taskw
@@ -141,12 +142,13 @@ class Egt:
     """
     Collection of parsed .egt files as Project objects
     """
+
     def __init__(
         self,
         config: Config,
         filter: List[str] = [],
         show_archived: bool = False,
-        statedir: str = None,
+        statedir: Path | None = None,
     ):
         self.config = config
         self.state = State()
@@ -157,7 +159,7 @@ class Egt:
         # It is built lazily when needed, and is None when not yet built.
         self._projects: Optional[Dict[str, Project]] = None
 
-    def load_project(self, fname: str, project_fd: Optional[TextIO] = None) -> Optional[Project]:
+    def load_project(self, path: Path, project_fd: Optional[TextIO] = None) -> Optional[Project]:
         """
         Return a Project object given its file name.
 
@@ -166,13 +168,16 @@ class Egt:
         """
         from .project import Project
 
-        if not Project.has_project(fname):
-            log.warning("project %s has disappeared: please rerun scan", fname)
+        # TODO: remove after Path migration
+        assert isinstance(path, Path)
+
+        if not Project.has_project(path):
+            log.warning("project %s has disappeared: please rerun scan", path)
             return None
-        proj = Project.from_file(fname, fd=project_fd, config=self.config)
+        proj = Project.from_file(path, fd=project_fd, config=self.config)
         if not self.show_archived and proj.archived:
             return None
-        proj.default_tags.update(self._default_tags(fname))
+        proj.default_tags.update(self._default_tags(path))
         if not self.filter.matches(proj):
             return None
         return proj
@@ -180,19 +185,20 @@ class Egt:
     def _load_projects(self) -> Dict[str, Project]:
         projs = {}
         for name, info in self.state.projects.items():
-            proj = self.load_project(info["fname"])
+            proj = self.load_project(Path(info["fname"]))
             if proj is None:
                 continue
             projs[proj.name] = proj
         return projs
 
-    def _default_tags(self, abspath: str) -> Set[str]:
+    def _default_tags(self, abspath: Path) -> Set[str]:
         """
         Guess tags from the project file pathname
         """
         tags: Set[str] = set()
+        str_path = abspath.as_posix()
         for tag, regexp in self.config.autotag_rules:
-            if re.search(regexp, abspath):
+            if re.search(regexp, str_path):
                 tags.add(tag)
         return tags
 

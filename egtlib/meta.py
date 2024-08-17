@@ -101,11 +101,11 @@ class Meta:
             return getattr(self, name)
         return self._raw.get(name, default)
 
-    def set(self, name: str, value: str) -> None:
+    def set(self, name: str, value: Any) -> None:
         """
         Set the value of a metadata element
         """
-        self._raw[name.lower()] = value
+        self._raw[name.lower()] = str(value)
 
     def unset(self, name: str) -> None:
         """

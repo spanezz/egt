@@ -6,6 +6,7 @@ import logging
 import os.path
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any, List, Optional, Set, TextIO, Tuple, cast
 
 from .body import Body
@@ -26,7 +27,7 @@ class ProjectState:
 
             statedir = State.get_state_dir()
         # TODO: ensure name does not contain '/'
-        self.abspath = os.path.join(statedir, "project-{}.json".format(project.name))
+        self.abspath = statedir / f"project-{project.name}.json"
         self._state: Optional[dict] = None
 
     def get(self, name: str) -> Any:
@@ -41,9 +42,9 @@ class ProjectState:
         self._save()
 
     def _load(self) -> dict:
-        if not os.path.exists(self.abspath):
+        if not self.abspath.exists():
             return {}
-        with open(self.abspath, "rt") as fd:
+        with self.abspath.open("r") as fd:
             return json.load(fd)
 
     def _save(self) -> None:
@@ -62,16 +63,19 @@ class Project:
     * A free-text body (body.Body)
     """
 
-    def __init__(self, abspath: str, *, config: Config, statedir: Optional[str] = None):
+    def __init__(self, path: Path, *, config: Config, statedir: Path | None = None):
+        # TODO: remove after migration to Path is successful
+        assert isinstance(path, Path)
+        assert isinstance(statedir, Path) or statedir is None
         self.config = config
         self.statedir = statedir
-        self.abspath = abspath
-        self.default_path, basename = os.path.split(abspath)
-        if basename == ".egt":
-            self.default_name = os.path.basename(self.default_path)
+        self.abspath = path
+        self.default_path = path.parent
+        if path.name == ".egt":
+            self.default_name = self.default_path.name
         else:
-            self.default_name = os.path.splitext(basename)[0]
-        self.default_tags: Set[str] = set()
+            self.default_name = path.stem
+        self.default_tags: set[str] = set()
         self.archived: bool = False
 
         # Project state, loaded lazily, None if not loaded
@@ -123,15 +127,15 @@ class Project:
         return self.default_tags | self.meta.tags
 
     @classmethod
-    def from_file(self, abspath: str, fd: Optional[TextIO] = None, config=None):
+    def from_file(self, path: Path, fd: Optional[TextIO] = None, config=None):
         # Default values, can be overridden by file metadata
-        p = Project(abspath, config=config)
+        p = Project(path, config=config)
         # Load the actual data
         p.load(fd=fd)
         return p
 
     @classmethod
-    def mock(self, abspath: str, name: Optional[str] = None, path: Optional[str] = None, tags=None, config=None):
+    def mock(self, abspath: Path, name: Optional[str] = None, path: Path | None = None, tags=None, config=None):
         p = Project(abspath, config=config if config is not None else Config())
         if path is not None:
             p.default_path = path
@@ -154,7 +158,7 @@ class Project:
         if first is None:
             return
         if not Log.is_start_line(first) and Meta.is_start_line(first):
-            log.debug("%s:%d: parsing metadata", lines.fname, lines.lineno)
+            log.debug("%s:%d: parsing metadata", lines.path, lines.lineno)
             self.meta.parse(lines)
 
         lines.skip_empty_lines()
@@ -165,12 +169,12 @@ class Project:
         if first_line is None:
             return
         elif self.log.is_start_line(first_line):
-            log.debug("%s:%d: parsing log", lines.fname, lines.lineno)
+            log.debug("%s:%d: parsing log", lines.path, lines.lineno)
             self.log.parse(lines, lang=self.meta.lang)
             lines.skip_empty_lines()
 
         # Parse body
-        log.debug("%s:%d: parsing body", lines.fname, lines.lineno)
+        log.debug("%s:%d: parsing body", lines.path, lines.lineno)
         self.body.parse(lines)
 
         # Allow to group archived projects with the same name.
@@ -268,19 +272,21 @@ class Project:
 
         run_editor(self)
 
-    def run_grep(self, args):
+    def run_grep(self, args: list[str]) -> None:
         for gd in self.gitdirs():
-            cwd = os.path.abspath(os.path.join(gd, ".."))
+            cwd = gd.parent.absolute()
             cmd = ["git", "grep"] + args
             log.info("%s: git grep %s", cwd, " ".join(cmd))
-            p = subprocess.Popen(cmd, cwd=cwd, close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(
+                cmd, cwd=cwd.as_posix(), close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
             for ltype, line in stream_output(p):
                 if ltype == "stdout":
                     print("{}:{}".format(self.name, line), file=sys.stdout)
                 elif ltype == "stderr":
                     print("{}:{}".format(self.name, line), file=sys.stderr)
 
-    def gitdirs(self, depth=2, root=None):
+    def gitdirs(self, depth=2, root=None) -> Iterator[Path]:
         """
         Find all .git directories below the project path
         """
@@ -289,19 +295,17 @@ class Project:
             root = self.path
 
         # Check the current dir
-        cand = os.path.join(root, ".git")
-        if os.path.isdir(cand):
+        cand = root / ".git"
+        if cand.is_dir():
             yield cand
 
         # Recurse into subdirs if we still have some way to go
         if depth > 1:
-            for fn in os.listdir(root):
-                if fn.startswith("."):
+            for sub in root.iterdir():
+                if sub.name.startswith("."):
                     continue
-                d = os.path.join(root, fn)
-                if os.path.isdir(d):
-                    for gd in self.gitdirs(depth - 1, d):
-                        yield gd
+                if sub.is_dir():
+                    yield from self.gitdirs(depth - 1, sub)
 
     def backup(self, tarout):
         backup_paths = [x.strip() for x in self.meta.get("backup", "").split("\n")]
@@ -333,10 +337,10 @@ class Project:
                 continue
             tarout.add(path)
 
-    def _create_archive(self, pathname: str, start: datetime.date, end: datetime.date) -> Optional["Project"]:
-        pathname = os.path.expanduser(pathname)
-        if os.path.exists(pathname):
-            log.warn("%s not archived: %s already exists", self.name, pathname)
+    def _create_archive(self, path: Path, start: datetime.date, end: datetime.date) -> Optional["Project"]:
+        path = path.expanduser()
+        if path.exists():
+            log.warn("%s not archived: %s already exists", self.name, path)
             return None
 
         # Select the log entries
@@ -344,13 +348,13 @@ class Project:
         if not entries:
             return None
 
-        archived = Project(pathname, config=self.config)
+        archived = Project(path, config=self.config)
         archived.meta = self.meta.copy()
         archived.log._entries = entries
         archived.meta.set("archived", "yes")
         archived.meta.set_durations(archived.log.durations())
         archived.archived = True
-        with open(pathname, "wt") as out:
+        with path.open("w") as out:
             archived.print(out)
         return archived
 
@@ -361,7 +365,7 @@ class Project:
         # Generate the target file name
         if "%" in archive_dir:
             archive_dir = month.strftime(archive_dir)
-        pathname = os.path.join(archive_dir, f"{month:%Y%m}-{self.name}.egt")
+        pathname = Path(archive_dir) / f"{month:%Y%m}-{self.name}.egt"
 
         next_month = (month + datetime.timedelta(days=40)).replace(day=1)
         return next_month, self._create_archive(pathname, month, next_month)
@@ -433,5 +437,5 @@ class Project:
             self.meta.set_durations(self.log.durations())
 
     @classmethod
-    def has_project(cls, abspath):
-        return os.path.exists(abspath)
+    def has_project(cls, path: Path):
+        return path.exists()

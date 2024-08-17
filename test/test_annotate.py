@@ -14,17 +14,17 @@ from .utils import ProjectTestMixin
 class TestAnnotate(ProjectTestMixin, unittest.TestCase):
     def setUp(self):
         super().setUp()
-        self.projectfile = os.path.join(self.workdir.name, ".egt")
+        self.projectfile = self.workdir / ".egt"
 
     def annotate(self, text, today=datetime.date(2019, 2, 1)):
-        with open(self.projectfile, "wt") as fd:
+        with self.projectfile.open("w") as fd:
             if isinstance(text, str):
                 fd.write(text)
             else:
                 for line in text:
                     print(line, file=fd)
 
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 

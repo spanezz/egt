@@ -1,3 +1,7 @@
+"""
+Facilities to run external commands.
+"""
+
 from __future__ import annotations
 
 import os

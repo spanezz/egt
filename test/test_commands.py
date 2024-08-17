@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-import os
+import contextlib
+import io
 import unittest
-from io import StringIO
+from pathlib import Path
 from unittest import mock
 
 import egtlib
@@ -33,28 +34,25 @@ tags: blubb, foo
 class TestCommands(ProjectTestMixin, unittest.TestCase):
     def setUp(self):
         super().setUp()
-        self.p = os.path.join(self.workdir.name, ".egt")
-        with open(self.p, "wt") as fd:
-            fd.write(body_p)
-        self.p1 = os.path.join(self.workdir.name, "p1.egt")
-        with open(self.p1, "wt") as fd:
-            fd.write(body_p1)
-        self.p2 = os.path.join(self.workdir.name, "p2.egt")
-        with open(self.p2, "wt") as fd:
-            fd.write(body_p2)
+        self.p = self.workdir / ".egt"
+        self.p.write_text(body_p)
+        self.p1 = self.workdir / "p1.egt"
+        self.p1.write_text(body_p1)
+        self.p2 = self.workdir / "p2.egt"
+        self.p2.write_text(body_p2)
 
     def test_scan(self):
-        State.rescan([self.workdir.name], statedir=self.workdir.name, config=Config())
+        State.rescan([self.workdir], statedir=self.workdir, config=Config())
         state = State()
-        state.load(self.workdir.name)
+        state.load(self.workdir)
         self.assertIn("test", state.projects)
         self.assertIn("p1", state.projects)
         self.assertIn("p2", state.projects)
         self.assertEqual(len(state.projects), 3)
 
     def test_list(self):
-        State.rescan([self.workdir.name], statedir=self.workdir.name, config=Config())
-        egt = egtlib.Egt(config=Config(), statedir=self.workdir.name)
+        State.rescan([self.workdir], statedir=self.workdir, config=Config())
+        egt = egtlib.Egt(config=Config(), statedir=self.workdir)
         names = set(p.name for p in egt.projects)
         self.assertIn("test", names)
         self.assertIn("p1", names)
@@ -66,15 +64,15 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
             {"cmd": "projects", "res": ["p1", "p2", "test"]},
             {"cmd": "tags", "res": ["bar", "blubb", "foo"]},
         ]
-        State.rescan([self.workdir.name], statedir=self.workdir.name, config=Config())
-        egt = egtlib.Egt(config=Config(), statedir=self.workdir.name)
+        State.rescan([self.workdir], statedir=self.workdir, config=Config())
+        egt = egtlib.Egt(config=Config(), statedir=self.workdir)
         with mock.patch("egtlib.cli.Command.setup_logging"):
             for subtest in subtests:
                 with self.subTest(config=subtest["cmd"]):
                     mock_arg = mock.Mock(subcommand=subtest["cmd"])
                     completion = Completion(mock_arg)
                     with mock.patch.object(completion, "make_egt", return_value=egt):
-                        with mock.patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+                        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
                             completion.main()
                     names = mock_stdout.getvalue().split("\n")[:-1]
                     self.assertEqual(names, subtest["res"])
@@ -92,9 +90,9 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     # TODO: test_serve
 
     def test_backup(self):
-        State.rescan([self.workdir.name], statedir=self.workdir.name, config=Config())
-        egt = egtlib.Egt(config=Config(), statedir=self.workdir.name)
-        tarfname = os.path.join(self.workdir.name, "backup.tar")
+        State.rescan([self.workdir], statedir=self.workdir, config=Config())
+        egt = egtlib.Egt(config=Config(), statedir=self.workdir)
+        tarfname = self.workdir / "backup.tar"
         with open(tarfname, "wb") as fd:
             egt.backup(fd)
 
@@ -104,10 +102,10 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
 
         with tarfile.open(tarfname, "r") as tar:
             for f in tar:
-                names.append(f.name)
+                names.append(Path(f.name))
 
-        wd = os.path.relpath(self.workdir.name, "/")
-        self.assertIn(os.path.join(wd, ".egt"), names)
-        self.assertIn(os.path.join(wd, "p1.egt"), names)
-        self.assertIn(os.path.join(wd, "p2.egt"), names)
+        wd = self.workdir.relative_to("/")
+        self.assertIn(wd / ".egt", names)
+        self.assertIn(wd / "p1.egt", names)
+        self.assertIn(wd / "p2.egt", names)
         self.assertEqual(len(names), 3)

@@ -10,6 +10,7 @@ import shutil
 import sys
 import typing
 from contextlib import contextmanager
+from pathlib import Path
 from typing import Optional, Tuple, Type
 
 import egtlib
@@ -60,7 +61,7 @@ class Scan(EgtCommand):
         if self.args.roots:
             dirs = self.args.roots
         else:
-            dirs = [os.path.expanduser("~")]
+            dirs = [Path.home()]
         from .state import State
 
         State.rescan(dirs, config=self.config)
@@ -115,9 +116,9 @@ class List(ProjectsCommand):
                 else:
                     print(p.abspath)
             else:
-                path = p.path
-                if p.path.startswith(homedir):
-                    path = "~" + p.path[len(homedir) :]
+                path = p.path.as_posix()
+                if p.path.is_relative_to(homedir):
+                    path = "~/" + p.path.relative_to(homedir).as_posix()
                 if self.args.age:
                     print(p.name.ljust(name_len), ages[idx].ljust(age_len), path)
                 else:

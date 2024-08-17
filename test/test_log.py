@@ -16,13 +16,13 @@ from .utils import ProjectTestMixin
 class TestLog(ProjectTestMixin, unittest.TestCase):
     def setUp(self):
         super().setUp()
-        self.projectfile = os.path.join(self.workdir.name, ".egt")
+        self.projectfile = self.workdir / ".egt"
 
     def write_project(self, log_lines, lang=None):
-        with open(self.projectfile, "wt") as fd:
+        with self.projectfile.open("w") as fd:
             print("Name: testprj", file=fd)
             if lang is not None:
-                print("Lang: {}".format(lang), file=fd)
+                print(f"Lang: {lang}", file=fd)
             print("Tags: testtag1, testtag2", file=fd)
             print(file=fd)
             for line in log_lines:
@@ -31,10 +31,10 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             print("hypothetic plans", file=fd)
 
     def testEmpty(self):
-        with open(self.projectfile, "wt") as fd:
+        with self.projectfile.open("w") as fd:
             print("Name: testprj", file=fd)
             print("", file=fd)
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.load()
         self.assertEqual(len(proj.log._entries), 0)
 
@@ -52,7 +52,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - implemented day logs",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.load()
         proj.log._entries.pop(0)
         self.assertEqual(len(proj.log._entries), 2)
@@ -73,7 +73,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - tested things",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.load()
         self.assertEqual(len(proj.log._entries), 2)
 
@@ -106,7 +106,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - implemented day logs",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
@@ -156,7 +156,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - new day entry",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
@@ -237,7 +237,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             ],
             lang="it",
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
@@ -286,7 +286,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             ],
             lang="fr",
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         proj.load()
 
@@ -330,26 +330,26 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             " - implemented day logs",
         ]
         self.write_project(lines + ["15 march:", " - localized"])
-        proj_default = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj_default = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj_default.load()
 
         e = self.assertEntryIsEntry(proj_default.log._entries[3])
         self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 marzo:", " - localized"], lang="it")
-        proj_it = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj_it = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj_it.load()
         e = self.assertEntryIsEntry(proj_default.log._entries[3])
         self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 mars:", " - localized"], lang="fr")
-        proj_fr = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj_fr = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj_fr.load()
         e = self.assertEntryIsEntry(proj_default.log._entries[3])
         self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 march:", " - localized"])
-        proj_default1 = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj_default1 = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj_default1.load()
         e = self.assertEntryIsEntry(proj_default.log._entries[3])
         self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
@@ -419,7 +419,7 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
                 " - implemented day logs",
             ]
         )
-        proj = Project(self.projectfile, statedir=self.workdir.name, config=Config())
+        proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.load()
 
         e1 = self.assertEntryIsEntry(proj.log._entries[1])

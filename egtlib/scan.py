@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import os.path
+from pathlib import Path
 from typing import Generator, Set
 
 log = logging.getLogger(__name__)
@@ -20,20 +21,20 @@ LEAF_FILE_MARKERS = frozenset(
 )
 
 
-def is_script(fname: str) -> bool:
+def is_script(fname: Path) -> bool:
     """
     Check if a file looks like a script
     """
-    with open(fname) as fd:
-        if fd.readline().startswith("#!"):
-            return True
-    return False
+    with fname.open() as fd:
+        return fd.read(2) == "#!"
 
 
-def scan(top: str) -> Generator[str, None, None]:
+def scan(top: Path) -> Generator[Path, None, None]:
     """
     Generate the pathnames of all project files inside the given directory
     """
+    # TODO: remove after Path migration is complete
+    assert isinstance(top, Path)
     # inodes already visited
     seen: Set[int] = set()
     for root, dirs, files in os.walk(top, followlinks=True):
@@ -56,7 +57,7 @@ def scan(top: str) -> Generator[str, None, None]:
         for f in files:
             if f.endswith(".egt"):
                 # All .egt files are good
-                yield os.path.join(top, root, f)
+                yield top / root / f
                 if f == ".egt":
                     has_dot_egt = True
             elif f == "egt":
@@ -67,7 +68,7 @@ def scan(top: str) -> Generator[str, None, None]:
         # If 'egt' exists, there is no '.egt' and egt isn't a script, it is
         # good
         if has_egt and not has_dot_egt:
-            fname = os.path.join(top, root, "egt")
+            fname = top / root / "egt"
             if not is_script(fname):
                 yield fname
             else:
