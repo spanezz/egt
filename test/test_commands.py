@@ -172,7 +172,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
                 names.append(Path(f.name))
 
         wd = self.workdir.relative_to("/")
-        self.assertIn(wd / ".egt", names)
-        self.assertIn(wd / "p1.egt", names)
-        self.assertIn(wd / "p2.egt", names)
+        self.assertIn(wd / "p" / ".egt", names)
+        self.assertIn(wd / "p1" / ".egt", names)
+        self.assertIn(wd / "p2" / ".egt", names)
         self.assertEqual(len(names), 3)
