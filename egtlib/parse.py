@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Generator
 from pathlib import Path
-from typing import TextIO
+from typing import IO
 
 
 class Lines:
@@ -10,7 +10,7 @@ class Lines:
     Access a text file line by line, with line numbers
     """
 
-    def __init__(self, path: Path, fd: TextIO | None = None):
+    def __init__(self, path: Path, fd: IO[str] | None = None):
         # File name being parsed
         self.path = path
         # Current line being parsed

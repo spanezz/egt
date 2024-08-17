@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime
 import re
-from typing import TextIO, cast
+from typing import IO, cast
 
 from . import project
 from .parse import Lines
@@ -26,7 +26,7 @@ class BodyEntry:
     def get_content(self) -> str:
         raise NotImplementedError(f"{self.__class__.__name__}.get_content() has been called on raw BodyEntry object")
 
-    def print(self, file: TextIO | None = None) -> None:
+    def print(self, file: IO[str] | None = None) -> None:
         print(self.indent + self.get_content(), file=file)
 
     def __eq__(self, other: object) -> bool:
@@ -81,7 +81,7 @@ class Line(BodyEntry):
     def get_content(self) -> str:
         return self.text
 
-    def print(self, file: TextIO | None = None) -> None:
+    def print(self, file: IO[str] | None = None) -> None:
         if self.date:
             print(f"{self.indent}{self.bullet}{self.date:%Y-%m-%d}{self.date_suffix}{self.text}", file=file)
         else:
@@ -143,7 +143,7 @@ class Body:
 
         self.tasks.post_parse_hook()
 
-    def print(self, file: TextIO) -> bool:
+    def print(self, file: IO[str]) -> bool:
         """
         Write the body as a project body section to the given output file.
 

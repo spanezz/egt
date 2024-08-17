@@ -137,8 +137,8 @@ class Project:
         return p
 
     @classmethod
-    def mock(self, abspath: Path, name: str | None = None, path: Path | None = None, tags=None, config=None) -> Self:
-        p = Project(abspath, config=config if config is not None else Config())
+    def mock(cls, abspath: Path, name: str | None = None, path: Path | None = None, tags=None, config=None) -> Self:
+        p = cls(abspath, config=config if config is not None else Config())
         if path is not None:
             p.default_path = path
         if name is not None:
@@ -147,7 +147,7 @@ class Project:
             p.default_tags = tags
         return p
 
-    def load(self, fd: IO[str] | None = None):
+    def load(self, fd: IO[str] | None = None) -> None:
         from .parse import Lines
 
         lines = Lines(self.abspath, fd=fd)
@@ -188,7 +188,7 @@ class Project:
         if self.meta.archived:
             self.archived = True
 
-    def print(self, out: IO[str], today: datetime.date | None = None):
+    def print(self, out: IO[str], today: datetime.date | None = None) -> None:
         """
         Serialize the whole project as a project file to the given file
         descriptor.
@@ -206,7 +206,7 @@ class Project:
 
         self.body.print(out)
 
-    def save(self, today: datetime.date | None = None):
+    def save(self, today: datetime.date | None = None) -> None:
         """
         Save over the original source file
         """
@@ -264,12 +264,12 @@ class Project:
 
         return since, until
 
-    def spawn_terminal(self, with_editor=False):
+    def spawn_terminal(self, with_editor=False) -> None:
         from .system import run_work_session
 
         run_work_session(self, with_editor)
 
-    def run_editor(self):
+    def run_editor(self) -> None:
         from .system import run_editor
 
         run_editor(self)
@@ -288,7 +288,7 @@ class Project:
                 elif ltype == "stderr":
                     print(f"{self.name}:{line}", file=sys.stderr)
 
-    def gitdirs(self, depth=2, root=None) -> Iterator[Path]:
+    def gitdirs(self, depth: int = 2, root: Path | None = None) -> Iterator[Path]:
         """
         Find all .git directories below the project path
         """
@@ -309,7 +309,7 @@ class Project:
                 if sub.is_dir():
                     yield from self.gitdirs(depth - 1, sub)
 
-    def backup(self, tarout):
+    def backup(self, tarout) -> None:
         backup_paths = [x.strip() for x in self.meta.get("backup", "").split("\n")]
 
         # Backup the main todo/log file
@@ -422,13 +422,13 @@ class Project:
 
         return archived
 
-    def sync_tasks(self, modify_state=True):
+    def sync_tasks(self, modify_state: bool = True) -> None:
         """
         Sync project with taskwarrior
         """
         self.body.tasks.sync_tasks(modify_state=modify_state)
 
-    def annotate(self, today: datetime.date | None = None):
+    def annotate(self, today: datetime.date | None = None) -> None:
         """
         Fill in fields, resolve commands, and perform all pending actions
         embedded in the project
@@ -439,5 +439,5 @@ class Project:
             self.meta.set_durations(self.log.durations())
 
     @classmethod
-    def has_project(cls, path: Path):
+    def has_project(cls, path: Path) -> bool:
         return path.exists()

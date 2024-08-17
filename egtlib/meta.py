@@ -5,7 +5,7 @@ import inspect
 import re
 import sys
 from pathlib import Path
-from typing import Any, TextIO
+from typing import Any, IO
 
 from .parse import Lines
 from .utils import format_duration
@@ -164,7 +164,7 @@ class Meta:
         if f is not None:
             self.tags.update(re.split(r"[ ,\t]+", f))
 
-    def print(self, file: TextIO = sys.stdout) -> bool:
+    def print(self, file: IO[str] = sys.stdout) -> bool:
         """
         Write the metadata as a project metadata section to the given output
         file.
