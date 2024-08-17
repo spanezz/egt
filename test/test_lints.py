@@ -72,5 +72,7 @@ class TestLinters(unittest.TestCase):
     @unittest.skipIf("SKIP_MYPY" in os.environ, "SKIP_MYPY is set in the environment")
     def test_mypy_clean(self):
         stubs_dir = os.path.join(basedir, "stubs")
-        self.assertEqual(run_check("mypy", basedir, "--check-untyped-defs", "--no-error-summary",
-                         extra_env={"MYPYPATH": stubs_dir}), 0)
+        self.assertEqual(
+            run_check("mypy", basedir, "--check-untyped-defs", "--no-error-summary", extra_env={"MYPYPATH": stubs_dir}),
+            0,
+        )

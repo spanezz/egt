@@ -21,13 +21,7 @@ class Task(BodyEntry):
     re_attribute = re.compile(r"^(?P<key>[^:]+):(?P<val>[^:]+)$")
     task_attributes = ["start", "due", "until", "wait", "scheduled", "priority"]
 
-    def __init__(
-            self,
-            body: Body, *,
-            id: int | str,
-            indent: str = "",
-            text: str | None = None,
-            task=None) -> None:
+    def __init__(self, body: Body, *, id: int | str, indent: str = "", text: str | None = None, task=None) -> None:
         super().__init__(indent=indent)
         # Body object owning this Task
         self.body = body
@@ -114,7 +108,7 @@ class Task(BodyEntry):
         return " ".join(res)
 
     def print(self, file: TextIO | None = None) -> None:
-        if (content := self.get_content()):
+        if content := self.get_content():
             print(self.indent + content, file=file)
 
     def create(self):
@@ -127,7 +121,8 @@ class Task(BodyEntry):
         # the following lines are a workaround for https://github.com/ralphbean/taskw/issues/111
         self.body.tasks.tw._marshal = False
         newtask = self.body.tasks.tw.task_add(
-            self.desc, project=self.body.project.name, tags=sorted(tags), **self.attributes)
+            self.desc, project=self.body.project.name, tags=sorted(tags), **self.attributes
+        )
         self.body.tasks.tw._marshal = True
         id, task = self.body.tasks.tw.get_task(uuid=newtask["id"])
         self.set_twtask(task)
@@ -183,6 +178,7 @@ class Tasks:
     """
     Handle tasks in a Project Body
     """
+
     def __init__(self, body: Body):
         self.body = body
 
@@ -257,10 +253,7 @@ class Tasks:
                 continue
             self._known_annotations.append(entry)
             date = annotation.entry.date().strftime(self.date_format)
-            line = Line(
-                indent="  ",
-                bullet="- ",
-                text=f"{task['description']}: {annotation}")
+            line = Line(indent="  ", bullet="- ", text=f"{task['description']}: {annotation}")
             self.new_log(date, line)
 
     def _sync_completed(self, task) -> None:
@@ -269,10 +262,7 @@ class Tasks:
         """
         if task["status"] == "completed":
             date = task["modified"].date().strftime(self.date_format)
-            line = Line(
-                indent="  ",
-                bullet="- ",
-                text=f"[completed] {task['description']}")
+            line = Line(indent="  ", bullet="- ", text=f"[completed] {task['description']}")
             self.new_log(date, line)
 
     def sync_tasks(self, modify_state=True) -> None:

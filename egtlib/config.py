@@ -15,6 +15,7 @@ class Config:
     """
     Egt configuration
     """
+
     def __init__(self, load: bool = False):
         self.config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
         self.config["config"] = {
@@ -57,7 +58,7 @@ class Config:
         Return the list of columns to show in summary
         """
         raw_cols = self.config.get("config", "summary-columns")
-        return [x.strip().lower() for x in raw_cols.split(',')]
+        return [x.strip().lower() for x in raw_cols.split(",")]
 
     @cached_property
     def backup_output(self) -> str | None:

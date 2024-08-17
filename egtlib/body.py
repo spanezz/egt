@@ -12,6 +12,7 @@ class BodyEntry:
     """
     Base class for elements that compose a project body
     """
+
     def __init__(self, *, indent: str = ""):
         # Indentation at the beginning of the lines
         self.indent = indent
@@ -39,6 +40,7 @@ class EmptyLine(BodyEntry):
     """
     One empty line
     """
+
     def is_empty(self) -> bool:
         return True
 
@@ -56,6 +58,7 @@ class Line(BodyEntry):
     """
     An entry with a line of text
     """
+
     def __init__(self, *, indent: str = "", bullet: str = "", date: str | None = None, text: str):
         super().__init__(indent=indent)
         self.bullet = bullet or ""
@@ -86,18 +89,23 @@ class Line(BodyEntry):
             print(self.indent + self.bullet + self.text, file=file)
 
     def __repr__(self):
-        return (f"{self.__class__.__name__}("
-                f"indent={self.indent!r}, bullet={self.bullet!r},"
-                f" date={self.date:%Y-%M-%d}, date_suffix={self.date_suffix!r},"
-                f" text={self.text!r})")
+        return (
+            f"{self.__class__.__name__}("
+            f"indent={self.indent!r}, bullet={self.bullet!r},"
+            f" date={self.date:%Y-%M-%d}, date_suffix={self.date_suffix!r},"
+            f" text={self.text!r})"
+        )
 
     def __eq__(self, other: object) -> bool:
         if not super().__eq__(other):
             return False
         o = cast(Line, other)
         return (
-            self.bullet == o.bullet and self.date == o.date
-            and self.date_suffix == o.date_suffix and self.text == o.text)
+            self.bullet == o.bullet
+            and self.date == o.date
+            and self.date_suffix == o.date_suffix
+            and self.text == o.text
+        )
 
 
 class Body:
@@ -126,9 +134,9 @@ class Body:
 
         # Get everything until we reach the end of file
         for line in lines.rest():
-            if (mo := self.re_task.match(line)):
+            if mo := self.re_task.match(line):
                 self.content.append(self.tasks.create_task(**mo.groupdict()))
-            elif (mo := self.re_line.match(line)):
+            elif mo := self.re_line.match(line):
                 if mo.group("text") or mo.group("bullet") or mo.group("date"):
                     self.content.append(Line(**mo.groupdict()))
                 else:
