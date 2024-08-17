@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from egtlib import body
+
 from .utils import ProjectTestMixin
 
 

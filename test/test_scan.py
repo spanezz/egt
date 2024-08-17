@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+
 from egtlib import scan
 
 testdir = Path(__file__).parent

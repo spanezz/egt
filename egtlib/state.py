@@ -7,10 +7,10 @@ from typing import Any
 
 from xdg import BaseDirectory
 
+from .config import Config
 from .project import Project
 from .scan import scan
 from .utils import atomic_writer
-from .config import Config
 
 log = logging.getLogger(__name__)
 

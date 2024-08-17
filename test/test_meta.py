@@ -1,8 +1,9 @@
-from pathlib import Path
+import io
 import unittest
+from pathlib import Path
+
 from egtlib.meta import Meta
 from egtlib.parse import Lines
-import io
 
 TEST_META1 = (
     "Field: value\n"

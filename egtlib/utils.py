@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import datetime
 import contextlib
+import datetime
 import fcntl
 import os
 import os.path
@@ -9,10 +9,9 @@ import select
 import subprocess
 import tempfile
 from collections import defaultdict
+from collections.abc import Callable, Generator, Iterator, Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING, IO, Any
-from collections.abc import Iterator, Generator
-from collections.abc import Callable, Sequence
+from typing import IO, TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import egtlib

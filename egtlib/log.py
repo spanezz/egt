@@ -4,8 +4,8 @@ import datetime
 import re
 import sys
 from collections import Counter
-from typing import Any, IO, Self
 from collections.abc import Generator
+from typing import IO, Any, Self
 
 import dateutil.parser
 

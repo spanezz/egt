@@ -7,7 +7,7 @@ from typing import cast
 
 from egtlib import Project
 from egtlib.config import Config
-from egtlib.log import Entry, EntryBase, Timebase, Command
+from egtlib.log import Command, Entry, EntryBase, Timebase
 
 from .utils import ProjectTestMixin
 

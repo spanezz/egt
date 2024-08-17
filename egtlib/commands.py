@@ -8,17 +8,18 @@ import logging
 import os
 import shutil
 import sys
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, IO
-from collections.abc import Iterator
+from typing import IO, Any
 
 import egtlib
-from egtlib.utils import HoursCol, LastEntryCol, SummaryCol, TaskStatCol, format_td
+from egtlib.utils import (HoursCol, LastEntryCol, SummaryCol, TaskStatCol,
+                          format_td)
 
 from . import cli
-from .config import Config
 from .body import BodyEntry
+from .config import Config
 
 log = logging.getLogger(__name__)
 

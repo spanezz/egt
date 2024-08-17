@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 import os
 import os.path
-from pathlib import Path
 from collections.abc import Generator
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 

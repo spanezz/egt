@@ -6,16 +6,16 @@ import logging
 import os.path
 import subprocess
 import sys
-from pathlib import Path
-from typing import Any, IO, Self, cast
 from collections.abc import Iterator
+from pathlib import Path
+from typing import IO, Any, Self, cast
 
 from .body import Body
+from .config import Config
 from .lang import set_locale
 from .log import Log
 from .meta import Meta
 from .utils import atomic_writer, format_duration, stream_output, today
-from .config import Config
 
 log = logging.getLogger(__name__)
 

@@ -7,10 +7,10 @@ from typing import Any, BinaryIO, TextIO
 
 import taskw
 
+from .config import Config
 from .project import Project
 from .state import State
 from .utils import intervals_intersect
-from .config import Config
 
 log = logging.getLogger(__name__)
 
