@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import io
+import sys
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -138,7 +139,6 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     def test_mrconfig(self) -> None:
         (self.p1 / ".git").mkdir()
         (self.p2 / ".git").mkdir()
-        self.maxDiff = None
         code, stdout, stderr = self.run_command("mrconfig")
         self.assertEqual(stderr, "")
         self.assertEqual(
@@ -155,6 +155,38 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     # TODO: test_weekrpt
     # TODO: test_printlog
     # TODO: test_annotate
+
+    def test_annotate_stdin_and_file(self) -> None:
+        file = self.workdir / "test.egt"
+        file.write_text("")
+
+        stdin = io.StringIO("test")
+        orig_stdin = sys.stdin
+        sys.stdin = stdin
+        try:
+            code, stdout, stderr = self.run_command("annotate", "--stdin", file.as_posix())
+        finally:
+            sys.stdin = orig_stdin
+        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stdout.splitlines(),
+            ["2024", "", "test"],
+        )
+
+    def test_annotate_stdin_only(self) -> None:
+        stdin = io.StringIO("test")
+        orig_stdin = sys.stdin
+        sys.stdin = stdin
+        try:
+            code, stdout, stderr = self.run_command("annotate", "--stdin", (self.workdir / "does-not-exist").as_posix())
+        finally:
+            sys.stdin = orig_stdin
+        self.assertEqual(stderr, "")
+        self.assertEqual(
+            stdout.splitlines(),
+            ["2024", "", "test"],
+        )
+
     # TODO: test_archive
     # TODO: test_serve
 

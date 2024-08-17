@@ -14,8 +14,7 @@ from pathlib import Path
 from typing import IO, Any
 
 import egtlib
-from egtlib.utils import (HoursCol, LastEntryCol, SummaryCol, TaskStatCol,
-                          format_td)
+from egtlib.utils import HoursCol, LastEntryCol, SummaryCol, TaskStatCol, format_td
 
 from . import cli
 from .body import BodyEntry
@@ -414,17 +413,13 @@ class Annotate(EgtCommand):
     def main(self) -> None:
         egt = egtlib.Egt(config=self.config, show_archived=True)
         path = Path(self.args.project)
-        if path.exists():
-            if self.args.stdin:
-                proj = egt.load_project(path, project_fd=sys.stdin)
-            else:
-                proj = egt.load_project(path)
+        if self.args.stdin:
+            proj = egt.load_project(path, project_fd=sys.stdin)
+        elif path.exists():
+            proj = egt.load_project(path)
+        elif p := egt.loaded_projects.get(self.args.project):
+            proj = p
         else:
-            if self.args.stdin:
-                proj = egt.project(self.args.project, project_fd=sys.stdin)
-            else:
-                proj = egt.project(self.args.project)
-        if proj is None:
             log.info("No project found.")
             return
 
