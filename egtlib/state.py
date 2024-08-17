@@ -80,7 +80,9 @@ class State:
                     log.exception("%s: failed to parse: %s", fname, str(e))
                     continue
                 if p.name in projects:
-                    log.warn("%s: project %s already exists in %s: skipping", fname, p.name, projects[p.name]["fname"])
+                    log.warning(
+                        "%s: project %s already exists in %s: skipping", fname, p.name, projects[p.name]["fname"]
+                    )
                 else:
                     projects[p.name] = {"fname": p.abspath}
 
