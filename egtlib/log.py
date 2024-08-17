@@ -530,19 +530,19 @@ class Log:
                 res[tag] += duration
         return res
 
-    def sync(self, today: datetime.date | None = None):
+    def sync(self, today: datetime.date | None = None) -> None:
         """
         Sync log contents with git or any other activity data sources
         """
         if today is None:
             today = utils.today()
-        self.project.set_locale()
-        new_entries = []
-        for e in self._entries:
-            new_entries.append(e.sync(self.project, today=today))
-        self._entries = new_entries
+        with self.project.set_locale():
+            new_entries = []
+            for e in self._entries:
+                new_entries.append(e.sync(self.project, today=today))
+            self._entries = new_entries
 
-    def parse(self, lines: Lines, lang: str | None = None):
+    def parse(self, lines: Lines, lang: str | None = None) -> None:
         self._lineno = lines.lineno
 
         log_parser = LogParser(lines, lang)

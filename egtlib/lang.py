@@ -1,12 +1,28 @@
 from __future__ import annotations
 
+import contextlib
+import locale
 import logging
 from collections.abc import Iterator
-from contextlib import contextmanager
+from typing import Generator
 
 import dateutil.parser
 
 log = logging.getLogger(__name__)
+
+
+@contextlib.contextmanager
+def set_locale(lang: str | None) -> Generator[None, None, None]:
+    if lang is None:
+        locname = ""
+    else:
+        locname = locale.normalize(lang + ".UTF-8")
+    orig = locale.setlocale(locale.LC_ALL)
+    try:
+        locale.setlocale(locale.LC_ALL, locname)
+        yield
+    finally:
+        locale.setlocale(locale.LC_ALL, orig)
 
 
 class Locale:
@@ -15,36 +31,7 @@ class Locale:
     """
 
     def __init__(self) -> None:
-        self.current_locale: str | None = None
         self.cached_parserinfo: dict[str, type[dateutil.parser.parserinfo]] = {}
-
-    def set(self, lang: str | None) -> None:
-        if self.current_locale == lang:
-            return
-
-        import locale
-
-        if lang is None:
-            try:
-                locale.resetlocale()
-                self.current_locale = None
-            except locale.Error as e:
-                log.warn("Cannot reset locale to the default: %s", e)
-        else:
-            try:
-                locname = locale.normalize(lang + ".UTF-8")
-                locale.setlocale(locale.LC_ALL, locname)
-                self.current_locale = lang
-            except locale.Error as e:
-                log.warn("Cannot set locale %s: %s", locname, e)
-
-    @contextmanager
-    def temp_set(self, lang: str) -> Iterator[None]:
-        cur = self.current_locale
-        self.set(lang)
-        yield
-        if cur is not None:
-            self.set(cur)
 
     def get_parserinfo(self, lang: str | None) -> dateutil.parser.parserinfo:
         if lang is None:
@@ -54,8 +41,7 @@ class Locale:
         if res is not None:
             return res()
 
-        with self.temp_set(lang):
-            import locale
+        with set_locale(lang):
 
             class ParserInfo(dateutil.parser.parserinfo):
                 WEEKDAYS = [
@@ -90,12 +76,8 @@ class Locale:
         return ParserInfo()
 
 
-locale = Locale()
+locale_cache = Locale()
 
 
 def get_parserinfo(lang: str | None) -> dateutil.parser.parserinfo:
-    return locale.get_parserinfo(lang)
-
-
-def set_locale(lang: str | None) -> None:
-    return locale.set(lang)
+    return locale_cache.get_parserinfo(lang)

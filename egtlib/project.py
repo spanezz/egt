@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import datetime
 import json
 import logging
@@ -87,11 +88,13 @@ class Project:
         self.log = Log(self)
         self.body = Body(self)
 
+    @contextlib.contextmanager
     def set_locale(self) -> None:
         """
         Set the current locale to the one specified in the project header
         """
-        set_locale(self.meta.lang)
+        with set_locale(self.meta.lang):
+            yield
 
     @property
     def state(self) -> ProjectState:
