@@ -8,6 +8,7 @@ import os.path
 import select
 import subprocess
 import tempfile
+import warnings
 from collections import defaultdict
 from collections.abc import Callable, Generator, Iterator, Sequence
 from pathlib import Path
@@ -106,9 +107,10 @@ class TaskStatCol(SummaryCol):
     def init_data(self) -> None:
         if self._proj is None:
             return
-        tasks = self._proj.body.tasks.tw.filter_tasks({"status": "pending"})
-        # could not figure out how to do this in one go
-        tasks += self._proj.body.tasks.tw.filter_tasks({"status": "waiting"})
+        with contain_taskwarrior_noise():
+            tasks = self._proj.body.tasks.tw.filter_tasks({"status": "pending"})
+            # could not figure out how to do this in one go
+            tasks += self._proj.body.tasks.tw.filter_tasks({"status": "waiting"})
         for task in tasks:
             try:
                 self.task_stats[task["project"]] += 1
@@ -205,3 +207,9 @@ def stream_output(proc: subprocess.Popen) -> Generator[tuple[str, str | int], No
                     yield types[idx], line.decode("utf-8")
     res = proc.wait()
     yield "result", res
+
+
+@contextlib.contextmanager
+def contain_taskwarrior_noise() -> Generator[None, None, None]:
+    with warnings.catch_warnings(action="ignore", category=DeprecationWarning):
+        yield

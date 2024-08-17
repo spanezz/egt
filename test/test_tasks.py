@@ -4,10 +4,14 @@ import datetime
 import io
 import json
 import unittest
+import warnings
 
-import taskw
+with warnings.catch_warnings(action="ignore"):
+    import taskw
 from dateutil.tz import tzlocal
 
+from egtlib.body_task import Tasks
+from egtlib.utils import contain_taskwarrior_noise
 from .utils import ProjectTestMixin
 
 
@@ -22,6 +26,11 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         "15 march: 9:30-",
         " - wrote more unit tests",
     ]
+
+    def test_has_taskwarrior(self) -> None:
+        self.assertTrue(Tasks.has_taskwarrior())
+        self.taskrc.unlink()
+        self.assertFalse(Tasks.has_taskwarrior())
 
     def testCreateFromEgt(self) -> None:
         """
@@ -120,10 +129,11 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         Test import of new taskwarrior tasks in egt
         """
 
-        tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
-        new_task = tw.task_add("new task", ["tag", "testtag1"], project="testprj")
-        tw.task_add("new parent task", project="testprj", depends=[new_task["uuid"]])
-        del tw
+        with contain_taskwarrior_noise():
+            tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
+            new_task = tw.task_add("new task", ["tag", "testtag1"], project="testprj")
+            tw.task_add("new parent task", project="testprj", depends=[new_task["uuid"]])
+            del tw
 
         proj = self.project(
             body=[
@@ -172,9 +182,10 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         Test handling of tasks present both in taskwarrior and in egt
         """
 
-        tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
-        new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
-        del tw
+        with contain_taskwarrior_noise():
+            tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
+            new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
+            del tw
 
         egt_id = new_task["id"] + 10
 
@@ -247,8 +258,9 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         task is marked done on taskwarrior
         """
 
-        tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
-        new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
+        with contain_taskwarrior_noise():
+            tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
+            new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
 
         egt_id = new_task["id"] + 10
 

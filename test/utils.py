@@ -4,10 +4,11 @@ import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from egtlib import Project
 from egtlib.config import Config
+from egtlib.utils import contain_taskwarrior_noise
 
 
 class ProjectTestMixin(TestCase):
@@ -20,6 +21,7 @@ class ProjectTestMixin(TestCase):
         self.taskrc = self.workdir / ".taskrc"
         with self.taskrc.open("w") as fd:
             print(f"data.location={self.workdir / 'tasks'}", file=fd)
+        self.enterContext(mock.patch("egtlib.body_task.Tasks.get_taskrc_path", return_value=self.taskrc))
 
     def project(
         self,
@@ -53,7 +55,8 @@ class ProjectTestMixin(TestCase):
                     print(line, file=fd)
 
         proj = Project(path, statedir=self.workdir, config=Config())
-        proj.body.tasks.force_load_tw(config_filename=self.taskrc)
+        with contain_taskwarrior_noise():
+            proj.body.tasks.force_load_tw(config_filename=self.taskrc)
         if load:
             proj.load()
         return proj

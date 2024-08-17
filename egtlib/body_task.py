@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 import datetime
+import os
 import re
 import shlex
+import warnings
+from functools import cached_property
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, TextIO, cast
 
-import taskw
+with warnings.catch_warnings(action="ignore"):
+    import taskw
+    import taskw.warrior
 
 from .body import BodyEntry, EmptyLine, Line
+from .utils import contain_taskwarrior_noise
 
 if TYPE_CHECKING:
     from .body import Body
@@ -119,12 +126,13 @@ class Task(BodyEntry):
             return
         tags = self.body.project.tags | self.tags
         # the following lines are a workaround for https://github.com/ralphbean/taskw/issues/111
-        self.body.tasks.tw._marshal = False
-        newtask = self.body.tasks.tw.task_add(
-            self.desc, project=self.body.project.name, tags=sorted(tags), **self.attributes
-        )
-        self.body.tasks.tw._marshal = True
-        id, task = self.body.tasks.tw.get_task(uuid=newtask["id"])
+        with contain_taskwarrior_noise():
+            self.body.tasks.tw._marshal = False
+            newtask = self.body.tasks.tw.task_add(
+                self.desc, project=self.body.project.name, tags=sorted(tags), **self.attributes
+            )
+            self.body.tasks.tw._marshal = True
+            id, task = self.body.tasks.tw.get_task(uuid=newtask["id"])
         self.set_twtask(task)
         self.id = self.task["id"]
         self.is_new = False
@@ -146,7 +154,8 @@ class Task(BodyEntry):
             ids = tasks.get("ids", None)
             uuid = ids.get(str(self.id), None)
             if uuid is not None:
-                id, task = self.body.tasks.tw.get_task(uuid=uuid)
+                with contain_taskwarrior_noise():
+                    id, task = self.body.tasks.tw.get_task(uuid=uuid)
                 if task:
                     self.set_twtask(task)
                     self.id = task["id"] if task["id"] != 0 else None
@@ -156,7 +165,8 @@ class Task(BodyEntry):
                     return
 
         # Looking up by uuid failed, try looking up by description
-        id, task = self.body.tasks.tw.get_task(description=self.desc)
+        with contain_taskwarrior_noise():
+            id, task = self.body.tasks.tw.get_task(description=self.desc)
         if task:
             self.set_twtask(task)
             return
@@ -171,7 +181,8 @@ class Task(BodyEntry):
         if task:
             if "depends" in task:
                 depends_uuids = set(task["depends"])
-                self.depends = {self.body.tasks.tw.get_task(uuid=t)[0] for t in depends_uuids}
+                with contain_taskwarrior_noise():
+                    self.depends = {self.body.tasks.tw.get_task(uuid=t)[0] for t in depends_uuids}
 
 
 class Tasks:
@@ -191,8 +202,10 @@ class Tasks:
         self._new_log: dict[str, list[Line]] = {}
         self._known_annotations: list[list[str]] = []  # using list instead of tuple due to json constraints
 
-        # Taskwarrior interface, loaded lazily
-        self._tw: taskw.TaskWarrior | None = None
+    @classmethod
+    def has_taskwarrior(cls) -> bool:
+        """Check if taskwarrior is configured."""
+        return cls.get_taskrc_path().exists()
 
     def __getitem__(self, index: int) -> Task:
         return self.tasks.__getitem__(index)
@@ -208,13 +221,16 @@ class Tasks:
         This is used in tests to instantiate TaskWarrior objects pointing to
         the test TaskWarrior configuration.
         """
-        self._tw = taskw.TaskWarrior(marshal=True, **kw)
+        with contain_taskwarrior_noise():
+            self._tw = taskw.TaskWarrior(marshal=True, **kw)
 
-    @property
+    @classmethod
+    def get_taskrc_path(self) -> Path:
+        return Path(taskw.warrior.TASKRC)
+
+    @cached_property
     def tw(self) -> taskw.TaskWarrior:
-        if self._tw is None:
-            self._tw = taskw.TaskWarrior(marshal=True)
-        return self._tw
+        return taskw.TaskWarrior(marshal=True, config_filename=self.get_taskrc_path().as_posix())
 
     def create_task(self, **kw) -> Task:
         """
@@ -302,25 +318,26 @@ class Tasks:
 
         # Process all tasks known to taskwarrior
         new = []
-        for tw_task in self.tw.filter_tasks({"project.is": self.body.project.name}):
-            uuid = str(tw_task["uuid"])
-            if self.body.project.config.sync_tw_annotations:
-                self._sync_annotations(tw_task)
-            # handle completed and deleted tasks
-            if tw_task["id"] == 0 and uuid not in old_uuids:
-                self._sync_completed(tw_task)
-                old_uuids.add(uuid)
-                continue
-            # handle reactivated tasks
-            if uuid in old_uuids and tw_task["id"] != 0:
-                old_uuids.remove(uuid)
-                known_uuids.remove(uuid)
-            # skip tasks that exist in project-file already
-            if uuid in known_uuids:
-                continue
-            # Add remaining Taskwarrior tasks to project-file
-            task = Task(self.body, id=tw_task["id"], task=tw_task)
-            new.append(task)
+        with contain_taskwarrior_noise():
+            for tw_task in self.tw.filter_tasks({"project.is": self.body.project.name}):
+                uuid = str(tw_task["uuid"])
+                if self.body.project.config.sync_tw_annotations:
+                    self._sync_annotations(tw_task)
+                # handle completed and deleted tasks
+                if tw_task["id"] == 0 and uuid not in old_uuids:
+                    self._sync_completed(tw_task)
+                    old_uuids.add(uuid)
+                    continue
+                # handle reactivated tasks
+                if uuid in old_uuids and tw_task["id"] != 0:
+                    old_uuids.remove(uuid)
+                    known_uuids.remove(uuid)
+                # skip tasks that exist in project-file already
+                if uuid in known_uuids:
+                    continue
+                # Add remaining Taskwarrior tasks to project-file
+                task = Task(self.body, id=tw_task["id"], task=tw_task)
+                new.append(task)
 
         # If we created new task-content, prepend it to self.tasks and self.content
         if new:

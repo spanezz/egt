@@ -426,7 +426,8 @@ class Project:
         """
         Sync project with taskwarrior
         """
-        self.body.tasks.sync_tasks(modify_state=modify_state)
+        if self.body.tasks.has_taskwarrior():
+            self.body.tasks.sync_tasks(modify_state=modify_state)
 
     def annotate(self, today: datetime.date | None = None) -> None:
         """

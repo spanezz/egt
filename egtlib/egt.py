@@ -2,16 +2,18 @@ import datetime
 import logging
 import re
 import sys
+import warnings
 from functools import cached_property
 from pathlib import Path
 from typing import Any, BinaryIO, TextIO
 
-import taskw
+with warnings.catch_warnings(action="ignore"):
+    import taskw
 
 from .config import Config
 from .project import Project
 from .state import State
-from .utils import intervals_intersect
+from .utils import contain_taskwarrior_noise, intervals_intersect
 
 log = logging.getLogger(__name__)
 
@@ -85,7 +87,8 @@ class ProjectFilter:
 
         for f in args:
             if f == "_":
-                tasks = self.tw.filter_tasks({"status": "completed", "end": datetime.date.today()})
+                with contain_taskwarrior_noise():
+                    tasks = self.tw.filter_tasks({"status": "completed", "end": datetime.date.today()})
                 try:
                     self.names.add(tasks[0]["project"])
                 except (IndexError, KeyError):
@@ -96,7 +99,8 @@ class ProjectFilter:
                 self.tags_unwanted.add(f[1:])
             else:
                 if f.isdecimal():
-                    task = self.tw.get_task(id=int(f))
+                    with contain_taskwarrior_noise():
+                        task = self.tw.get_task(id=int(f))
                     try:
                         self.names.add(task[1]["project"])
                     except (IndexError, KeyError):
