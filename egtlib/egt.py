@@ -2,6 +2,7 @@ import datetime
 import logging
 import re
 import sys
+from functools import cached_property
 from pathlib import Path
 from typing import Any, BinaryIO, TextIO
 
@@ -155,11 +156,8 @@ class Egt:
         self.state.load(statedir)
         self.show_archived = show_archived
         self.filter = ProjectFilter(filter)
-        # Dict mapping project names to Project objects.
-        # It is built lazily when needed, and is None when not yet built.
-        self._projects: dict[str, Project] | None = None
 
-    def load_project(self, path: Path, project_fd: TextIO | None = None) -> Project | None:
+    def load_project(self, path: Path, project_fd: TextIO | None = None) -> Project:
         """
         Return a Project object given its file name.
 
@@ -168,22 +166,23 @@ class Egt:
         """
         from .project import Project
 
-        if not Project.has_project(path):
-            log.warning("project %s has disappeared: please rerun scan", path)
-            return None
         proj = Project.from_file(path, fd=project_fd, config=self.config)
-        if not self.show_archived and proj.archived:
-            return None
         proj.default_tags.update(self._default_tags(path))
-        if not self.filter.matches(proj):
-            return None
         return proj
 
     def _load_projects(self) -> dict[str, Project]:
+        from .project import Project
+
         projs = {}
         for name, info in self.state.projects.items():
-            proj = self.load_project(Path(info["fname"]))
-            if proj is None:
+            path = Path(info["fname"])
+            if not Project.has_project(path):
+                log.warning("project %s has disappeared: please rerun scan", path)
+                continue
+            proj = self.load_project(path)
+            if not self.show_archived and proj.archived:
+                continue
+            if not self.filter.matches(proj):
                 continue
             projs[proj.name] = proj
         return projs
@@ -199,11 +198,9 @@ class Egt:
                 tags.add(tag)
         return tags
 
-    @property
+    @cached_property
     def loaded_projects(self) -> dict[str, Project]:
-        if self._projects is None:
-            self._projects = self._load_projects()
-        return self._projects
+        return self._load_projects()
 
     @property
     def projects(self) -> list[Project]:
@@ -219,20 +216,6 @@ class Egt:
         for p in self.projects:
             res.update(p.tags)
         return sorted(res)
-
-    def project(self, name: str, project_fd: TextIO | None = None) -> Project | None:
-        """
-        Return a Project by its name
-        """
-        # Try loading from _projects, if we have already loaded it
-        if self._projects is not None:
-            return self._projects.get(name, None)
-
-        # Otherwise, look it up on state and load it on the fly
-        info = self.state.projects.get(name, None)
-        if info is None:
-            return None
-        return self.load_project(Path(info["fname"]), project_fd=project_fd)
 
     def weekrpt(
         self,
