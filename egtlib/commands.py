@@ -23,10 +23,10 @@ from .body import BodyEntry
 log = logging.getLogger(__name__)
 
 
-COMMANDS: typing.List[Type["EgtCommand"]] = []
+COMMANDS: list[type[EgtCommand]] = []
 
 
-def register(c: Type["EgtCommand"]) -> Type["EgtCommand"]:
+def register(c: type[EgtCommand]) -> type[EgtCommand]:
     return c
 
 
@@ -41,7 +41,7 @@ class EgtCommand(cli.Command, abc.ABC):
         if not inspect.isabstract(cls):
             COMMANDS.append(cls)
 
-    def make_egt(self, filter: typing.List[str] = []) -> egtlib.Egt:
+    def make_egt(self, filter: list[str] = []) -> egtlib.Egt:
         return egtlib.Egt(config=self.config, filter=filter, show_archived=self.args.archived)
 
     @classmethod
@@ -108,7 +108,7 @@ class List(ProjectsCommand):
                 ages.append(format_td(age))
             age_len = max(len(a) for a in ages)
 
-        name_len = max((len(x.name) for x in projects))
+        name_len = max(len(x.name) for x in projects)
         for idx, p in enumerate(projects):
             if self.args.files:
                 if self.args.age:
@@ -448,7 +448,7 @@ class Archive(ProjectsCommand):
             for p in e.projects:
                 archives = p.archive(cutoff, report_fd=fd, save=self.args.remove_old, combined=self.args.singlefile)
                 for archive in archives:
-                    print("Archived {}: {}".format(p.name, archive.abspath))
+                    print(f"Archived {p.name}: {archive.abspath}")
 
     @contextmanager
     def report_fd(self):
@@ -502,9 +502,9 @@ class Next(ProjectsCommand):
     Show the top of the notes of the most recent .egt files
     """
 
-    def get_lead_entries(self, project: egtlib.Project) -> Tuple[Optional[BodyEntry], Optional[BodyEntry]]:
-        first: Optional[BodyEntry] = None
-        second: Optional[BodyEntry] = None
+    def get_lead_entries(self, project: egtlib.Project) -> tuple[BodyEntry | None, BodyEntry | None]:
+        first: BodyEntry | None = None
+        second: BodyEntry | None = None
         for entry in project.body.content:
             if entry.is_empty():
                 continue

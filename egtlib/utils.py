@@ -10,7 +10,8 @@ import subprocess
 import tempfile
 from collections import defaultdict
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, Callable, Optional, Sequence
+from typing import IO, TYPE_CHECKING, Optional
+from collections.abc import Callable, Sequence
 
 if TYPE_CHECKING:
     import egtlib
@@ -25,7 +26,7 @@ def today() -> datetime.date:
 
 @contextlib.contextmanager
 def atomic_writer(
-    path: Path, mode: str = "w+b", chmod: Optional[int] = 0o664, sync: bool = True, use_umask: bool = False, **kw
+    path: Path, mode: str = "w+b", chmod: int | None = 0o664, sync: bool = True, use_umask: bool = False, **kw
 ):
     """
     open/tempfile wrapper to atomically write to a file, by writing its
@@ -77,7 +78,7 @@ def intervals_intersect(p1s, p1e, p2s, p2e):
 
 
 class SummaryCol:
-    def __init__(self, label: str, align: str, func: Optional[Callable[[egtlib.Project], str]] = None):
+    def __init__(self, label: str, align: str, func: Callable[[egtlib.Project], str] | None = None):
         self.label = label
         self.align = align
         self._func = func
@@ -96,7 +97,7 @@ class TaskStatCol(SummaryCol):
     def __init__(self, label: str, align: str, projs: Sequence[egtlib.Project]):
         super().__init__(label, align)
         self.task_stats: dict[str, int] = defaultdict(int)
-        self._proj: Optional[egtlib.Project]
+        self._proj: egtlib.Project | None
         try:
             self._proj = projs[0]
         except IndexError:
@@ -170,7 +171,7 @@ def format_td(td: datetime.timedelta, tabular=False) -> str:
             return f"{td.days} days"
 
 
-def stream_output(proc: "subprocess.Popen"):
+def stream_output(proc: subprocess.Popen):
     """
     Take a subprocess.Popen object and generate its output, line by line,
     annotated with "stdout" or "stderr". At process termination it generates

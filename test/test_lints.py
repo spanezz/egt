@@ -49,14 +49,14 @@ def run_check(*args, **kw):
             continue
         if should_ignore(line):
             continue
-        print("I:{}:{}".format(args[0], line))
+        print(f"I:{args[0]}:{line}")
         count += 1
     for line in stderr.split("\n"):
         if not line:
             continue
         if should_ignore(line):
             continue
-        print("W:{}:{}".format(args[0], line))
+        print(f"W:{args[0]}:{line}")
         count += 1
     p.wait()
     return count

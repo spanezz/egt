@@ -4,7 +4,8 @@ import datetime
 import re
 import sys
 from collections import Counter
-from typing import Generator, List, Optional, TextIO, Type
+from typing import List, Optional, TextIO, Type
+from collections.abc import Generator
 
 import dateutil.parser
 
@@ -15,24 +16,24 @@ from .utils import format_duration
 
 
 class LogParser:
-    ENTRY_TYPES: List[Type["EntryBase"]] = []
+    ENTRY_TYPES: list[type[EntryBase]] = []
 
-    def __init__(self, lines: Lines, lang: Optional[str] = None):
+    def __init__(self, lines: Lines, lang: str | None = None):
         self.lines = lines
         self.lang = lang
         self.parserinfo = get_parserinfo(lang)
         # Defaults for missing parsedate values
         self.default = datetime.datetime(utils.today().year, 1, 1)
         # Log of parse errors
-        self.errors: List[str] = []
+        self.errors: list[str] = []
 
     @classmethod
-    def register_entry_type(cls, c: Type["EntryBase"]):
+    def register_entry_type(cls, c: type[EntryBase]):
         cls.ENTRY_TYPES.append(c)
         return c
 
     def log_parse_error(self, lineno: int, msg: str):
-        self.errors.append("line {}: {}".format(lineno + 1, msg))
+        self.errors.append(f"line {lineno + 1}: {msg}")
 
     def parse_date(self, s: str):
         try:
@@ -42,7 +43,7 @@ class LogParser:
         self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
         return d
 
-    def parse_entries(self) -> Generator["EntryBase", None, None]:
+    def parse_entries(self) -> Generator[EntryBase, None, None]:
         while True:
             line = self.lines.peek()
             if not line:
@@ -73,15 +74,15 @@ class EntryBase:
     Base class for log entries
     """
 
-    def __init__(self, body: List[str] = None):
+    def __init__(self, body: list[str] = None):
         # List of lines with the body of the log entry
-        self.body: List[str]
+        self.body: list[str]
         if body is None:
             self.body = []
         else:
             self.body = body
 
-    def sync(self, project: "project.Project", today: datetime.date):
+    def sync(self, project: project.Project, today: datetime.date):
         """
         When syncing logs, return the transformed version of this entry.
 
@@ -89,13 +90,13 @@ class EntryBase:
         """
         return self
 
-    def reference_time(self) -> Optional[datetime.datetime]:
+    def reference_time(self) -> datetime.datetime | None:
         """
         Return the reference time for this log entry
         """
         raise NotImplementedError("reference_time called on EntryBase")
 
-    def print_lead_timeref(self, file: Optional[TextIO] = None):
+    def print_lead_timeref(self, file: TextIO | None = None):
         """
         Assuming this is the first entry of the log being printed, print a time
         reference before the entry if it is needed to be able to reparse the
@@ -104,7 +105,7 @@ class EntryBase:
         raise NotImplementedError("print_lead_timeref called on EntryBase")
 
     @classmethod
-    def _read_body(cls, lines: Lines) -> List[str]:
+    def _read_body(cls, lines: Lines) -> list[str]:
         # Read entry body
         body = []
         while True:
@@ -122,11 +123,11 @@ class EntryBase:
         raise RuntimeError("print called on EntryBase instead of the real class")
 
     @classmethod
-    def parse(cls, logparser: "LogParser", **kw):
+    def parse(cls, logparser: LogParser, **kw):
         raise RuntimeError("parse called on EntryBase instead of the real class")
 
     @classmethod
-    def is_start_line(cls, line: str) -> Optional[re.Match]:
+    def is_start_line(cls, line: str) -> re.Match | None:
         return None
 
 
@@ -143,7 +144,7 @@ class Timebase(EntryBase):
         self.line = line
         self.dt = dt
 
-    def reference_time(self) -> Optional[datetime.datetime]:
+    def reference_time(self) -> datetime.datetime | None:
         return self.dt
 
     def print(self, file=sys.stdout):
@@ -154,7 +155,7 @@ class Timebase(EntryBase):
         pass
 
     @classmethod
-    def parse(cls, logparser: "LogParser", **kw):
+    def parse(cls, logparser: LogParser, **kw):
         val: str = kw["date"] or kw["year"]
         # Just parse the next line, storing it nowhere, but updating
         # the 'default' datetime context
@@ -165,7 +166,7 @@ class Timebase(EntryBase):
         return cls(line, dt)
 
     @classmethod
-    def is_start_line(cls, line: str) -> Optional[re.Match]:
+    def is_start_line(cls, line: str) -> re.Match | None:
         """
         Check if the next line looks like the start of a log block
         """
@@ -192,11 +193,11 @@ class Entry(EntryBase):
     def __init__(
         self,
         begin: datetime.datetime,
-        until: Optional[datetime.datetime],
+        until: datetime.datetime | None,
         head: str,
-        body: List[str],
+        body: list[str],
         fullday: bool,
-        tags: List[str] = [],
+        tags: list[str] = [],
     ):
         super().__init__(body)
         # Datetime of beginning of log entry timespan
@@ -210,7 +211,7 @@ class Entry(EntryBase):
         # Log entry tags
         self.tags = tags
 
-    def reference_time(self) -> Optional[datetime.datetime]:
+    def reference_time(self) -> datetime.datetime | None:
         return self.begin
 
     @property
@@ -223,7 +224,7 @@ class Entry(EntryBase):
         else:
             return self.until is None
 
-    def _sync_body(self, project: "project.Project"):
+    def _sync_body(self, project: project.Project):
         """
         Sync log body with git or any other activity data sources
         """
@@ -236,7 +237,7 @@ class Entry(EntryBase):
 
         collect_achievements(project, self)
 
-    def sync(self, project: "project.Project", today: datetime.date):
+    def sync(self, project: project.Project, today: datetime.date):
         self._sync_body(project)
         return self
 
@@ -260,10 +261,10 @@ class Entry(EntryBase):
     def formatted_duration(self) -> str:
         return format_duration(self.duration)
 
-    def print_lead_timeref(self, file: Optional[TextIO] = None):
+    def print_lead_timeref(self, file: TextIO | None = None):
         print(self.begin.year, file=file)
 
-    def print(self, file: TextIO = sys.stdout, project: Optional["project.Project"] = None):
+    def print(self, file: TextIO = sys.stdout, project: project.Project | None = None):
         mo = self.re_entry.match(self.head)
         if not mo:
             raise RuntimeError("Header line was parsed right during parsing, and not during printing")
@@ -284,7 +285,7 @@ class Entry(EntryBase):
             print(bline, file=file)
 
     @classmethod
-    def parse(cls, logparser: "LogParser", **kw):
+    def parse(cls, logparser: LogParser, **kw):
         entry_lineno = logparser.lines.lineno
         # Read entry head line
         head = logparser.lines.next()
@@ -303,7 +304,7 @@ class Entry(EntryBase):
         start = kw.get("start")
         end = kw.get("end")
         begin: datetime.datetime
-        until: Optional[datetime.datetime]
+        until: datetime.datetime | None
         if start:
             begin = datetime.datetime.combine(date, parsetime(start))
             if end:
@@ -320,7 +321,7 @@ class Entry(EntryBase):
             fullday = True
 
         # Parse tags
-        tags: List[str] = []
+        tags: list[str] = []
         notes = kw.get("notes")
         if notes:
             for note in notes.split():
@@ -333,12 +334,12 @@ class Entry(EntryBase):
                     # Ignore hour count
                     pass
                 else:
-                    logparser.log_parse_error(entry_lineno, "unrecognised annotation {}".format(repr(note)))
+                    logparser.log_parse_error(entry_lineno, f"unrecognised annotation {repr(note)}")
 
         return cls(begin, until, head, body, fullday, tags)
 
     @classmethod
-    def is_start_line(cls, line: str) -> Optional[re.Match]:
+    def is_start_line(cls, line: str) -> re.Match | None:
         """
         Check if the next line looks like the start of a log block
         """
@@ -354,15 +355,15 @@ class Command(EntryBase):
     re_new_time = re.compile(r"^(?P<start>\d{1,2}:\d{2})-?\s*\+?\s*$")
     re_new_day = re.compile(r"^\+\+?\s*$")
 
-    def __init__(self, head: str, body: List[str], start: Optional[datetime.time] = None):
+    def __init__(self, head: str, body: list[str], start: datetime.time | None = None):
         super().__init__(body)
         self.head = head
         self.start = start
 
-    def reference_time(self) -> Optional[datetime.datetime]:
+    def reference_time(self) -> datetime.datetime | None:
         return None
 
-    def sync(self, project: "project.Project", today: datetime.date):
+    def sync(self, project: project.Project, today: datetime.date):
         date_format = project.config.date_format + ":"
         datetime_format = date_format + " " + project.config.time_format + "-"
         if self.start is None:
@@ -382,7 +383,7 @@ class Command(EntryBase):
         res._sync_body(project)
         return res
 
-    def print_lead_timeref(self, file: Optional[TextIO] = None):
+    def print_lead_timeref(self, file: TextIO | None = None):
         raise RuntimeError(
             "Cannot output a log with a Command as the very first element, without a previous time reference"
         )
@@ -393,7 +394,7 @@ class Command(EntryBase):
             print(line, file=file)
 
     @classmethod
-    def parse(cls, logparser: "LogParser", **kw):
+    def parse(cls, logparser: LogParser, **kw):
         # Read entry head
         head = logparser.lines.next().rstrip()
 
@@ -408,7 +409,7 @@ class Command(EntryBase):
         return cls(head, body, start)
 
     @classmethod
-    def is_start_line(cls, line: str) -> Optional[re.Match]:
+    def is_start_line(cls, line: str) -> re.Match | None:
         """
         Check if the next line looks like the start of a log block
         """
@@ -416,11 +417,11 @@ class Command(EntryBase):
 
 
 class LogPrinter:
-    def __init__(self, file: TextIO, today: Optional[datetime.date] = None, archived: bool = False):
+    def __init__(self, file: TextIO, today: datetime.date | None = None, archived: bool = False):
         self.today: datetime.date = today if today is not None else utils.today()
         self.file = file
         self.has_time_ref = False
-        self.last_reference_time: Optional[datetime.datetime] = None
+        self.last_reference_time: datetime.datetime | None = None
         self.archived = archived
 
     def print(self, entry: EntryBase) -> None:
@@ -445,12 +446,12 @@ class Log:
     Time-based log section of a .egt file
     """
 
-    def __init__(self, project: "project.Project"):
+    def __init__(self, project: project.Project):
         self.project = project
         # Line number in the project file where the log starts
-        self._lineno: Optional[int] = None
+        self._lineno: int | None = None
         # Array of Entry
-        self._entries: List[EntryBase] = []
+        self._entries: list[EntryBase] = []
 
     @property
     def entries(self) -> Generator[Entry, None, None]:
@@ -463,7 +464,7 @@ class Log:
             yield e
 
     @property
-    def first_entry(self) -> Optional[Entry]:
+    def first_entry(self) -> Entry | None:
         """
         Return the first Entry of the log
         """
@@ -474,7 +475,7 @@ class Log:
         return None
 
     @property
-    def last_entry(self) -> Optional[Entry]:
+    def last_entry(self) -> Entry | None:
         """
         Return the last Entry of the log
         """
@@ -484,7 +485,7 @@ class Log:
             return e
         return None
 
-    def detach_entries(self, since: datetime.date, until: datetime.date) -> List[EntryBase]:
+    def detach_entries(self, since: datetime.date, until: datetime.date) -> list[EntryBase]:
         """
         Remove from the log the entries that go between the first Entry within
         the given interval and the last Entry within the given interval
@@ -553,7 +554,7 @@ class Log:
         else:
             self.project.meta.unset("parse-errors")
 
-    def print(self, file: TextIO = sys.stdout, today: Optional[datetime.date] = None):
+    def print(self, file: TextIO = sys.stdout, today: datetime.date | None = None):
         """
         Write the log as a project log section to the given output file.
 
@@ -568,7 +569,7 @@ class Log:
         return True
 
     @classmethod
-    def is_start_line(cls, line: str) -> Optional[re.Match]:
+    def is_start_line(cls, line: str) -> re.Match | None:
         """
         Check if the next line looks like the start of a log block
         """

@@ -24,16 +24,16 @@ class Task(BodyEntry):
     def __init__(
             self,
             body: Body, *,
-            id: Union[int, str],
+            id: int | str,
             indent: str = "",
-            text: Optional[str] = None,
+            text: str | None = None,
             task=None) -> None:
         super().__init__(indent=indent)
         # Body object owning this Task
         self.body = body
         # Taskwarrior task dict (None means no mapping attempted yet)
         self.set_twtask(task)
-        self.id: Optional[int]
+        self.id: int | None
         if isinstance(id, int):
             # Whether the task is new and needs to be created in TaskWarrior
             self.is_new = False
@@ -89,7 +89,7 @@ class Task(BodyEntry):
     def is_empty(self) -> bool:
         return False
 
-    def get_date(self) -> Optional[datetime.date]:
+    def get_date(self) -> datetime.date | None:
         return None
 
     def get_content(self) -> str:
@@ -101,7 +101,7 @@ class Task(BodyEntry):
         elif self.id is None:
             res.append("t")
         else:
-            res.append("t{}".format(self.id))
+            res.append(f"t{self.id}")
         if self.task:
             if self.task["status"] == "completed":
                 return ""
@@ -113,7 +113,7 @@ class Task(BodyEntry):
             res.append("depends:" + ",".join(str(t) for t in sorted(self.depends)))
         return " ".join(res)
 
-    def print(self, file: Optional[TextIO] = None) -> None:
+    def print(self, file: TextIO | None = None) -> None:
         if (content := self.get_content()):
             print(self.indent + content, file=file)
 
@@ -157,7 +157,7 @@ class Task(BodyEntry):
                     self.id = task["id"] if task["id"] != 0 else None
                     self.desc = task["description"]
                     bl = self.body.project.tags
-                    self.tags = set(t for t in task["tags"] if t not in bl) if "tags" in task else set()
+                    self.tags = {t for t in task["tags"] if t not in bl} if "tags" in task else set()
                     return
 
         # Looking up by uuid failed, try looking up by description
@@ -176,7 +176,7 @@ class Task(BodyEntry):
         if task:
             if "depends" in task:
                 depends_uuids = set(task["depends"])
-                self.depends = set(self.body.tasks.tw.get_task(uuid=t)[0] for t in depends_uuids)
+                self.depends = {self.body.tasks.tw.get_task(uuid=t)[0] for t in depends_uuids}
 
 
 class Tasks:
@@ -189,14 +189,14 @@ class Tasks:
         self.date_format = self.body.project.config.date_format
 
         # Just the Task entries, for easy access
-        self.tasks: List[Task] = []
+        self.tasks: list[Task] = []
 
         # Storage for handling annotations
-        self._new_log: Dict[str, List[Line]] = {}
-        self._known_annotations: List[List[str]] = []  # using list instead of tuple due to json constraints
+        self._new_log: dict[str, list[Line]] = {}
+        self._known_annotations: list[list[str]] = []  # using list instead of tuple due to json constraints
 
         # Taskwarrior interface, loaded lazily
-        self._tw: Optional[taskw.TaskWarrior] = None
+        self._tw: taskw.TaskWarrior | None = None
 
     def __getitem__(self, index: int) -> Task:
         return self.tasks.__getitem__(index)
@@ -339,7 +339,7 @@ class Tasks:
 
         # If we created new log-content, prepend it to self.content
         if self._new_log:
-            content: List[BodyEntry] = []
+            content: list[BodyEntry] = []
             for key, lines in sorted(self._new_log.items()):
                 content.append(Line(indent="", text=key + ":"))
                 content += lines

@@ -21,30 +21,30 @@ class Meta:
 
     def __init__(self) -> None:
         # Line number in the project file where the metadata start
-        self._lineno: Optional[int] = None
+        self._lineno: int | None = None
 
         # Dict mapping lowercase field names to their string values
-        self._raw: Dict[str, str] = {}
+        self._raw: dict[str, str] = {}
 
         # Set of tags for the project
-        self.tags: Set[str] = set()
+        self.tags: set[str] = set()
 
     @property
-    def lang(self) -> Optional[str]:
+    def lang(self) -> str | None:
         """
         Return the default language
         """
         return self._raw.get("lang")
 
     @property
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         """
         Return the project name
         """
         return self._raw.get("name")
 
     @property
-    def path(self) -> Optional[str]:
+    def path(self) -> str | None:
         """
         Path of the project if it is not in the same directory as the .egt file
         """
@@ -58,7 +58,7 @@ class Meta:
         return self._raw.get("archived", "false").lower() in ("true", "yes")
 
     @property
-    def start_date(self) -> Optional[datetime.date]:
+    def start_date(self) -> datetime.date | None:
         """
         Return the explicit begin date of this project
         """
@@ -68,7 +68,7 @@ class Meta:
             return None
 
     @property
-    def end_date(self) -> Optional[datetime.date]:
+    def end_date(self) -> datetime.date | None:
         """
         Return the explicit end date of this project
         """
@@ -114,7 +114,7 @@ class Meta:
         """
         self._raw.pop(name.lower(), None)
 
-    def set_durations(self, durations: Dict[str, int]) -> None:
+    def set_durations(self, durations: dict[str, int]) -> None:
         """
         Set the Total: header from the given computed durations
         """
@@ -125,7 +125,7 @@ class Meta:
             for tag, duration in sorted(durations.items()):
                 if not tag:
                     tag = "*"
-                lines.append("{}: {}".format(tag, format_duration(duration)))
+                lines.append(f"{tag}: {format_duration(duration)}")
             self.set("total", "\n".join(lines))
 
     def parse(self, lines: Lines) -> None:
@@ -136,7 +136,7 @@ class Meta:
         self._lineno = lines.lineno
 
         # Get everything until we reach an empty line
-        meta_lines: List[str] = []
+        meta_lines: list[str] = []
         while True:
             # Stop at an empty line or at EOF
             if not lines.peek():
@@ -171,11 +171,11 @@ class Meta:
         for name, value in self._raw.items():
             res = True
             if "\n" in value:
-                print("{}:".format(name.title()), file=file)
+                print(f"{name.title()}:", file=file)
                 for line in value.splitlines():
                     print(" " + line, file=file)
             else:
-                print("{}: {}".format(name.title(), value.strip()), file=file)
+                print(f"{name.title()}: {value.strip()}", file=file)
         return res
 
     @classmethod

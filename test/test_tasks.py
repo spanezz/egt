@@ -91,7 +91,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
             ("due", "2030-12-26+week", datedata),
         ]
         for key, value, data in test_attributes:
-            attr = "{}:{}".format(key, value)
+            attr = f"{key}:{value}"
             with self.subTest(config=attr):
                 proj = self.project(
                     body=[
@@ -197,7 +197,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         proj = self.project(
             body=[
                 "body line1",
-                " t{} foo the bar".format(egt_id),
+                f" t{egt_id} foo the bar",
                 "body line3",
             ]
         )
@@ -276,7 +276,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         proj = self.project(
             body=[
                 "body line1",
-                " t{} foo the bar".format(egt_id),
+                f" t{egt_id} foo the bar",
                 "body line3",
             ]
         )

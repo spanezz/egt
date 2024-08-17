@@ -4,7 +4,8 @@ import logging
 import os
 import os.path
 from pathlib import Path
-from typing import Generator, Set
+from typing import Set
+from collections.abc import Generator
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ def scan(top: Path) -> Generator[Path, None, None]:
     Generate the pathnames of all project files inside the given directory
     """
     # inodes already visited
-    seen: Set[int] = set()
+    seen: set[int] = set()
     for root, dirs, files in os.walk(top, followlinks=True):
         # Since we follow links, prevent loops by remembering which inodes we
         # visited

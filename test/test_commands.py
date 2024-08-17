@@ -103,7 +103,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     def test_list(self):
         State.rescan([self.workdir], statedir=self.workdir, config=Config())
         egt = egtlib.Egt(config=Config(), statedir=self.workdir)
-        names = set(p.name for p in egt.projects)
+        names = {p.name for p in egt.projects}
         self.assertIn("test", names)
         self.assertIn("p1", names)
         self.assertIn("p2", names)

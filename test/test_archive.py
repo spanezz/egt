@@ -80,7 +80,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             ],
         )
 
-        with open(self.reportfile, "rt") as fd:
+        with open(self.reportfile) as fd:
             self.assertEqual(
                 [x.rstrip() for x in fd],
                 [
@@ -159,7 +159,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             ],
         )
 
-        with open(self.reportfile, "rt") as fd:
+        with open(self.reportfile) as fd:
             self.assertEqual(
                 [x.rstrip() for x in fd],
                 [

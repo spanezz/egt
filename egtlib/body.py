@@ -19,13 +19,13 @@ class BodyEntry:
     def is_empty(self) -> bool:
         raise NotImplementedError(f"{self.__class__.__name__}.is_empty() has been called on raw BodyEntry object")
 
-    def get_date(self) -> Optional[datetime.date]:
+    def get_date(self) -> datetime.date | None:
         raise NotImplementedError(f"{self.__class__.__name__}.get_date() has been called on raw BodyEntry object")
 
     def get_content(self) -> str:
         raise NotImplementedError(f"{self.__class__.__name__}.get_content() has been called on raw BodyEntry object")
 
-    def print(self, file: Optional[TextIO] = None) -> None:
+    def print(self, file: TextIO | None = None) -> None:
         print(self.indent + self.get_content(), file=file)
 
     def __eq__(self, other: object) -> bool:
@@ -42,7 +42,7 @@ class EmptyLine(BodyEntry):
     def is_empty(self) -> bool:
         return True
 
-    def get_date(self) -> Optional[datetime.date]:
+    def get_date(self) -> datetime.date | None:
         return None
 
     def get_content(self) -> str:
@@ -56,12 +56,12 @@ class Line(BodyEntry):
     """
     An entry with a line of text
     """
-    def __init__(self, *, indent: str = "", bullet: str = "", date: Optional[str] = None, text: str):
+    def __init__(self, *, indent: str = "", bullet: str = "", date: str | None = None, text: str):
         super().__init__(indent=indent)
         self.bullet = bullet or ""
         self.text = text
-        self.date: Optional[datetime.date]
-        self.date_suffix: Optional[str]
+        self.date: datetime.date | None
+        self.date_suffix: str | None
 
         if date is None:
             self.date = None
@@ -73,13 +73,13 @@ class Line(BodyEntry):
     def is_empty(self) -> bool:
         return False
 
-    def get_date(self) -> Optional[datetime.date]:
+    def get_date(self) -> datetime.date | None:
         return self.date
 
     def get_content(self) -> str:
         return self.text
 
-    def print(self, file: Optional[TextIO] = None) -> None:
+    def print(self, file: TextIO | None = None) -> None:
         if self.date:
             print(f"{self.indent}{self.bullet}{self.date:%Y-%m-%d}{self.date_suffix}{self.text}", file=file)
         else:
@@ -109,17 +109,17 @@ class Body:
     re_task = re.compile(r"^(?P<indent>\s*)t(?P<id>\d*)\s+(?P<text>.+)$")
     re_line = re.compile(r"^(?P<indent>\s*)(?P<bullet>[-*+]\s+)?(?P<date>\d{4}-\d{2}-\d{2}:\s*)?(?P<text>.*)$")
 
-    def __init__(self, project: "project.Project"):
+    def __init__(self, project: project.Project):
         from .body_task import Tasks
 
         self.project = project
         self.tasks = Tasks(self)
 
         # Line number in the project file where the body starts
-        self._lineno: Optional[int] = None
+        self._lineno: int | None = None
 
         # Text lines for the project body
-        self.content: List[BodyEntry] = []
+        self.content: list[BodyEntry] = []
 
     def parse(self, lines: Lines) -> None:
         self._lineno = lines.lineno

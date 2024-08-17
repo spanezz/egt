@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
+from collections.abc import Sequence
 from unittest import TestCase
 
 from egtlib import Project
@@ -11,9 +12,9 @@ from egtlib.config import Config
 
 
 class ProjectTestMixin(TestCase):
-    DEFAULT_META: Optional[dict[str, Any]] = None
-    DEFAULT_LOG: Optional[Sequence[str]] = None
-    DEFAULT_BODY: Optional[Sequence[str]] = None
+    DEFAULT_META: dict[str, Any] | None = None
+    DEFAULT_LOG: Sequence[str] | None = None
+    DEFAULT_BODY: Sequence[str] | None = None
 
     def setUp(self):
         self.workdir = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -24,9 +25,9 @@ class ProjectTestMixin(TestCase):
     def project(
         self,
         *,
-        meta: Optional[dict[str, Any]] = None,
-        log: Optional[Sequence[str]] = None,
-        body: Optional[Sequence[str]] = None,
+        meta: dict[str, Any] | None = None,
+        log: Sequence[str] | None = None,
+        body: Sequence[str] | None = None,
         load: bool = True,
     ) -> Project:
         if meta is None:

@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 class ProjectState:
-    def __init__(self, project: "Project"):
+    def __init__(self, project: Project):
         statedir = project.statedir
         if statedir is None:
             from .state import State
@@ -28,7 +28,7 @@ class ProjectState:
             statedir = State.get_state_dir()
         # TODO: ensure name does not contain '/'
         self.abspath = statedir / f"project-{project.name}.json"
-        self._state: Optional[dict] = None
+        self._state: dict | None = None
 
     def get(self, name: str) -> Any:
         if self._state is None:
@@ -76,7 +76,7 @@ class Project:
         self.archived: bool = False
 
         # Project state, loaded lazily, None if not loaded
-        self._state: Optional[ProjectState] = None
+        self._state: ProjectState | None = None
 
         self.meta = Meta()
         self.log = Log(self)
@@ -120,11 +120,11 @@ class Project:
         return os.path.getmtime(self.abspath)
 
     @property
-    def tags(self) -> Set[str]:
+    def tags(self) -> set[str]:
         return self.default_tags | self.meta.tags
 
     @classmethod
-    def from_file(self, path: Path, fd: Optional[TextIO] = None, config=None):
+    def from_file(self, path: Path, fd: TextIO | None = None, config=None):
         # Default values, can be overridden by file metadata
         p = Project(path, config=config)
         # Load the actual data
@@ -132,7 +132,7 @@ class Project:
         return p
 
     @classmethod
-    def mock(self, abspath: Path, name: Optional[str] = None, path: Path | None = None, tags=None, config=None):
+    def mock(self, abspath: Path, name: str | None = None, path: Path | None = None, tags=None, config=None):
         p = Project(abspath, config=config if config is not None else Config())
         if path is not None:
             p.default_path = path
@@ -142,7 +142,7 @@ class Project:
             p.default_tags = tags
         return p
 
-    def load(self, fd: Optional[TextIO] = None):
+    def load(self, fd: TextIO | None = None):
         from .parse import Lines
 
         lines = Lines(self.abspath, fd=fd)
@@ -183,7 +183,7 @@ class Project:
         if self.meta.archived:
             self.archived = True
 
-    def print(self, out: TextIO, today: Optional[datetime.date] = None):
+    def print(self, out: TextIO, today: datetime.date | None = None):
         """
         Serialize the whole project as a project file to the given file
         descriptor.
@@ -201,7 +201,7 @@ class Project:
 
         self.body.print(out)
 
-    def save(self, today: Optional[datetime.date] = None):
+    def save(self, today: datetime.date | None = None):
         """
         Save over the original source file
         """
@@ -209,7 +209,7 @@ class Project:
             self.print(cast(TextIO, fd), today)
 
     @property
-    def last_updated(self) -> Optional[datetime.datetime]:
+    def last_updated(self) -> datetime.datetime | None:
         """
         Datetime when this project was last updated
         """
@@ -236,7 +236,7 @@ class Project:
         return ", ".join(sorted(self.tags))
 
     @property
-    def formal_period(self) -> Tuple[datetime.date, datetime.date]:
+    def formal_period(self) -> tuple[datetime.date, datetime.date]:
         """
         Compute the begin and end dates for this project.
 
@@ -279,9 +279,9 @@ class Project:
             )
             for ltype, line in stream_output(p):
                 if ltype == "stdout":
-                    print("{}:{}".format(self.name, line), file=sys.stdout)
+                    print(f"{self.name}:{line}", file=sys.stdout)
                 elif ltype == "stderr":
-                    print("{}:{}".format(self.name, line), file=sys.stderr)
+                    print(f"{self.name}:{line}", file=sys.stderr)
 
     def gitdirs(self, depth=2, root=None) -> Iterator[Path]:
         """
@@ -334,7 +334,7 @@ class Project:
                 continue
             tarout.add(path)
 
-    def _create_archive(self, path: Path, start: datetime.date, end: datetime.date) -> Optional["Project"]:
+    def _create_archive(self, path: Path, start: datetime.date, end: datetime.date) -> Project | None:
         path = path.expanduser()
         if path.exists():
             log.warn("%s not archived: %s already exists", self.name, path)
@@ -355,7 +355,7 @@ class Project:
             archived.print(out)
         return archived
 
-    def archive_month(self, archive_dir: str, month: datetime.date) -> Tuple[datetime.date, Optional["Project"]]:
+    def archive_month(self, archive_dir: str, month: datetime.date) -> tuple[datetime.date, Project | None]:
         """
         Write log entries for the given month to an archive file
         """
@@ -369,7 +369,7 @@ class Project:
 
     def archive_range(
         self, archive_dir: str, start: datetime.date, end: datetime.date
-    ) -> Tuple[datetime.date, Optional["Project"]]:
+    ) -> tuple[datetime.date, Project | None]:
         """
         Write log entries for the given range to an archive file
         """
@@ -381,7 +381,7 @@ class Project:
 
         return end, self._create_archive(pathname, start, end)
 
-    def archive(self, cutoff: datetime.date, report_fd: Optional[TextIO], save=True, combined=True) -> List["Project"]:
+    def archive(self, cutoff: datetime.date, report_fd: TextIO | None, save=True, combined=True) -> list[Project]:
         """
         Archive contents until the given cutoff date (excluded).
 
@@ -423,7 +423,7 @@ class Project:
         """
         self.body.tasks.sync_tasks(modify_state=modify_state)
 
-    def annotate(self, today: Optional[datetime.date] = None):
+    def annotate(self, today: datetime.date | None = None):
         """
         Fill in fields, resolve commands, and perform all pending actions
         embedded in the project

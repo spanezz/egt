@@ -52,7 +52,7 @@ class Config:
         self.config.read([new_cfg])
 
     @cached_property
-    def summary_columns(self) -> List[str]:
+    def summary_columns(self) -> list[str]:
         """
         Return the list of columns to show in summary
         """
@@ -60,7 +60,7 @@ class Config:
         return [x.strip().lower() for x in raw_cols.split(',')]
 
     @cached_property
-    def backup_output(self) -> Optional[str]:
+    def backup_output(self) -> str | None:
         """
         Return the default backup file location.
 
@@ -90,7 +90,7 @@ class Config:
         return self.config.getboolean("config", "sync-tw-annotations")
 
     @cached_property
-    def autotag_rules(self) -> List[Tuple[str, str]]:
+    def autotag_rules(self) -> list[tuple[str, str]]:
         """
         Return a list of (tag, regexp) autotagging rules
         """

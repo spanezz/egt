@@ -60,7 +60,7 @@ class State:
             return
 
     @classmethod
-    def rescan(cls, dirs: List[Path], *, config: Config, statedir: Path | None = None) -> None:
+    def rescan(cls, dirs: list[Path], *, config: Config, statedir: Path | None = None) -> None:
         """
         Rebuild the state looking for files in the given directories.
 
@@ -72,7 +72,7 @@ class State:
             statedir = cls.get_state_dir()
 
         # Read and detect duplicates
-        projects: Dict[str, dict] = {}
+        projects: dict[str, dict] = {}
         for dirname in dirs:
             for fname in scan(dirname):
                 try:

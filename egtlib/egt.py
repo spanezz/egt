@@ -15,21 +15,21 @@ from .config import Config
 log = logging.getLogger(__name__)
 
 
-class WeeklyReport(object):
+class WeeklyReport:
     def __init__(self):
-        self.projs: List["Project"] = []
+        self.projs: list["Project"] = []
 
     def add(self, p: Project) -> None:
         self.projs.append(p)
 
-    def report(self, end: datetime.date = None, days: int = 7) -> Dict[str, Any]:
+    def report(self, end: datetime.date = None, days: int = 7) -> dict[str, Any]:
         if end is None:
             d_until = datetime.date.today()
         else:
             d_until = end
         d_begin = d_until - datetime.timedelta(days=days)
 
-        res: Dict[str, Any] = dict(
+        res: dict[str, Any] = dict(
             begin=d_begin,
             until=d_until,
         )
@@ -74,12 +74,12 @@ class ProjectFilter:
     contain any of the -tag tags.
     """
 
-    def __init__(self, args: List[str]):
-        self._tw: Optional[taskw.TaskWarrior] = None
+    def __init__(self, args: list[str]):
+        self._tw: taskw.TaskWarrior | None = None
         self.args = args
-        self.names: Set[str] = set()
-        self.tags_wanted: Set[str] = set()
-        self.tags_unwanted: Set[str] = set()
+        self.names: set[str] = set()
+        self.tags_wanted: set[str] = set()
+        self.tags_unwanted: set[str] = set()
         self.bad_filter: bool = False
 
         for f in args:
@@ -146,7 +146,7 @@ class Egt:
     def __init__(
         self,
         config: Config,
-        filter: List[str] = [],
+        filter: list[str] = [],
         show_archived: bool = False,
         statedir: Path | None = None,
     ):
@@ -157,9 +157,9 @@ class Egt:
         self.filter = ProjectFilter(filter)
         # Dict mapping project names to Project objects.
         # It is built lazily when needed, and is None when not yet built.
-        self._projects: Optional[Dict[str, Project]] = None
+        self._projects: dict[str, Project] | None = None
 
-    def load_project(self, path: Path, project_fd: Optional[TextIO] = None) -> Optional[Project]:
+    def load_project(self, path: Path, project_fd: TextIO | None = None) -> Project | None:
         """
         Return a Project object given its file name.
 
@@ -179,7 +179,7 @@ class Egt:
             return None
         return proj
 
-    def _load_projects(self) -> Dict[str, Project]:
+    def _load_projects(self) -> dict[str, Project]:
         projs = {}
         for name, info in self.state.projects.items():
             proj = self.load_project(Path(info["fname"]))
@@ -188,11 +188,11 @@ class Egt:
             projs[proj.name] = proj
         return projs
 
-    def _default_tags(self, abspath: Path) -> Set[str]:
+    def _default_tags(self, abspath: Path) -> set[str]:
         """
         Guess tags from the project file pathname
         """
-        tags: Set[str] = set()
+        tags: set[str] = set()
         str_path = abspath.as_posix()
         for tag, regexp in self.config.autotag_rules:
             if re.search(regexp, str_path):
@@ -200,13 +200,13 @@ class Egt:
         return tags
 
     @property
-    def loaded_projects(self) -> Dict[str, Project]:
+    def loaded_projects(self) -> dict[str, Project]:
         if self._projects is None:
             self._projects = self._load_projects()
         return self._projects
 
     @property
-    def projects(self) -> List[Project]:
+    def projects(self) -> list[Project]:
         return sorted(self.loaded_projects.values(), key=lambda p: p.name)
 
     @property
@@ -214,13 +214,13 @@ class Egt:
         return sorted(self.loaded_projects.keys())
 
     @property
-    def all_tags(self) -> List[str]:
-        res: Set[str] = set()
+    def all_tags(self) -> list[str]:
+        res: set[str] = set()
         for p in self.projects:
             res.update(p.tags)
         return sorted(res)
 
-    def project(self, name: str, project_fd: Optional[TextIO] = None) -> Optional[Project]:
+    def project(self, name: str, project_fd: TextIO | None = None) -> Project | None:
         """
         Return a Project by its name
         """
@@ -235,8 +235,8 @@ class Egt:
         return self.load_project(Path(info["fname"]), project_fd=project_fd)
 
     def weekrpt(
-        self, tags: List[str] = None, end: datetime.date = None, days: int = 7, projs: List[Project] = None
-    ) -> Dict[str, Any]:
+        self, tags: list[str] = None, end: datetime.date = None, days: int = 7, projs: list[Project] = None
+    ) -> dict[str, Any]:
         rep = WeeklyReport()
         if projs:
             for p in projs:

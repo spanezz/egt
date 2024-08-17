@@ -15,10 +15,10 @@ class Locale:
     """
 
     def __init__(self):
-        self.current_locale: Optional[str] = None
-        self.cached_parserinfo: Dict[str, Type[dateutil.parser.parserinfo]] = {}
+        self.current_locale: str | None = None
+        self.cached_parserinfo: dict[str, type[dateutil.parser.parserinfo]] = {}
 
-    def set(self, lang: Optional[str]) -> None:
+    def set(self, lang: str | None) -> None:
         if self.current_locale == lang:
             return
 
@@ -46,7 +46,7 @@ class Locale:
         if cur is not None:
             self.set(cur)
 
-    def get_parserinfo(self, lang: Optional[str]) -> dateutil.parser.parserinfo:
+    def get_parserinfo(self, lang: str | None) -> dateutil.parser.parserinfo:
         if lang is None:
             return dateutil.parser.parserinfo()
 
@@ -93,9 +93,9 @@ class Locale:
 locale = Locale()
 
 
-def get_parserinfo(lang: Optional[str]) -> dateutil.parser.parserinfo:
+def get_parserinfo(lang: str | None) -> dateutil.parser.parserinfo:
     return locale.get_parserinfo(lang)
 
 
-def set_locale(lang: Optional[str]) -> None:
+def set_locale(lang: str | None) -> None:
     return locale.set(lang)
