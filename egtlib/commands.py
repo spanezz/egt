@@ -272,10 +272,9 @@ class MrConfig(ProjectsCommand):
 
     def main(self):
         e = self.make_egt()
-        for name, proj in e.projects.items():
+        for proj in e.projects:
             for gd in proj.gitdirs():
-                gd = os.path.abspath(os.path.join(gd, ".."))
-                print("[{}]".format(gd))
+                print(f"[{gd.parent.absolute()}]")
                 print()
 
 
