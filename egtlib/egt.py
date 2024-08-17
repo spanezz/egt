@@ -235,7 +235,7 @@ class Egt:
         info = self.state.projects.get(name, None)
         if info is None:
             return None
-        return self.load_project(info["fname"], project_fd=project_fd)
+        return self.load_project(Path(info["fname"]), project_fd=project_fd)
 
     def weekrpt(
         self, tags: List[str] = None, end: datetime.date = None, days: int = 7, projs: List[Project] = None

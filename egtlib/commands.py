@@ -408,12 +408,12 @@ class Annotate(EgtCommand):
 
     def main(self):
         egt = egtlib.Egt(config=self.config, show_archived=True)
-        abspath = os.path.abspath(self.args.project)
-        if os.path.exists(abspath):
+        path = Path(self.args.project)
+        if path.exists():
             if self.args.stdin:
-                proj = egt.load_project(abspath, project_fd=sys.stdin)
+                proj = egt.load_project(path, project_fd=sys.stdin)
             else:
-                proj = egt.load_project(abspath)
+                proj = egt.load_project(path)
         else:
             if self.args.stdin:
                 proj = egt.project(self.args.project, project_fd=sys.stdin)
