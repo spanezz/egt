@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import abc
 import argparse
 import datetime
+import inspect
 import logging
 import os
 import shutil
@@ -20,19 +22,23 @@ from .body import BodyEntry
 log = logging.getLogger(__name__)
 
 
-COMMANDS: typing.List[Type["cli.Command"]] = []
+COMMANDS: typing.List[Type["EgtCommand"]] = []
 
 
-def register(c: Type["cli.Command"]) -> Type["cli.Command"]:
-    COMMANDS.append(c)
+def register(c: Type["EgtCommand"]) -> Type["EgtCommand"]:
     return c
 
 
-class EgtCommand(cli.Command):
+class EgtCommand(cli.Command, abc.ABC):
     def __init__(self, args: argparse.Namespace):
         super().__init__(args)
         self.args = args
         self.config = Config(load=True)
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if not inspect.isabstract(cls):
+            COMMANDS.append(cls)
 
     def make_egt(self, filter: typing.List[str] = []) -> egtlib.Egt:
         return egtlib.Egt(config=self.config, filter=filter, show_archived=self.args.archived)
@@ -44,7 +50,6 @@ class EgtCommand(cli.Command):
         return parser
 
 
-@register
 class Scan(EgtCommand):
     """
     Update the list of known project files, by scanning everything below the
@@ -63,11 +68,13 @@ class Scan(EgtCommand):
     @classmethod
     def add_subparser(cls, subparsers):
         parser = super().add_subparser(subparsers)
-        parser.add_argument("roots", nargs="*", help="root directories to search (default: the home directory)")
+        parser.add_argument(
+            "roots", nargs="*", type=Path, help="root directories to search (default: the home directory)"
+        )
         return parser
 
 
-class ProjectsCommand(EgtCommand):
+class ProjectsCommand(EgtCommand, abc.ABC):
     def make_egt(self, allow_empty=True):
         res = super().make_egt(filter=self.args.projects)
         if not allow_empty and not res.projects:
@@ -81,7 +88,6 @@ class ProjectsCommand(EgtCommand):
         return parser
 
 
-@register
 class List(ProjectsCommand):
     """
     List known projects.
@@ -125,7 +131,6 @@ class List(ProjectsCommand):
         return parser
 
 
-@register
 class Summary(ProjectsCommand):
     """
     Print a summary of the activity on all projects
@@ -208,7 +213,6 @@ class Summary(ProjectsCommand):
         return parser
 
 
-@register
 class Term(ProjectsCommand):
     """
     Open a terminal in the directory of the given project(s)
@@ -220,7 +224,6 @@ class Term(ProjectsCommand):
             proj.spawn_terminal()
 
 
-@register
 class Work(ProjectsCommand):
     """
     Open a terminal in a project directory, and edit the project file.
@@ -232,7 +235,6 @@ class Work(ProjectsCommand):
             proj.spawn_terminal(with_editor=True)
 
 
-@register
 class Edit(ProjectsCommand):
     """
     Open a terminal in a project directory, and edit the project file.
@@ -244,7 +246,6 @@ class Edit(ProjectsCommand):
             proj.run_editor()
 
 
-@register
 class Grep(EgtCommand):
     """
     Run 'git grep' on all project .git dirs
@@ -263,7 +264,6 @@ class Grep(EgtCommand):
         return parser
 
 
-@register
 class MrConfig(ProjectsCommand):
     """
     Print a mr configuration snippet for all git projects
@@ -278,7 +278,6 @@ class MrConfig(ProjectsCommand):
                 print()
 
 
-@register
 class Weekrpt(ProjectsCommand):
     """
     Compute weekly reports
@@ -342,7 +341,6 @@ class Weekrpt(ProjectsCommand):
             log_entry.print(sys.stdout, project=p)
 
 
-@register
 class PrintLog(ProjectsCommand):
     """
     Output the log for one or more projects
@@ -368,7 +366,6 @@ class PrintLog(ProjectsCommand):
                 log_entry.print(sys.stdout, p)
 
 
-@register
 class Cat(ProjectsCommand):
     """
     Output the content of one or more project files
@@ -403,7 +400,6 @@ class Cat(ProjectsCommand):
         return parser
 
 
-@register
 class Annotate(EgtCommand):
     """
     Print a project file on stdout, annotating its contents with anything
@@ -438,7 +434,6 @@ class Annotate(EgtCommand):
         return parser
 
 
-@register
 class Archive(ProjectsCommand):
     """
     Output the log for one or more projects
@@ -486,7 +481,6 @@ class Archive(ProjectsCommand):
         return parser
 
 
-@register
 class Backup(ProjectsCommand):
     """
     Backup of egt project core information
@@ -503,11 +497,11 @@ class Backup(ProjectsCommand):
             e.backup(sys.stdout)
 
 
-@register
 class Next(ProjectsCommand):
     """
     Show the top of the notes of the most recent .egt files
     """
+
     def get_lead_entries(self, project: egtlib.Project) -> Tuple[Optional[BodyEntry], Optional[BodyEntry]]:
         first: Optional[BodyEntry] = None
         second: Optional[BodyEntry] = None
@@ -518,7 +512,7 @@ class Next(ProjectsCommand):
                 first = entry
                 continue
 
-            first_indent = first.indent + (' ' * len(first.bullet))
+            first_indent = first.indent + (" " * len(first.bullet))
             if len(entry.indent) > len(first_indent) and entry.indent.startswith(first_indent):
                 second = entry
             break
@@ -549,7 +543,7 @@ class Next(ProjectsCommand):
                 # If the first line is a heading, then there is no now&next
                 # section
                 sort_key = (1, now - mtime, "")
-            elif (date := entry.get_date()):
+            elif date := entry.get_date():
                 # Sort by due date
                 ts = datetime.datetime.combine(date, datetime.time(0))
                 if ts > now:
@@ -583,7 +577,6 @@ class Next(ProjectsCommand):
         print(table.draw())
 
 
-@register
 class Completion(EgtCommand):
     """
     Tab completion support
