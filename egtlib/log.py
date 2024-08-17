@@ -352,7 +352,15 @@ class Entry(EntryBase):
 
 class Command(EntryBase):
     """
-    Log entry with a user query, to be expanded with the query result
+    Log entry with a user query, to be expanded with the query result.
+
+    Supported expansions:
+
+    * `+`: expand to today
+    * `hh:mm` or `hh:mm-`: start an entry today at the given time
+    * `hh:mm-hh:mm`: create an entry today for the given time span
+    * `hh:mm +tags`, `hh:mm- +tags`, `hh:mm-hh:mm +tags`:
+      create entries with tags
     """
 
     re_new_time = re.compile(
