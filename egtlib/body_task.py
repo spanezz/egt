@@ -226,7 +226,7 @@ class Tasks:
 
     @classmethod
     def get_taskrc_path(self) -> Path:
-        return Path(taskw.warrior.TASKRC)
+        return Path(taskw.warrior.TASKRC).expanduser()
 
     @cached_property
     def tw(self) -> taskw.TaskWarrior:
