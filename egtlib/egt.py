@@ -88,7 +88,11 @@ class ProjectFilter:
         for f in args:
             if f == "_":
                 with contain_taskwarrior_noise():
-                    tasks = self.tw.filter_tasks({"status": "completed", "end": datetime.date.today()})
+                    tasks = sorted(
+                            self.tw.filter_tasks({"status": "completed", "end": datetime.date.today()}),
+                            key=lambda t: t['end'],
+                            reverse=True
+                            )
                 try:
                     self.names.add(tasks[0]["project"])
                 except (IndexError, KeyError):
