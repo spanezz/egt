@@ -3,18 +3,20 @@ from __future__ import annotations
 import abc
 import argparse
 import datetime
+import datetime as dt
 import inspect
 import logging
 import os
 import shutil
 import sys
 from collections.abc import Iterator
+from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path
 from typing import IO, Any
 
 import egtlib
-from egtlib.utils import HoursCol, LastEntryCol, SummaryCol, TaskStatCol, format_td
+from egtlib.utils import HoursCol, LastEntryCol, SummaryCol, TaskStatCol, format_td, format_duration
 
 from . import cli
 from .body import BodyEntry
@@ -37,8 +39,7 @@ class EgtCommand(cli.Command, abc.ABC):
         self.config = Config(load=True)
 
     @abc.abstractmethod
-    def main(self) -> None:
-        ...
+    def main(self) -> None: ...
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -343,6 +344,36 @@ class Weekrpt(ProjectsCommand):
         log.sort(key=lambda x: x[0].begin)
         for log_entry, p in log:
             log_entry.print(sys.stdout, project=p)
+
+
+class Monthrpt(ProjectsCommand):
+    """
+    Compute monthly reports
+    """
+
+    def main(self) -> None:
+        from texttable import Texttable
+
+        # egt weekrpt also showing stats by project, and by tags
+        egt = self.make_egt()
+
+        by_day: dict[dt.date, int] = Counter()
+        for p in egt.projects:
+            for e in p.log.entries:
+                by_day[e.begin.date()] += e.duration
+
+        termsize = shutil.get_terminal_size((80, 25))
+        table = Texttable(max_width=termsize.columns)
+        table.set_deco(Texttable.HEADER)
+        table.set_cols_align(("l", "r"))
+        table.set_cols_dtype(("t", "i"))
+        table.add_row(("Day", "Hours"))
+
+        for day, duration in sorted(by_day.items()):
+            table.add_row((day, format_duration(duration)))
+
+        print(table.draw())
+        print()
 
 
 class PrintLog(ProjectsCommand):
