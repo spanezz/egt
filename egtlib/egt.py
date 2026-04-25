@@ -2,6 +2,7 @@ import datetime as dt
 import logging
 import re
 import sys
+import tarfile
 import warnings
 from functools import cached_property
 from pathlib import Path
@@ -77,7 +78,8 @@ class ProjectFilter:
         name  matches projects with this name
           NN  matches the project of the taskwarrior task with ID NN
            _  matches the project of the last taskwarrior task completed today
-     pattern  if only one keyword: fnmatch pattern to match against project names
+     pattern  if only one keyword: fnmatch pattern to match against project
+              names
 
     A project matches the filter if its name is explicitly listed. If it is
     not, it matches if its tag set contains all the +tag tags, and does not
@@ -163,7 +165,7 @@ class ProjectFilter:
 
 class Egt:
     """
-    Collection of parsed .egt files as Project objects
+    Database of Project objects loaded from ``.egt`` files.
     """
 
     def __init__(
@@ -172,7 +174,7 @@ class Egt:
         filter: list[str] = [],
         show_archived: bool = False,
         statedir: Path | None = None,
-    ):
+    ) -> None:
         self.config = config
         self.state = State()
         self.state.load(statedir)
@@ -261,9 +263,6 @@ class Egt:
         return rep.report(end, days)
 
     def backup(self, out: BinaryIO = sys.stdout.buffer) -> None:
-        import tarfile
-
-        tarout = tarfile.open(None, "w|", fileobj=out)
-        for p in self.projects:
-            p.backup(tarout)
-        tarout.close()
+        with tarfile.open(mode="w|", fileobj=out) as tarout:
+            for p in self.projects:
+                p.backup(tarout)

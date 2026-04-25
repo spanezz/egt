@@ -5,9 +5,10 @@ import logging
 import os.path
 import subprocess
 import sys
+import tarfile
 from collections.abc import Iterator
 from pathlib import Path
-from typing import IO, Any, Self, cast
+from typing import IO, Any, Self, cast, Generator
 
 from .body import Body
 from .config import Config
@@ -58,7 +59,7 @@ class ProjectState:
 
 class Project:
     """
-    A .egt file.
+    A parsed ``.egt`` file.
 
     The file contains:
 
@@ -69,7 +70,7 @@ class Project:
 
     def __init__(
         self, path: Path, *, config: Config, statedir: Path | None = None
-    ):
+    ) -> None:
         self.config = config
         self.statedir = statedir
         self.abspath = path
@@ -89,7 +90,7 @@ class Project:
         self.body = Body(self)
 
     @contextlib.contextmanager
-    def set_locale(self) -> None:
+    def set_locale(self) -> Generator[None]:
         """
         Set the current locale to the one specified in the project header
         """
@@ -133,7 +134,7 @@ class Project:
 
     @classmethod
     def from_file(
-        cls, path: Path, fd: IO[str] | None = None, config=None
+        cls, path: Path, *, fd: IO[str] | None = None, config: Config
     ) -> Self:
         # Default values, can be overridden by file metadata
         p = cls(path, config=config)
@@ -147,8 +148,8 @@ class Project:
         abspath: Path,
         name: str | None = None,
         path: Path | None = None,
-        tags=None,
-        config=None,
+        tags: set[str] | None = None,
+        config: Config | None = None,
     ) -> Self:
         p = cls(abspath, config=config if config is not None else Config())
         if path is not None:
@@ -276,7 +277,7 @@ class Project:
 
         return since, until
 
-    def spawn_terminal(self, with_editor=False) -> None:
+    def spawn_terminal(self, with_editor: bool = False) -> None:
         from .system import run_work_session
 
         run_work_session(self, with_editor)
@@ -327,7 +328,7 @@ class Project:
                 if sub.is_dir():
                     yield from self.gitdirs(depth - 1, sub)
 
-    def backup(self, tarout) -> None:
+    def backup(self, tarout: tarfile.TarFile) -> None:
         backup_paths = [
             x.strip() for x in self.meta.get("backup", "").split("\n")
         ]
@@ -419,8 +420,8 @@ class Project:
         self,
         cutoff: dt.date,
         report_fd: IO[str] | None,
-        save=True,
-        combined=True,
+        save: bool = True,
+        combined: bool = True,
     ) -> list["Project"]:
         """
         Archive contents until the given cutoff date (excluded).
