@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import argparse
 import logging
 import sys
@@ -62,7 +60,7 @@ class Command:
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = subparsers.add_parser(
             cls.command_name(),

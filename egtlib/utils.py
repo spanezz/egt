@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 import datetime
 import fcntl
@@ -90,7 +88,7 @@ class SummaryCol:
         self,
         label: str,
         align: str,
-        func: Callable[[egtlib.Project], str] | None = None,
+        func: Callable[["egtlib.Project"], str] | None = None,
     ):
         self.label = label
         self.align = align
@@ -99,7 +97,7 @@ class SummaryCol:
     def init_data(self) -> None:
         pass
 
-    def func(self, p: egtlib.Project) -> str:
+    def func(self, p: "egtlib.Project") -> str:
         if self._func:
             return self._func(p)
         else:
@@ -107,10 +105,12 @@ class SummaryCol:
 
 
 class TaskStatCol(SummaryCol):
-    def __init__(self, label: str, align: str, projs: Sequence[egtlib.Project]):
+    def __init__(
+        self, label: str, align: str, projs: Sequence["egtlib.Project"]
+    ):
         super().__init__(label, align)
         self.task_stats: dict[str, int] = defaultdict(int)
-        self._proj: egtlib.Project | None
+        self._proj: "egtlib.Project" | None
         try:
             self._proj = projs[0]
         except IndexError:
@@ -131,12 +131,12 @@ class TaskStatCol(SummaryCol):
             except KeyError:
                 pass
 
-    def func(self, p: egtlib.Project) -> str:
+    def func(self, p: "egtlib.Project") -> str:
         return str(self.task_stats[p.name])
 
 
 class HoursCol(SummaryCol):
-    def func(self, p: egtlib.Project) -> str:
+    def func(self, p: "egtlib.Project") -> str:
         return (
             format_duration(p.elapsed, tabular=True) if p.last_updated else "--"
         )
@@ -147,7 +147,7 @@ class LastEntryCol(SummaryCol):
         super().__init__(*args)
         self.now = datetime.datetime.now()
 
-    def func(self, p: egtlib.Project) -> str:
+    def func(self, p: "egtlib.Project") -> str:
         if p.last_updated:
             return format_td(self.now - p.last_updated, tabular=True) + " ago"
         else:

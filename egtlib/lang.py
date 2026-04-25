@@ -1,9 +1,6 @@
-from __future__ import annotations
-
 import contextlib
 import locale
 import logging
-from collections.abc import Iterator
 from typing import Generator
 
 import dateutil.parser

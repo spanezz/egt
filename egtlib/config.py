@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 import os
 from configparser import ConfigParser
@@ -15,7 +13,7 @@ class Config:
     Egt configuration
     """
 
-    def __init__(self, load: bool = False):
+    def __init__(self, load: bool = False) -> None:
         self.config = ConfigParser(
             interpolation=None
         )  # we want '%' in formats to work directly

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import datetime
 import os
 import re
@@ -30,7 +28,7 @@ class Task(BodyEntry):
 
     def __init__(
         self,
-        body: Body,
+        body: "Body",
         *,
         id: int | str,
         indent: str = "",
@@ -218,7 +216,7 @@ class Tasks:
     Handle tasks in a Project Body
     """
 
-    def __init__(self, body: Body):
+    def __init__(self, body: "Body"):
         self.body = body
 
         self.date_format = self.body.project.config.date_format

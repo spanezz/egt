@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import abc
 import argparse
 import datetime
@@ -32,10 +30,10 @@ from .config import Config
 log = logging.getLogger(__name__)
 
 
-COMMANDS: list[type[EgtCommand]] = []
+COMMANDS: list[type["EgtCommand"]] = []
 
 
-def register(c: type[EgtCommand]) -> type[EgtCommand]:
+def register(c: type["EgtCommand"]) -> type["EgtCommand"]:
     return c
 
 
@@ -60,7 +58,7 @@ class EgtCommand(cli.Command, abc.ABC):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument(
@@ -88,7 +86,7 @@ class Scan(EgtCommand):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument(
@@ -109,7 +107,7 @@ class ProjectsCommand(EgtCommand, abc.ABC):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument(
@@ -157,7 +155,7 @@ class List(ProjectsCommand):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument(
@@ -245,7 +243,7 @@ class Summary(ProjectsCommand):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument(
@@ -320,7 +318,7 @@ class Grep(EgtCommand):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("pattern", help="pattern to pass to git grep")
@@ -508,7 +506,7 @@ class Cat(ProjectsCommand):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         group = parser.add_mutually_exclusive_group()
@@ -551,7 +549,7 @@ class Annotate(EgtCommand):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument("project", help="project to work on")
@@ -594,7 +592,7 @@ class Archive(ProjectsCommand):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         last_month = datetime.date.today().replace(day=1) - datetime.timedelta(
@@ -755,7 +753,7 @@ class Completion(EgtCommand):
 
     @classmethod
     def add_subparser(
-        cls, subparsers: argparse._SubParsersAction[Any]
+        cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
         parser.add_argument(

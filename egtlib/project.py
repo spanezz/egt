@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import contextlib
 import datetime
 import json
@@ -22,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 class ProjectState:
-    def __init__(self, project: Project):
+    def __init__(self, project: "Project"):
         statedir = project.statedir
         if statedir is None:
             from .state import State
@@ -135,10 +133,10 @@ class Project:
 
     @classmethod
     def from_file(
-        self, path: Path, fd: IO[str] | None = None, config=None
-    ) -> Project:
+        cls, path: Path, fd: IO[str] | None = None, config=None
+    ) -> Self:
         # Default values, can be overridden by file metadata
-        p = Project(path, config=config)
+        p = cls(path, config=config)
         # Load the actual data
         p.load(fd=fd)
         return p
@@ -363,7 +361,7 @@ class Project:
 
     def _create_archive(
         self, path: Path, start: datetime.date, end: datetime.date
-    ) -> Project | None:
+    ) -> "Project | None":
         path = path.expanduser()
         if path.exists():
             log.warn("%s not archived: %s already exists", self.name, path)
@@ -386,7 +384,7 @@ class Project:
 
     def archive_month(
         self, archive_dir: str, month: datetime.date
-    ) -> tuple[datetime.date, Project | None]:
+    ) -> tuple[datetime.date, "Project | None"]:
         """
         Write log entries for the given month to an archive file
         """
@@ -400,7 +398,7 @@ class Project:
 
     def archive_range(
         self, archive_dir: str, start: datetime.date, end: datetime.date
-    ) -> tuple[datetime.date, Project | None]:
+    ) -> tuple[datetime.date, "Project | None"]:
         """
         Write log entries for the given range to an archive file
         """
@@ -423,7 +421,7 @@ class Project:
         report_fd: IO[str] | None,
         save=True,
         combined=True,
-    ) -> list[Project]:
+    ) -> list["Project"]:
         """
         Archive contents until the given cutoff date (excluded).
 

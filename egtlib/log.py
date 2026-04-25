@@ -1,22 +1,23 @@
-from __future__ import annotations
-
 import datetime
 import re
 import sys
 from collections import Counter
 from collections.abc import Generator
-from typing import IO, Any, Self
+from typing import IO, Any, Self, TYPE_CHECKING
 
 import dateutil.parser
 
-from . import project, utils
+from . import utils
 from .lang import get_parserinfo
 from .parse import Lines
 from .utils import format_duration
 
+if TYPE_CHECKING:
+    from . import project
+
 
 class LogParser:
-    ENTRY_TYPES: list[type[EntryBase]] = []
+    ENTRY_TYPES: list[type["EntryBase"]] = []
 
     def __init__(self, lines: Lines, lang: str | None = None):
         self.lines = lines
@@ -40,7 +41,7 @@ class LogParser:
         self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
         return d
 
-    def parse_entries(self) -> Generator[EntryBase, None, None]:
+    def parse_entries(self) -> Generator["EntryBase", None, None]:
         while True:
             line = self.lines.peek()
             if not line:
@@ -105,7 +106,7 @@ class EntryBase:
         super().__init_subclass__(**kwargs)
         LogParser.ENTRY_TYPES.append(cls)
 
-    def sync(self, project: project.Project, today: datetime.date) -> Self:
+    def sync(self, project: "project.Project", today: datetime.date) -> Self:
         """
         When syncing logs, return the transformed version of this entry.
 
@@ -252,7 +253,7 @@ class Entry(EntryBase):
         else:
             return self.until is None
 
-    def _sync_body(self, project: project.Project):
+    def _sync_body(self, project: "project.Project"):
         """
         Sync log body with git or any other activity data sources
         """
@@ -265,7 +266,7 @@ class Entry(EntryBase):
 
         collect_achievements(project, self)
 
-    def sync(self, project: project.Project, today: datetime.date):
+    def sync(self, project: "project.Project", today: datetime.date):
         self._sync_body(project)
         return self
 
@@ -293,7 +294,9 @@ class Entry(EntryBase):
         print(self.begin.year, file=file)
 
     def print(
-        self, file: IO[str] = sys.stdout, project: project.Project | None = None
+        self,
+        file: IO[str] = sys.stdout,
+        project: "project.Project | None" = None,
     ):
         mo = self.re_entry.match(self.head)
         if not mo:
@@ -417,7 +420,9 @@ class Command(EntryBase):
     def reference_time(self) -> datetime.datetime | None:
         return None
 
-    def sync(self, project: project.Project, today: datetime.date) -> EntryBase:
+    def sync(
+        self, project: "project.Project", today: datetime.date
+    ) -> EntryBase:
         date_format = project.config.date_format + ":"
         datetime_format = date_format + " " + project.config.time_format + "-"
         if self.start is None:
@@ -523,7 +528,7 @@ class Log:
     Time-based log section of a .egt file
     """
 
-    def __init__(self, project: project.Project):
+    def __init__(self, project: "project.Project"):
         self.project = project
         # Line number in the project file where the log starts
         self._lineno: int | None = None

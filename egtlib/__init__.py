@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from . import state, utils
 from .egt import Egt
 from .project import Project
