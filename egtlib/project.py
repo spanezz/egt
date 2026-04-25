@@ -7,6 +7,7 @@ import subprocess
 import sys
 import tarfile
 from collections.abc import Iterator
+from functools import cached_property
 from pathlib import Path
 from typing import IO, Any, Self, cast, Generator
 
@@ -21,12 +22,12 @@ log = logging.getLogger(__name__)
 
 
 class ProjectState:
+    """
+    Project information cached in the state directory
+    """
+
     def __init__(self, project: "Project"):
         statedir = project.statedir
-        if statedir is None:
-            from .state import State
-
-            statedir = State.get_state_dir()
         # TODO: ensure name does not contain '/'
         self.abspath = statedir / f"project-{project.name}.json"
         self._state: dict | None = None
@@ -71,19 +72,27 @@ class Project:
     def __init__(
         self, path: Path, *, config: Config, statedir: Path | None = None
     ) -> None:
-        self.config = config
-        self.statedir = statedir
-        self.abspath = path
-        self.default_path = path.parent
-        if path.name == ".egt":
-            self.default_name = self.default_path.name
-        else:
-            self.default_name = path.stem
-        self.default_tags: set[str] = set()
-        self.archived: bool = False
+        """
+        Instantiate a project.
 
-        # Project state, loaded lazily, None if not loaded
-        self._state: ProjectState | None = None
+        :param path: Path to the .egt file
+        :param config: egt configuration
+        :param statedir: Directory where cached project state is saved. If
+          None, the default location is used.
+        """
+        # Prevent circular import
+        from .state import State
+
+        #: Egt configuration
+        self.config = config
+        #: Directory where cached project state is saved
+        self.statedir = statedir or State.get_state_dir()
+        #: Path to the .egt file
+        self.abspath = path
+        #: Project tags
+        self.tags: set[str] = set()
+        #: If True, the project is archived
+        self.archived: bool = False
 
         self.meta = Meta()
         self.log = Log(self)
@@ -97,114 +106,125 @@ class Project:
         with set_locale(self.meta.lang):
             yield
 
-    @property
+    @cached_property
     def state(self) -> ProjectState:
-        if not self._state:
-            self._state = ProjectState(self)
-        return self._state
+        """Cached project information."""
+        return ProjectState(self)
+
+    @cached_property
+    def base_name(self) -> str:
+        """
+        Return the base name of the project.
+
+        This is the project name without an archived suffix.
+        """
+        if self.meta.name is not None:
+            return self.meta.name
+
+        if self.abspath.name == ".egt":
+            return self.abspath.parent.name
+        else:
+            return self.abspath.stem
 
     @property
     def name(self) -> str:
-        name = self.meta.name or self.default_name
+        """Project name."""
         if not self.archived:
-            return name
+            return self.base_name
 
         since, until = self.formal_period
         if until:
-            return f"{name}-{until:%Y-%m-%d}"
+            return f"{self.base_name}-{until:%Y-%m-%d}"
         elif since:
-            return f"{name}-{since:%Y-%m-%d}"
+            return f"{self.base_name}-{since:%Y-%m-%d}"
         else:
-            return name
+            return self.base_name
 
-    @property
+    @cached_property
     def path(self) -> Path:
-        return self.meta.path or self.default_path
+        """Return the project directory."""
+        return self.meta.path or self.abspath.parent
 
     @property
     def mtime(self) -> float:
         """
         Returh the modification time of the .egt file
         """
-        return os.path.getmtime(self.abspath)
-
-    @property
-    def tags(self) -> set[str]:
-        return self.default_tags | self.meta.tags
+        return self.abspath.stat().st_mtime
 
     @classmethod
     def from_file(
         cls, path: Path, *, fd: IO[str] | None = None, config: Config
     ) -> Self:
+        """
+        Load a project from a ``.egt`` file.
+
+        :param path: path to the ``.egt`` file.
+        :param fd: file descriptor to load the ``.egt`` file from. If missing,
+          ``path`` is opened.
+        :param config: egt configuration
+        """
         # Default values, can be overridden by file metadata
         p = cls(path, config=config)
         # Load the actual data
         p.load(fd=fd)
         return p
 
-    @classmethod
-    def mock(
-        cls,
-        abspath: Path,
-        name: str | None = None,
-        path: Path | None = None,
-        tags: set[str] | None = None,
-        config: Config | None = None,
-    ) -> Self:
-        p = cls(abspath, config=config if config is not None else Config())
-        if path is not None:
-            p.default_path = path
-        if name is not None:
-            p.default_name = name
-        if tags is not None:
-            p.default_tags = tags
-        return p
-
     def load(self, fd: IO[str] | None = None) -> None:
+        """
+        Load the project from file.
+
+        :param fd: file descriptor to load the ``.egt`` file from. If missing,
+          ``self.abspath`` is opened.
+        """
         from .parse import Lines
 
         lines = Lines(self.abspath, fd=fd)
 
-        # Parse optionalmetadata
+        try:
+            # Parse optional metadata
 
-        # If it starts with a log, there is no metadata: stop
-        # If the first line doesn't look like a header, stop
-        first = lines.peek()
-        if first is None:
-            return
-        if not Log.is_start_line(first) and Meta.is_start_line(first):
-            log.debug("%s:%d: parsing metadata", lines.path, lines.lineno)
-            self.meta.parse(lines)
+            # If it starts with a log, there is no metadata: stop
+            # If the first line doesn't look like a header, stop
+            if (line := lines.peek()) is None:
+                return
+            if not Log.is_start_line(line) and Meta.is_start_line(line):
+                log.debug("%s:%d: parsing metadata", lines.path, lines.lineno)
+                self.meta.parse(lines)
 
-        lines.skip_empty_lines()
-
-        # Parse log entries
-        first_line = lines.peek()
-
-        if first_line is None:
-            return
-        elif self.log.is_start_line(first_line):
-            log.debug("%s:%d: parsing log", lines.path, lines.lineno)
-            self.log.parse(lines, lang=self.meta.lang)
             lines.skip_empty_lines()
 
-        # Parse body
-        log.debug("%s:%d: parsing body", lines.path, lines.lineno)
-        self.body.parse(lines)
+            # Parse log entries
+            if (line := lines.peek()) is None:
+                return
+            elif self.log.is_start_line(line):
+                log.debug("%s:%d: parsing log", lines.path, lines.lineno)
+                self.log.parse(lines, lang=self.meta.lang)
+                lines.skip_empty_lines()
 
-        # Allow to group archived projects with the same name.
-        # Compute it separately to skip the archieve name mangling performed by
-        # the name property on archived project names
-        self.group = self.meta.name or self.default_name
+            # Parse body
+            log.debug("%s:%d: parsing body", lines.path, lines.lineno)
+            self.body.parse(lines)
+        finally:
+            # Allow to group archived projects with the same name.
+            # Compute it separately to skip the archieve name mangling
+            # performed by the name property on archived project names
+            self.group = self.base_name
 
-        # Quick access to 'archive' meta attribute
-        if self.meta.archived:
-            self.archived = True
+            # Add tags from project metadata
+            self.tags.update(self.meta.tags)
 
-    def print(self, out: IO[str], today: dt.date | None = None) -> None:
+            # Quick access to 'archive' meta attribute
+            if self.meta.archived:
+                self.archived = True
+
+    def print(self, out: IO[str], *, today: dt.date | None = None) -> None:
         """
         Serialize the whole project as a project file to the given file
         descriptor.
+
+        :param out: output file descriptor
+        :param today: if present, override today's date
         """
         from . import utils
 
@@ -224,7 +244,7 @@ class Project:
         Save over the original source file
         """
         with atomic_writer(self.abspath, "wt") as fd:
-            self.print(cast(IO[str], fd), today)
+            self.print(cast(IO[str], fd), today=today)
 
     @property
     def last_updated(self) -> dt.datetime | None:

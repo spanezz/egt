@@ -14,24 +14,23 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
         self.projectfile = self.workdir / ".egt"
         self.reportfile = self.workdir / "report.egt"
 
-    def archive(self, text: str | list[str], today=dt.date(2019, 2, 1)):
+    def archive(
+        self, text: list[str], today: dt.date = dt.date(2019, 2, 1)
+    ) -> tuple[Project, list[Project]]:
         with self.projectfile.open("w") as fd:
-            if isinstance(text, str):
-                fd.write(text)
-            else:
-                for line in text:
-                    print(line, file=fd)
+            for line in text:
+                print(line, file=fd)
 
         proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.load()
-        proj.meta.set("Name", "test")
-        proj.meta.set("Archive-Dir", self.workdir)
         with open(self.reportfile, "wt") as fd:
             return proj, proj.archive(
                 cutoff=today.replace(day=1), report_fd=fd, combined=False
             )
 
-    def to_text(self, proj, today: dt.date | None = dt.date(2019, 2, 1)) -> str:
+    def to_text(
+        self, proj: Project, today: dt.date | None = dt.date(2019, 2, 1)
+    ) -> str:
         with io.StringIO() as fd:
             proj.print(fd, today=today)
             return fd.getvalue()
@@ -39,6 +38,9 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
     def test_archive(self) -> None:
         proj, archives = self.archive(
             [
+                "Name: test",
+                f"Archive-Dir: {self.workdir}",
+                "",
                 "2019",
                 "01 january: 10:00-12:00",
                 " - broken",
@@ -98,6 +100,9 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
     def test_archive_multi(self) -> None:
         proj, archives = self.archive(
             [
+                "Name: test",
+                f"Archive-Dir: {self.workdir}",
+                "",
                 "2018",
                 "15 december: 9:00-13:00",
                 " - worked",
@@ -186,6 +191,9 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
     def test_archive_tagged(self) -> None:
         proj, archives = self.archive(
             [
+                "Name: test",
+                f"Archive-Dir: {self.workdir}",
+                "",
                 "2019",
                 "01 january: 10:00-12:00 +tag1 +tag2",
                 " - broken",
@@ -237,6 +245,9 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
     def test_no_old_data(self) -> None:
         proj, archives = self.archive(
             [
+                "Name: test",
+                f"Archive-Dir: {self.workdir}",
+                "",
                 "2019",
                 "01 february: 10:00-13:00",
                 " - fixed",
@@ -262,6 +273,9 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
     def test_empty(self) -> None:
         proj, archives = self.archive(
             [
+                "Name: test",
+                f"Archive-Dir: {self.workdir}",
+                "",
                 "2019",
             ]
         )

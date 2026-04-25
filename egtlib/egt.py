@@ -190,15 +190,11 @@ class Egt:
         Returns None if the file does not exist or no suitable project could be
         created from that file.
         """
-        from .project import Project
-
         proj = Project.from_file(path, fd=project_fd, config=self.config)
-        proj.default_tags.update(self._default_tags(path))
+        proj.tags.update(self._default_tags(path))
         return proj
 
     def _load_projects(self) -> dict[str, Project]:
-        from .project import Project
-
         projs = {}
         for name, info in self.state.projects.items():
             path = Path(info["fname"])

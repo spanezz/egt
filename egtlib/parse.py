@@ -9,6 +9,13 @@ class Lines:
     """
 
     def __init__(self, path: Path, fd: IO[str] | None = None):
+        """
+        Iterate a file line by line.
+
+        :param path: pathname to the file to iterate
+        :param fd: file descriptor to use for loading. If missing, ``path`` is
+          opened.
+        """
         # File name being parsed
         self.path = path
         # Current line being parsed
@@ -23,8 +30,10 @@ class Lines:
 
     def peek(self) -> str | None:
         """
-        Return the next line to be parsed, without advancing the cursor.
-        Return None if we are at the end.
+        Peek at the next line.
+
+        :returns: the next line to be parsed, without advancing the cursor.
+          None if we are at the end.
         """
         if self.lineno < len(self.lines):
             return self.lines[self.lineno]
@@ -33,8 +42,10 @@ class Lines:
 
     def next(self) -> str:
         """
-        Return the next line to be parsed, advancing the cursor.
-        Raise RuntimeError if we are at the end.
+        Get the next file.
+
+        :returns: the next line to be parsed, advancing the cursor.
+        :raise RuntimeError: when the end of file is reached
         """
         if self.lineno >= len(self.lines):
             raise RuntimeError("Lines.next() called at the end of the input")
@@ -43,19 +54,16 @@ class Lines:
         return res
 
     def rest(self) -> Generator[str, None, None]:
-        """
-        Generate all remaining lines
-        """
+        """Generate all remaining lines."""
         yield from self.lines[self.lineno :]
 
     def discard(self) -> None:
-        """
-        Just advance the cursor to the next line
-        """
+        """Advance to the next line."""
         if self.lineno < len(self.lines):
             self.lineno += 1
 
     def skip_empty_lines(self) -> None:
+        """Skip all consecutive empty files."""
         while True:
             line = self.peek()
             if line is None:
