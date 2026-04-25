@@ -1,7 +1,6 @@
-from __future__ import annotations
-
 import argparse
 import contextlib
+import datetime as dt
 import io
 import sys
 import unittest
@@ -177,6 +176,8 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     # TODO: test_annotate
 
     def test_annotate_stdin_and_file(self) -> None:
+        cur_year = str(dt.date.today().year)
+
         file = self.workdir / "test.egt"
         file.write_text("")
 
@@ -192,10 +193,12 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(stderr, "")
         self.assertEqual(
             stdout.splitlines(),
-            ["2024", "", "test"],
+            [cur_year, "", "test"],
         )
 
     def test_annotate_stdin_only(self) -> None:
+        cur_year = str(dt.date.today().year)
+
         stdin = io.StringIO("test")
         orig_stdin = sys.stdin
         sys.stdin = stdin
@@ -210,7 +213,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(stderr, "")
         self.assertEqual(
             stdout.splitlines(),
-            ["2024", "", "test"],
+            [cur_year, "", "test"],
         )
 
     # TODO: test_archive

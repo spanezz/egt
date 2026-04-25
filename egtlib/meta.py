@@ -1,9 +1,10 @@
 import datetime as dt
+import email
 import inspect
 import re
 import sys
 from pathlib import Path
-from typing import Any, IO
+from typing import Any, IO, Self
 
 from .parse import Lines
 from .utils import format_duration
@@ -80,11 +81,11 @@ class Meta:
         else:
             return None
 
-    def copy(self):
+    def copy(self) -> Self:
         """
         Return a copy of this metadata
         """
-        res = Meta()
+        res = self.__class__()
         res._raw = self._raw.copy()
         res.tags = self.tags.copy()
         return res
@@ -148,11 +149,7 @@ class Meta:
             meta_lines.append(lines.next())
 
         # Parse fields in the same way as email headers
-        import email
-
         for k, v in email.message_from_string("\n".join(meta_lines)).items():
-            if v is None:
-                continue
             self._raw[k.lower()] = inspect.cleandoc(str(v))
 
         # Extract well known values

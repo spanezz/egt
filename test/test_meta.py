@@ -33,7 +33,7 @@ class TestMeta(unittest.TestCase):
                 "field": "value",
                 "lowercase": "value1",
                 "uppercase": "value2",
-                "multiline": "foobar\n baz",
+                "multiline": "foobar\nbaz",
                 "tags": "a,  b,  c",
             },
         )
@@ -46,7 +46,7 @@ class TestMeta(unittest.TestCase):
         self.assertEqual(meta.get("field"), "value")
         self.assertEqual(meta.get("lowercase"), "value1")
         self.assertEqual(meta.get("uppercase"), "value2")
-        self.assertEqual(meta.get("multiline"), "foobar\n baz")
+        self.assertEqual(meta.get("multiline"), "foobar\nbaz")
         self.assertEqual(meta.get("tags"), {"a", "b", "c"})
 
     def test_set(self) -> None:
@@ -92,7 +92,7 @@ class TestMeta(unittest.TestCase):
                 "Uppercase: value2",
                 "Multiline:",
                 " foobar",
-                "  baz",
+                " baz",
                 "Tags: a,  b,  c",
             ],
         )
