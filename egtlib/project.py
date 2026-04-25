@@ -69,7 +69,9 @@ class Project:
     * A free-text body (body.Body)
     """
 
-    def __init__(self, path: Path, *, config: Config, statedir: Path | None = None):
+    def __init__(
+        self, path: Path, *, config: Config, statedir: Path | None = None
+    ):
         self.config = config
         self.statedir = statedir
         self.abspath = path
@@ -132,7 +134,9 @@ class Project:
         return self.default_tags | self.meta.tags
 
     @classmethod
-    def from_file(self, path: Path, fd: IO[str] | None = None, config=None) -> Project:
+    def from_file(
+        self, path: Path, fd: IO[str] | None = None, config=None
+    ) -> Project:
         # Default values, can be overridden by file metadata
         p = Project(path, config=config)
         # Load the actual data
@@ -140,7 +144,14 @@ class Project:
         return p
 
     @classmethod
-    def mock(cls, abspath: Path, name: str | None = None, path: Path | None = None, tags=None, config=None) -> Self:
+    def mock(
+        cls,
+        abspath: Path,
+        name: str | None = None,
+        path: Path | None = None,
+        tags=None,
+        config=None,
+    ) -> Self:
         p = cls(abspath, config=config if config is not None else Config())
         if path is not None:
             p.default_path = path
@@ -283,7 +294,11 @@ class Project:
             cmd = ["git", "grep"] + args
             log.info("%s: git grep %s", cwd, " ".join(cmd))
             p = subprocess.Popen(
-                cmd, cwd=cwd.as_posix(), close_fds=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                cmd,
+                cwd=cwd.as_posix(),
+                close_fds=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
             for ltype, line in stream_output(p):
                 if ltype == "stdout":
@@ -291,7 +306,9 @@ class Project:
                 elif ltype == "stderr":
                     print(f"{self.name}:{line}", file=sys.stderr)
 
-    def gitdirs(self, depth: int = 2, root: Path | None = None) -> Iterator[Path]:
+    def gitdirs(
+        self, depth: int = 2, root: Path | None = None
+    ) -> Iterator[Path]:
         """
         Find all .git directories below the project path
         """
@@ -313,7 +330,9 @@ class Project:
                     yield from self.gitdirs(depth - 1, sub)
 
     def backup(self, tarout) -> None:
-        backup_paths = [x.strip() for x in self.meta.get("backup", "").split("\n")]
+        backup_paths = [
+            x.strip() for x in self.meta.get("backup", "").split("\n")
+        ]
 
         # Backup the main todo/log file
         tarout.add(self.abspath)
@@ -342,7 +361,9 @@ class Project:
                 continue
             tarout.add(path)
 
-    def _create_archive(self, path: Path, start: datetime.date, end: datetime.date) -> Project | None:
+    def _create_archive(
+        self, path: Path, start: datetime.date, end: datetime.date
+    ) -> Project | None:
         path = path.expanduser()
         if path.exists():
             log.warn("%s not archived: %s already exists", self.name, path)
@@ -363,7 +384,9 @@ class Project:
             archived.print(out)
         return archived
 
-    def archive_month(self, archive_dir: str, month: datetime.date) -> tuple[datetime.date, Project | None]:
+    def archive_month(
+        self, archive_dir: str, month: datetime.date
+    ) -> tuple[datetime.date, Project | None]:
         """
         Write log entries for the given month to an archive file
         """
@@ -383,13 +406,24 @@ class Project:
         """
         # Generate the target file name
         if "%" in archive_dir:
-            raise RuntimeError("Placeholders in archive-dir not supported for single-file archives")
+            raise RuntimeError(
+                "Placeholders in archive-dir not supported for single-file archives"
+            )
         last_day = end - datetime.timedelta(days=1)
-        pathname = Path(archive_dir) / f"{self.name}_{start:%Y-%m-%d}_to_{last_day:%Y-%m-%d}.egt"
+        pathname = (
+            Path(archive_dir)
+            / f"{self.name}_{start:%Y-%m-%d}_to_{last_day:%Y-%m-%d}.egt"
+        )
 
         return end, self._create_archive(pathname, start, end)
 
-    def archive(self, cutoff: datetime.date, report_fd: IO[str] | None, save=True, combined=True) -> list[Project]:
+    def archive(
+        self,
+        cutoff: datetime.date,
+        report_fd: IO[str] | None,
+        save=True,
+        combined=True,
+    ) -> list[Project]:
         """
         Archive contents until the given cutoff date (excluded).
 
@@ -397,7 +431,9 @@ class Project:
         """
         archive_dir = self.meta.get("archive-dir", None)
         if archive_dir is None:
-            log.info("%s not archived: archive-dir not found in header", self.name)
+            log.info(
+                "%s not archived: archive-dir not found in header", self.name
+            )
             return []
 
         archived = []
@@ -411,7 +447,9 @@ class Project:
             # Iterate until cutoff
             while date < cutoff:
                 if combined:
-                    date, arc = self.archive_range(archive_dir, date.replace(day=1), cutoff)
+                    date, arc = self.archive_range(
+                        archive_dir, date.replace(day=1), cutoff
+                    )
                 else:
                     date, arc = self.archive_month(archive_dir, date)
                 if arc is not None:

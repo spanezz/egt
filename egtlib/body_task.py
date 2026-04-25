@@ -28,7 +28,15 @@ class Task(BodyEntry):
     re_attribute = re.compile(r"^(?P<key>[^:]+):(?P<val>[^:]+)$")
     task_attributes = ["start", "due", "until", "wait", "scheduled", "priority"]
 
-    def __init__(self, body: Body, *, id: int | str, indent: str = "", text: str | None = None, task=None) -> None:
+    def __init__(
+        self,
+        body: Body,
+        *,
+        id: int | str,
+        indent: str = "",
+        text: str | None = None,
+        task=None,
+    ) -> None:
         super().__init__(indent=indent)
         # Body object owning this Task
         self.body = body
@@ -85,7 +93,11 @@ class Task(BodyEntry):
         if not super().__eq__(other):
             return False
         o = cast(Task, other)
-        return self.task == o.task and self.id == o.id and self.is_orphan == o.is_orphan
+        return (
+            self.task == o.task
+            and self.id == o.id
+            and self.is_orphan == o.is_orphan
+        )
 
     def is_empty(self) -> bool:
         return False
@@ -106,12 +118,18 @@ class Task(BodyEntry):
         if self.task:
             if self.task["status"] == "completed":
                 return ""
-            res.append("[{:%Y-%m-%d %H:%M} {}]".format(self.task["modified"], self.task["status"]))
+            res.append(
+                "[{:%Y-%m-%d %H:%M} {}]".format(
+                    self.task["modified"], self.task["status"]
+                )
+            )
         res.append(self.desc)
         bl = self.body.project.tags
         res.extend("+" + t for t in sorted(self.tags) if t not in bl)
         if self.depends:
-            res.append("depends:" + ",".join(str(t) for t in sorted(self.depends)))
+            res.append(
+                "depends:" + ",".join(str(t) for t in sorted(self.depends))
+            )
         return " ".join(res)
 
     def print(self, file: TextIO | None = None) -> None:
@@ -129,7 +147,10 @@ class Task(BodyEntry):
         with contain_taskwarrior_noise():
             self.body.tasks.tw._marshal = False
             newtask = self.body.tasks.tw.task_add(
-                self.desc, project=self.body.project.name, tags=sorted(tags), **self.attributes
+                self.desc,
+                project=self.body.project.name,
+                tags=sorted(tags),
+                **self.attributes,
             )
             self.body.tasks.tw._marshal = True
             id, task = self.body.tasks.tw.get_task(uuid=newtask["id"])
@@ -161,7 +182,11 @@ class Task(BodyEntry):
                     self.id = task["id"] if task["id"] != 0 else None
                     self.desc = task["description"]
                     bl = self.body.project.tags
-                    self.tags = {t for t in task["tags"] if t not in bl} if "tags" in task else set()
+                    self.tags = (
+                        {t for t in task["tags"] if t not in bl}
+                        if "tags" in task
+                        else set()
+                    )
                     return
 
         # Looking up by uuid failed, try looking up by description
@@ -182,7 +207,10 @@ class Task(BodyEntry):
             if "depends" in task:
                 depends_uuids = set(task["depends"])
                 with contain_taskwarrior_noise():
-                    self.depends = {self.body.tasks.tw.get_task(uuid=t)[0] for t in depends_uuids}
+                    self.depends = {
+                        self.body.tasks.tw.get_task(uuid=t)[0]
+                        for t in depends_uuids
+                    }
 
 
 class Tasks:
@@ -200,7 +228,9 @@ class Tasks:
 
         # Storage for handling annotations
         self._new_log: dict[str, list[Line]] = {}
-        self._known_annotations: list[list[str]] = []  # using list instead of tuple due to json constraints
+        self._known_annotations: list[list[str]] = (
+            []
+        )  # using list instead of tuple due to json constraints
 
     @classmethod
     def has_taskwarrior(cls) -> bool:
@@ -230,7 +260,9 @@ class Tasks:
 
     @cached_property
     def tw(self) -> taskw.TaskWarrior:
-        return taskw.TaskWarrior(marshal=True, config_filename=self.get_taskrc_path().as_posix())
+        return taskw.TaskWarrior(
+            marshal=True, config_filename=self.get_taskrc_path().as_posix()
+        )
 
     def create_task(self, **kw) -> Task:
         """
@@ -264,12 +296,19 @@ class Tasks:
         except KeyError:
             return
         for annotation in annotations:
-            entry = [str(task["uuid"]), annotation.entry.isoformat()]  # isoformat as used internally only
+            entry = [
+                str(task["uuid"]),
+                annotation.entry.isoformat(),
+            ]  # isoformat as used internally only
             if entry in self._known_annotations:
                 continue
             self._known_annotations.append(entry)
             date = annotation.entry.date().strftime(self.date_format)
-            line = Line(indent="  ", bullet="- ", text=f"{task['description']}: {annotation}")
+            line = Line(
+                indent="  ",
+                bullet="- ",
+                text=f"{task['description']}: {annotation}",
+            )
             self.new_log(date, line)
 
     def _sync_completed(self, task) -> None:
@@ -278,7 +317,11 @@ class Tasks:
         """
         if task["status"] == "completed":
             date = task["modified"].date().strftime(self.date_format)
-            line = Line(indent="  ", bullet="- ", text=f"[completed] {task['description']}")
+            line = Line(
+                indent="  ",
+                bullet="- ",
+                text=f"[completed] {task['description']}",
+            )
             self.new_log(date, line)
 
     def sync_tasks(self, modify_state: bool = True) -> None:
@@ -319,7 +362,9 @@ class Tasks:
         # Process all tasks known to taskwarrior
         new = []
         with contain_taskwarrior_noise():
-            for tw_task in self.tw.filter_tasks({"project.is": self.body.project.name}):
+            for tw_task in self.tw.filter_tasks(
+                {"project.is": self.body.project.name}
+            ):
                 uuid = str(tw_task["uuid"])
                 if self.body.project.config.sync_tw_annotations:
                     self._sync_annotations(tw_task)
@@ -362,5 +407,7 @@ class Tasks:
                 if t.id is None:
                     continue
                 ids[t.id] = str(t.task["uuid"])
-            self.body.project.state.set("tasks", {"ids": ids, "old_uuids": list(old_uuids)})
+            self.body.project.state.set(
+                "tasks", {"ids": ids, "old_uuids": list(old_uuids)}
+            )
             self.body.project.state.set("annotations", self._known_annotations)

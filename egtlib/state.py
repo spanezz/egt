@@ -59,7 +59,9 @@ class State:
             return
 
     @classmethod
-    def rescan(cls, dirs: list[Path], *, config: Config, statedir: Path | None = None) -> None:
+    def rescan(
+        cls, dirs: list[Path], *, config: Config, statedir: Path | None = None
+    ) -> None:
         """
         Rebuild the state looking for files in the given directories.
 
@@ -81,7 +83,10 @@ class State:
                     continue
                 if p.name in projects:
                     log.warning(
-                        "%s: project %s already exists in %s: skipping", fname, p.name, projects[p.name]["fname"]
+                        "%s: project %s already exists in %s: skipping",
+                        fname,
+                        p.name,
+                        projects[p.name]["fname"],
                     )
                 else:
                     projects[p.name] = {"fname": p.abspath}

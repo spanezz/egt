@@ -45,30 +45,89 @@ class Locale:
 
             class ParserInfo(dateutil.parser.parserinfo):
                 WEEKDAYS = [
-                    (locale.nl_langinfo(locale.ABDAY_2), locale.nl_langinfo(locale.DAY_2)),
-                    (locale.nl_langinfo(locale.ABDAY_3), locale.nl_langinfo(locale.DAY_3)),
-                    (locale.nl_langinfo(locale.ABDAY_4), locale.nl_langinfo(locale.DAY_4)),
-                    (locale.nl_langinfo(locale.ABDAY_5), locale.nl_langinfo(locale.DAY_5)),
-                    (locale.nl_langinfo(locale.ABDAY_6), locale.nl_langinfo(locale.DAY_6)),
-                    (locale.nl_langinfo(locale.ABDAY_7), locale.nl_langinfo(locale.DAY_7)),
-                    (locale.nl_langinfo(locale.ABDAY_1), locale.nl_langinfo(locale.DAY_1)),
+                    (
+                        locale.nl_langinfo(locale.ABDAY_2),
+                        locale.nl_langinfo(locale.DAY_2),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABDAY_3),
+                        locale.nl_langinfo(locale.DAY_3),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABDAY_4),
+                        locale.nl_langinfo(locale.DAY_4),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABDAY_5),
+                        locale.nl_langinfo(locale.DAY_5),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABDAY_6),
+                        locale.nl_langinfo(locale.DAY_6),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABDAY_7),
+                        locale.nl_langinfo(locale.DAY_7),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABDAY_1),
+                        locale.nl_langinfo(locale.DAY_1),
+                    ),
                 ]
                 MONTHS = [
-                    (locale.nl_langinfo(locale.ABMON_1), locale.nl_langinfo(locale.MON_1)),
-                    (locale.nl_langinfo(locale.ABMON_2), locale.nl_langinfo(locale.MON_2)),
-                    (locale.nl_langinfo(locale.ABMON_3), locale.nl_langinfo(locale.MON_3)),
-                    (locale.nl_langinfo(locale.ABMON_4), locale.nl_langinfo(locale.MON_4)),
-                    (locale.nl_langinfo(locale.ABMON_5), locale.nl_langinfo(locale.MON_5)),
-                    (locale.nl_langinfo(locale.ABMON_6), locale.nl_langinfo(locale.MON_6)),
-                    (locale.nl_langinfo(locale.ABMON_7), locale.nl_langinfo(locale.MON_7)),
-                    (locale.nl_langinfo(locale.ABMON_8), locale.nl_langinfo(locale.MON_8)),
-                    (locale.nl_langinfo(locale.ABMON_9), locale.nl_langinfo(locale.MON_9)),
-                    (locale.nl_langinfo(locale.ABMON_10), locale.nl_langinfo(locale.MON_10)),
-                    (locale.nl_langinfo(locale.ABMON_11), locale.nl_langinfo(locale.MON_11)),
-                    (locale.nl_langinfo(locale.ABMON_12), locale.nl_langinfo(locale.MON_12)),
+                    (
+                        locale.nl_langinfo(locale.ABMON_1),
+                        locale.nl_langinfo(locale.MON_1),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_2),
+                        locale.nl_langinfo(locale.MON_2),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_3),
+                        locale.nl_langinfo(locale.MON_3),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_4),
+                        locale.nl_langinfo(locale.MON_4),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_5),
+                        locale.nl_langinfo(locale.MON_5),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_6),
+                        locale.nl_langinfo(locale.MON_6),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_7),
+                        locale.nl_langinfo(locale.MON_7),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_8),
+                        locale.nl_langinfo(locale.MON_8),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_9),
+                        locale.nl_langinfo(locale.MON_9),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_10),
+                        locale.nl_langinfo(locale.MON_10),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_11),
+                        locale.nl_langinfo(locale.MON_11),
+                    ),
+                    (
+                        locale.nl_langinfo(locale.ABMON_12),
+                        locale.nl_langinfo(locale.MON_12),
+                    ),
                 ]
 
-                def __init__(self, dayfirst: bool = True, yearfirst: bool = False) -> None:
+                def __init__(
+                    self, dayfirst: bool = True, yearfirst: bool = False
+                ) -> None:
                     # for non-us dates, set ``dayfirst`` by default
                     super().__init__(dayfirst=dayfirst, yearfirst=yearfirst)
 

@@ -18,13 +18,19 @@ class BodyEntry:
         self.indent = indent
 
     def is_empty(self) -> bool:
-        raise NotImplementedError(f"{self.__class__.__name__}.is_empty() has been called on raw BodyEntry object")
+        raise NotImplementedError(
+            f"{self.__class__.__name__}.is_empty() has been called on raw BodyEntry object"
+        )
 
     def get_date(self) -> datetime.date | None:
-        raise NotImplementedError(f"{self.__class__.__name__}.get_date() has been called on raw BodyEntry object")
+        raise NotImplementedError(
+            f"{self.__class__.__name__}.get_date() has been called on raw BodyEntry object"
+        )
 
     def get_content(self) -> str:
-        raise NotImplementedError(f"{self.__class__.__name__}.get_content() has been called on raw BodyEntry object")
+        raise NotImplementedError(
+            f"{self.__class__.__name__}.get_content() has been called on raw BodyEntry object"
+        )
 
     def print(self, file: IO[str] | None = None) -> None:
         print(self.indent + self.get_content(), file=file)
@@ -58,7 +64,14 @@ class Line(BodyEntry):
     An entry with a line of text
     """
 
-    def __init__(self, *, indent: str = "", bullet: str = "", date: str | None = None, text: str):
+    def __init__(
+        self,
+        *,
+        indent: str = "",
+        bullet: str = "",
+        date: str | None = None,
+        text: str,
+    ):
         super().__init__(indent=indent)
         self.bullet = bullet or ""
         self.text = text
@@ -83,7 +96,10 @@ class Line(BodyEntry):
 
     def print(self, file: IO[str] | None = None) -> None:
         if self.date:
-            print(f"{self.indent}{self.bullet}{self.date:%Y-%m-%d}{self.date_suffix}{self.text}", file=file)
+            print(
+                f"{self.indent}{self.bullet}{self.date:%Y-%m-%d}{self.date_suffix}{self.text}",
+                file=file,
+            )
         else:
             print(self.indent + self.bullet + self.text, file=file)
 
@@ -114,7 +130,9 @@ class Body:
     """
 
     re_task = re.compile(r"^(?P<indent>\s*)t(?P<id>\d*)\s+(?P<text>.+)$")
-    re_line = re.compile(r"^(?P<indent>\s*)(?P<bullet>[-*+]\s+)?(?P<date>\d{4}-\d{2}-\d{2}:\s*)?(?P<text>.*)$")
+    re_line = re.compile(
+        r"^(?P<indent>\s*)(?P<bullet>[-*+]\s+)?(?P<date>\d{4}-\d{2}-\d{2}:\s*)?(?P<text>.*)$"
+    )
 
     def __init__(self, project: project.Project):
         from .body_task import Tasks

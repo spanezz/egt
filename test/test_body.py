@@ -24,7 +24,9 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(proj.body.content, [])
 
     def test_lines(self) -> None:
-        proj = self.project(body=["first line", "", "second line", "* third line"])
+        proj = self.project(
+            body=["first line", "", "second line", "* third line"]
+        )
         self.assertEqual(
             proj.body.content,
             [
@@ -36,7 +38,9 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
         )
 
     def test_indent(self) -> None:
-        proj = self.project(body=["first line", "  ", "  second line", "  * third line"])
+        proj = self.project(
+            body=["first line", "  ", "  second line", "  * third line"]
+        )
         self.assertEqual(
             proj.body.content,
             [
@@ -49,7 +53,9 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
         )
 
     def test_paragraph(self) -> None:
-        proj = self.project(body=["first line", "  ", " * second line", "   third line"])
+        proj = self.project(
+            body=["first line", "  ", " * second line", "   third line"]
+        )
         self.assertEqual(
             proj.body.content,
             [
@@ -62,14 +68,24 @@ class TestBody(ProjectTestMixin, unittest.TestCase):
 
     def test_date(self) -> None:
         proj = self.project(
-            body=["2022-10-01: first line", "  ", " * 2022-10-15:  second line", "   2022-10-30: third line"]
+            body=[
+                "2022-10-01: first line",
+                "  ",
+                " * 2022-10-15:  second line",
+                "   2022-10-30: third line",
+            ]
         )
         self.assertEqual(
             proj.body.content,
             [
                 body.Line(indent="", date="2022-10-01: ", text="first line"),
                 body.EmptyLine(),
-                body.Line(indent=" ", bullet="* ", date="2022-10-15:  ", text="second line"),
+                body.Line(
+                    indent=" ",
+                    bullet="* ",
+                    date="2022-10-15:  ",
+                    text="second line",
+                ),
                 body.Line(indent="   ", date="2022-10-30: ", text="third line"),
             ],
         )

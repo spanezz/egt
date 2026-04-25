@@ -27,7 +27,12 @@ def today() -> datetime.date:
 
 @contextlib.contextmanager
 def atomic_writer(
-    path: Path, mode: str = "w+b", chmod: int | None = 0o664, sync: bool = True, use_umask: bool = False, **kw: Any
+    path: Path,
+    mode: str = "w+b",
+    chmod: int | None = 0o664,
+    sync: bool = True,
+    use_umask: bool = False,
+    **kw: Any,
 ) -> Iterator[IO[Any]]:
     """
     open/tempfile wrapper to atomically write to a file, by writing its
@@ -51,7 +56,9 @@ def atomic_writer(
     dirname = path.parent
     dirname.mkdir(parents=True, exist_ok=True)
 
-    fd, abspath_str = tempfile.mkstemp(dir=dirname, text="b" not in mode, prefix=path.as_posix())
+    fd, abspath_str = tempfile.mkstemp(
+        dir=dirname, text="b" not in mode, prefix=path.as_posix()
+    )
     abspath = Path(abspath_str)
     with open(fd, mode, closefd=True, **kw) as outfd:
         try:
@@ -79,7 +86,12 @@ def intervals_intersect(p1s, p1e, p2s, p2e) -> bool:
 
 
 class SummaryCol:
-    def __init__(self, label: str, align: str, func: Callable[[egtlib.Project], str] | None = None):
+    def __init__(
+        self,
+        label: str,
+        align: str,
+        func: Callable[[egtlib.Project], str] | None = None,
+    ):
         self.label = label
         self.align = align
         self._func = func
@@ -110,7 +122,9 @@ class TaskStatCol(SummaryCol):
         with contain_taskwarrior_noise():
             tasks = self._proj.body.tasks.tw.filter_tasks({"status": "pending"})
             # could not figure out how to do this in one go
-            tasks += self._proj.body.tasks.tw.filter_tasks({"status": "waiting"})
+            tasks += self._proj.body.tasks.tw.filter_tasks(
+                {"status": "waiting"}
+            )
         for task in tasks:
             try:
                 self.task_stats[task["project"]] += 1
@@ -123,7 +137,9 @@ class TaskStatCol(SummaryCol):
 
 class HoursCol(SummaryCol):
     def func(self, p: egtlib.Project) -> str:
-        return format_duration(p.elapsed, tabular=True) if p.last_updated else "--"
+        return (
+            format_duration(p.elapsed, tabular=True) if p.last_updated else "--"
+        )
 
 
 class LastEntryCol(SummaryCol):
@@ -173,7 +189,9 @@ def format_td(td: datetime.timedelta, tabular: bool = False) -> str:
             return f"{td.days} days"
 
 
-def stream_output(proc: subprocess.Popen) -> Generator[tuple[str, str | int], None, None]:
+def stream_output(
+    proc: subprocess.Popen,
+) -> Generator[tuple[str, str | int], None, None]:
     """
     Take a subprocess.Popen object and generate its output, line by line,
     annotated with "stdout" or "stderr". At process termination it generates

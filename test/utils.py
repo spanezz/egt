@@ -21,7 +21,12 @@ class ProjectTestMixin(TestCase):
         self.taskrc = self.workdir / ".taskrc"
         with self.taskrc.open("w") as fd:
             print(f"data.location={self.workdir / 'tasks'}", file=fd)
-        self.enterContext(mock.patch("egtlib.body_task.Tasks.get_taskrc_path", return_value=self.taskrc))
+        self.enterContext(
+            mock.patch(
+                "egtlib.body_task.Tasks.get_taskrc_path",
+                return_value=self.taskrc,
+            )
+        )
 
     def project(
         self,

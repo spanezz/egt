@@ -32,7 +32,9 @@ class LogParser:
 
     def parse_date(self, s: str) -> datetime.datetime | None:
         try:
-            d = dateutil.parser.parse(s, default=self.default, parserinfo=self.parserinfo)
+            d = dateutil.parser.parse(
+                s, default=self.default, parserinfo=self.parserinfo
+            )
         except (TypeError, ValueError):
             return None
         self.default = d.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -52,7 +54,10 @@ class LogParser:
                         yield el
                     break
             else:
-                self.log_parse_error(self.lines.lineno, "log parse stops at unrecognised line " + repr(line))
+                self.log_parse_error(
+                    self.lines.lineno,
+                    "log parse stops at unrecognised line " + repr(line),
+                )
                 break
 
     def parse_tags(self, lineno: int, notes: str) -> list[str]:
@@ -69,7 +74,9 @@ class LogParser:
                     # Ignore hour count
                     pass
                 else:
-                    self.log_parse_error(entry_lineno, f"unrecognised annotation {repr(note)}")
+                    self.log_parse_error(
+                        entry_lineno, f"unrecognised annotation {repr(note)}"
+                    )
         return tags
 
 
@@ -136,11 +143,15 @@ class EntryBase:
         return body
 
     def print(self, file: IO[str] = sys.stdout) -> None:
-        raise RuntimeError("print called on EntryBase instead of the real class")
+        raise RuntimeError(
+            "print called on EntryBase instead of the real class"
+        )
 
     @classmethod
     def parse(cls, logparser: LogParser, **kw: Any) -> Self:
-        raise RuntimeError("parse called on EntryBase instead of the real class")
+        raise RuntimeError(
+            "parse called on EntryBase instead of the real class"
+        )
 
     @classmethod
     def is_start_line(cls, line: str) -> re.Match | None:
@@ -281,10 +292,14 @@ class Entry(EntryBase):
     def print_lead_timeref(self, file: IO[str] | None = None):
         print(self.begin.year, file=file)
 
-    def print(self, file: IO[str] = sys.stdout, project: project.Project | None = None):
+    def print(
+        self, file: IO[str] = sys.stdout, project: project.Project | None = None
+    ):
         mo = self.re_entry.match(self.head)
         if not mo:
-            raise RuntimeError("Header line was parsed right during parsing, and not during printing")
+            raise RuntimeError(
+                "Header line was parsed right during parsing, and not during printing"
+            )
         line = [mo.group("date") + ":"]
         if not self.fullday:
             line.append(mo.group("trange"))
@@ -313,7 +328,10 @@ class Entry(EntryBase):
         date = logparser.parse_date(kw["date"])
         if date is None:
             logparser.log_parse_error(
-                entry_lineno, "cannot parse log header date: {} (lang={})".format(repr(kw["date"]), logparser.lang)
+                entry_lineno,
+                "cannot parse log header date: {} (lang={})".format(
+                    repr(kw["date"]), logparser.lang
+                ),
             )
             date = logparser.default
 
@@ -466,8 +484,15 @@ class Command(EntryBase):
 
 
 class LogPrinter:
-    def __init__(self, file: IO[str], today: datetime.date | None = None, archived: bool = False):
-        self.today: datetime.date = today if today is not None else utils.today()
+    def __init__(
+        self,
+        file: IO[str],
+        today: datetime.date | None = None,
+        archived: bool = False,
+    ):
+        self.today: datetime.date = (
+            today if today is not None else utils.today()
+        )
         self.file = file
         self.has_time_ref = False
         self.last_reference_time: datetime.datetime | None = None
@@ -486,7 +511,10 @@ class LogPrinter:
         if self.archived:
             return
         this_year = self.today.year
-        if self.last_reference_time is None or self.last_reference_time.year != this_year:
+        if (
+            self.last_reference_time is None
+            or self.last_reference_time.year != this_year
+        ):
             print(this_year, file=self.file)
 
 
@@ -534,7 +562,9 @@ class Log:
             return e
         return None
 
-    def detach_entries(self, since: datetime.date, until: datetime.date) -> list[EntryBase]:
+    def detach_entries(
+        self, since: datetime.date, until: datetime.date
+    ) -> list[EntryBase]:
         """
         Remove from the log the entries that go between the first Entry within
         the given interval and the last Entry within the given interval
@@ -603,7 +633,9 @@ class Log:
         else:
             self.project.meta.unset("parse-errors")
 
-    def print(self, file: IO[str] = sys.stdout, today: datetime.date | None = None):
+    def print(
+        self, file: IO[str] = sys.stdout, today: datetime.date | None = None
+    ):
         """
         Write the log as a project log section to the given output file.
 

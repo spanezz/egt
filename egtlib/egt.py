@@ -25,7 +25,9 @@ class WeeklyReport:
     def add(self, p: Project) -> None:
         self.projs.append(p)
 
-    def report(self, end: datetime.date | None = None, days: int = 7) -> dict[str, Any]:
+    def report(
+        self, end: datetime.date | None = None, days: int = 7
+    ) -> dict[str, Any]:
         if end is None:
             d_until = datetime.date.today()
         else:
@@ -43,7 +45,10 @@ class WeeklyReport:
         for p in self.projs:
             for e in p.log.entries:
                 if intervals_intersect(
-                    e.begin.date(), e.until.date() if e.until else datetime.date.today(), d_begin, d_until
+                    e.begin.date(),
+                    e.until.date() if e.until else datetime.date.today(),
+                    d_begin,
+                    d_until,
                 ):
                     log.append((e, p))
                     count += 1
@@ -53,7 +58,9 @@ class WeeklyReport:
             count=count,
             hours=mins / 60,
             hours_per_day=mins / 60 / days,
-            hours_per_workday=mins / 60 / 5,  # FIXME: properly compute work days in period
+            hours_per_workday=mins
+            / 60
+            / 5,  # FIXME: properly compute work days in period
             log=log,
         )
 
@@ -89,10 +96,15 @@ class ProjectFilter:
             if f == "_":
                 with contain_taskwarrior_noise():
                     tasks = sorted(
-                            self.tw.filter_tasks({"status": "completed", "end": datetime.date.today()}),
-                            key=lambda t: t['end'],
-                            reverse=True
-                            )
+                        self.tw.filter_tasks(
+                            {
+                                "status": "completed",
+                                "end": datetime.date.today(),
+                            }
+                        ),
+                        key=lambda t: t["end"],
+                        reverse=True,
+                    )
                 try:
                     self.names.add(tasks[0]["project"])
                 except (IndexError, KeyError):
@@ -142,7 +154,9 @@ class ProjectFilter:
                 return False
         if self.tags_wanted and self.tags_wanted.isdisjoint(project.tags):
             return False
-        if self.tags_unwanted and not self.tags_unwanted.isdisjoint(project.tags):
+        if self.tags_unwanted and not self.tags_unwanted.isdisjoint(
+            project.tags
+        ):
             return False
         return True
 
@@ -165,7 +179,9 @@ class Egt:
         self.show_archived = show_archived
         self.filter = ProjectFilter(filter)
 
-    def load_project(self, path: Path, project_fd: TextIO | None = None) -> Project:
+    def load_project(
+        self, path: Path, project_fd: TextIO | None = None
+    ) -> Project:
         """
         Return a Project object given its file name.
 
@@ -185,7 +201,9 @@ class Egt:
         for name, info in self.state.projects.items():
             path = Path(info["fname"])
             if not Project.has_project(path):
-                log.warning("project %s has disappeared: please rerun scan", path)
+                log.warning(
+                    "project %s has disappeared: please rerun scan", path
+                )
                 continue
             proj = self.load_project(path)
             if not self.show_archived and proj.archived:

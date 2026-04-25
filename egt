@@ -7,10 +7,16 @@ VERSION = "0.4"
 
 def main() -> int | None:
     parser = argparse.ArgumentParser(description="Enrico's getting things done")
-    parser.add_argument("--version", action="version", version="%(prog)s " + VERSION)
-    parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + VERSION
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="verbose output"
+    )
     parser.add_argument("--debug", action="store_true", help="debug output")
-    subparsers = parser.add_subparsers(help="egt subcommands", required=True, dest="command")
+    subparsers = parser.add_subparsers(
+        help="egt subcommands", required=True, dest="command"
+    )
 
     from egtlib.cli import Fail
     from egtlib.commands import COMMANDS

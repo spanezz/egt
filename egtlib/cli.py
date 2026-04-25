@@ -61,7 +61,9 @@ class Command:
             logging.basicConfig(level=level, stream=sys.stderr, format=FORMAT)
 
     @classmethod
-    def add_subparser(cls, subparsers: argparse._SubParsersAction[Any]) -> argparse.ArgumentParser:
+    def add_subparser(
+        cls, subparsers: argparse._SubParsersAction[Any]
+    ) -> argparse.ArgumentParser:
         parser = subparsers.add_parser(
             cls.command_name(),
             help=_get_first_docstring_line(cls),

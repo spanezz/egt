@@ -50,7 +50,10 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         (self.p2 / ".egt").write_text(body_p2)
 
     def build_command(
-        self, command_cls: type[commands.EgtCommand] | str, *args: str, rescan: bool = True
+        self,
+        command_cls: type[commands.EgtCommand] | str,
+        *args: str,
+        rescan: bool = True,
     ) -> commands.EgtCommand:
         """Instantiate the EgtCommand class for the given command."""
         if rescan:
@@ -64,12 +67,20 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
                 raise KeyError(f"command {command_cls} not found")
 
         parser = argparse.ArgumentParser(description="egt test command")
-        parser.add_argument("--version", action="version", version="%(prog)s 0.0")
-        parser.add_argument("--verbose", "-v", action="store_true", help="verbose output")
+        parser.add_argument(
+            "--version", action="version", version="%(prog)s 0.0"
+        )
+        parser.add_argument(
+            "--verbose", "-v", action="store_true", help="verbose output"
+        )
         parser.add_argument("--debug", action="store_true", help="debug output")
-        subparsers = parser.add_subparsers(help="egt subcommands", required=True, dest="command")
+        subparsers = parser.add_subparsers(
+            help="egt subcommands", required=True, dest="command"
+        )
         command_cls.add_subparser(subparsers)
-        parsed_args = parser.parse_args([command_cls.command_name()] + list(args))
+        parsed_args = parser.parse_args(
+            [command_cls.command_name()] + list(args)
+        )
         with mock.patch("egtlib.config.Config.load"):
             try:
                 return command_cls(parsed_args)
@@ -77,13 +88,18 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
                 self.fail(f"Command argument parsing exited with code {e.code}")
 
     def run_command(
-        self, command_cls: type[commands.EgtCommand], *args: str, rescan: bool = True
+        self,
+        command_cls: type[commands.EgtCommand],
+        *args: str,
+        rescan: bool = True,
     ) -> tuple[int, str, str]:
         """Run a command returning stdout and stderr."""
         cmd = self.build_command(command_cls, *args, rescan=rescan)
         stdout_buf, stderr_buf = io.StringIO(), io.StringIO()
         with (
-            mock.patch("egtlib.state.State.get_state_dir", return_value=self.workdir),
+            mock.patch(
+                "egtlib.state.State.get_state_dir", return_value=self.workdir
+            ),
             contextlib.redirect_stdout(stdout_buf),
             contextlib.redirect_stderr(stderr_buf),
         ):
@@ -124,8 +140,12 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
                 with self.subTest(config=subtest["cmd"]):
                     mock_arg = mock.Mock(subcommand=subtest["cmd"])
                     completion = Completion(mock_arg)
-                    with mock.patch.object(completion, "make_egt", return_value=egt):
-                        with mock.patch("sys.stdout", new_callable=io.StringIO) as mock_stdout:
+                    with mock.patch.object(
+                        completion, "make_egt", return_value=egt
+                    ):
+                        with mock.patch(
+                            "sys.stdout", new_callable=io.StringIO
+                        ) as mock_stdout:
                             completion.main()
                     names = mock_stdout.getvalue().split("\n")[:-1]
                     self.assertEqual(names, subtest["res"])
@@ -164,7 +184,9 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         orig_stdin = sys.stdin
         sys.stdin = stdin
         try:
-            code, stdout, stderr = self.run_command("annotate", "--stdin", file.as_posix())
+            code, stdout, stderr = self.run_command(
+                "annotate", "--stdin", file.as_posix()
+            )
         finally:
             sys.stdin = orig_stdin
         self.assertEqual(stderr, "")
@@ -178,7 +200,11 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         orig_stdin = sys.stdin
         sys.stdin = stdin
         try:
-            code, stdout, stderr = self.run_command("annotate", "--stdin", (self.workdir / "does-not-exist").as_posix())
+            code, stdout, stderr = self.run_command(
+                "annotate",
+                "--stdin",
+                (self.workdir / "does-not-exist").as_posix(),
+            )
         finally:
             sys.stdin = orig_stdin
         self.assertEqual(stderr, "")

@@ -17,7 +17,9 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         super().setUp()
         self.projectfile = self.workdir / ".egt"
 
-    def write_project(self, log_lines: list[str], lang: str | None = None) -> None:
+    def write_project(
+        self, log_lines: list[str], lang: str | None = None
+    ) -> None:
         with self.projectfile.open("w") as fd:
             print("Name: testprj", file=fd)
             if lang is not None:
@@ -60,7 +62,11 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         proj.log.print(file=out, today=datetime.date(2015, 6, 1))
         self.assertEqual(
             out.getvalue(),
-            "2015\n" "15 march: 9:00-12:00 3h\n" " - tested things\n" "16 march:\n" " - implemented day logs\n",
+            "2015\n"
+            "15 march: 9:00-12:00 3h\n"
+            " - tested things\n"
+            "16 march:\n"
+            " - implemented day logs\n",
         )
 
     def testWriteNewYear(self) -> None:
@@ -78,7 +84,10 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
 
         out = io.StringIO()
         proj.log.print(file=out, today=datetime.date(2016, 6, 1))
-        self.assertEqual(out.getvalue(), "2015\n" "15 march: 9:00-12:00 3h\n" " - tested things\n" "2016\n")
+        self.assertEqual(
+            out.getvalue(),
+            "2015\n" "15 march: 9:00-12:00 3h\n" " - tested things\n" "2016\n",
+        )
 
     def assertEntryIsTimebase(self, entry: EntryBase) -> Timebase:
         self.assertIsInstance(entry, Timebase)
@@ -93,7 +102,10 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         return cast(Command, entry)
 
     def assertProjLines(
-        self, proj: Project, lines: list[str], today: datetime.date = datetime.date(2015, 6, 1)
+        self,
+        proj: Project,
+        lines: list[str],
+        today: datetime.date = datetime.date(2015, 6, 1),
     ) -> None:
         with io.StringIO() as out:
             proj.log.print(out, today=today)
@@ -148,7 +160,9 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             ],
         )
 
-    def assertExpandEntry(self, entry: str, today=datetime.date(2015, 6, 1)) -> tuple[Project, Entry]:
+    def assertExpandEntry(
+        self, entry: str, today=datetime.date(2015, 6, 1)
+    ) -> tuple[Project, Entry]:
         self.write_project(["2015", entry])
         proj = Project(self.projectfile, statedir=self.workdir, config=Config())
         proj.load()
@@ -249,14 +263,18 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(f1.head, "15 march: 9:00-12:00")
         self.assertEqual(f1.body, [" - tested things"])
 
-        new_entry_dt2 = datetime.datetime.combine(datetime.datetime.today(), datetime.time(8, 0, 0))
+        new_entry_dt2 = datetime.datetime.combine(
+            datetime.datetime.today(), datetime.time(8, 0, 0)
+        )
         self.assertEqual(f2.begin, new_entry_dt2)
         self.assertEqual(f2.until, None)
         self.assertEqual(f2.head, new_entry_dt2.strftime("%d %B: %H:%M-"))
         self.assertEqual(f2.body, [" - new entry"])
         self.assertEqual(f2.fullday, False)
 
-        new_entry_dt3 = datetime.datetime.combine(datetime.datetime.today(), datetime.time(0))
+        new_entry_dt3 = datetime.datetime.combine(
+            datetime.datetime.today(), datetime.time(0)
+        )
         self.assertEqual(f3.begin, new_entry_dt3)
         self.assertEqual(f3.until, new_entry_dt3 + datetime.timedelta(days=1))
         self.assertEqual(f3.head, new_entry_dt3.strftime("%d %B:"))
@@ -383,26 +401,34 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
             " - implemented day logs",
         ]
         self.write_project(lines + ["15 march:", " - localized"])
-        proj_default = Project(self.projectfile, statedir=self.workdir, config=Config())
+        proj_default = Project(
+            self.projectfile, statedir=self.workdir, config=Config()
+        )
         proj_default.load()
 
         e = self.assertEntryIsEntry(proj_default.log._entries[3])
         self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 marzo:", " - localized"], lang="it")
-        proj_it = Project(self.projectfile, statedir=self.workdir, config=Config())
+        proj_it = Project(
+            self.projectfile, statedir=self.workdir, config=Config()
+        )
         proj_it.load()
         e = self.assertEntryIsEntry(proj_default.log._entries[3])
         self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 mars:", " - localized"], lang="fr")
-        proj_fr = Project(self.projectfile, statedir=self.workdir, config=Config())
+        proj_fr = Project(
+            self.projectfile, statedir=self.workdir, config=Config()
+        )
         proj_fr.load()
         e = self.assertEntryIsEntry(proj_default.log._entries[3])
         self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
 
         self.write_project(lines + ["15 march:", " - localized"])
-        proj_default1 = Project(self.projectfile, statedir=self.workdir, config=Config())
+        proj_default1 = Project(
+            self.projectfile, statedir=self.workdir, config=Config()
+        )
         proj_default1.load()
         e = self.assertEntryIsEntry(proj_default.log._entries[3])
         self.assertEqual(e.begin, datetime.datetime(2015, 3, 15, 0, 0, 0))
@@ -499,7 +525,9 @@ class TestLog(ProjectTestMixin, unittest.TestCase):
 
         self.assertEqual(len(body_lines), 5)
         self.assertEqual(body_lines[0], "2015")
-        self.assertEqual(body_lines[1], "15 march: 9:00-12:00 3h +tag1 +tag2 +tag3")
+        self.assertEqual(
+            body_lines[1], "15 march: 9:00-12:00 3h +tag1 +tag2 +tag3"
+        )
         self.assertEqual(body_lines[2], " - tested things")
         self.assertEqual(body_lines[3], "16 march: +tag2")
         self.assertEqual(body_lines[4], " - implemented day logs")

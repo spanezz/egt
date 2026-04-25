@@ -74,7 +74,9 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(len(body_lines), 4)
         self.assertEqual(body_lines[0], "body line1")
         self.assertRegex(body_lines[1], r"^t\d+ \[[^]]+\] new parent task$")
-        self.assertRegex(body_lines[2], r"^  t\d+ \[[^]]+\] new taskwarrior task \+tag$")
+        self.assertRegex(
+            body_lines[2], r"^  t\d+ \[[^]]+\] new taskwarrior task \+tag$"
+        )
         self.assertEqual(body_lines[3], "body line3")
 
         with (self.workdir / "project-testprj.json").open("r") as fd:
@@ -131,8 +133,12 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
 
         with contain_taskwarrior_noise():
             tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
-            new_task = tw.task_add("new task", ["tag", "testtag1"], project="testprj")
-            tw.task_add("new parent task", project="testprj", depends=[new_task["uuid"]])
+            new_task = tw.task_add(
+                "new task", ["tag", "testtag1"], project="testprj"
+            )
+            tw.task_add(
+                "new parent task", project="testprj", depends=[new_task["uuid"]]
+            )
             del tw
 
         proj = self.project(
@@ -165,7 +171,9 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(len(body_lines), 5)
 
         self.assertRegex(body_lines[0], r"^t\d+ \[[^]]+\] new task \+tag$")
-        self.assertRegex(body_lines[1], r"^t\d+ \[[^]]+\] new parent task depends:1$")
+        self.assertRegex(
+            body_lines[1], r"^t\d+ \[[^]]+\] new parent task depends:1$"
+        )
         self.assertEqual(body_lines[2], "")
         self.assertEqual(body_lines[3], "body line1")
         self.assertEqual(body_lines[4], "body line2")
@@ -184,7 +192,9 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
 
         with contain_taskwarrior_noise():
             tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
-            new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
+            new_task = tw.task_add(
+                "task", ["tag", "testtag1"], project="testprj"
+            )
             del tw
 
         egt_id = new_task["id"] + 10
@@ -260,7 +270,9 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
 
         with contain_taskwarrior_noise():
             tw = taskw.TaskWarrior(marshal=True, config_filename=self.taskrc)
-            new_task = tw.task_add("task", ["tag", "testtag1"], project="testprj")
+            new_task = tw.task_add(
+                "task", ["tag", "testtag1"], project="testprj"
+            )
 
         egt_id = new_task["id"] + 10
 

@@ -16,7 +16,9 @@ class Config:
     """
 
     def __init__(self, load: bool = False):
-        self.config = ConfigParser(interpolation=None)  # we want '%' in formats to work directly
+        self.config = ConfigParser(
+            interpolation=None
+        )  # we want '%' in formats to work directly
         self.config["config"] = {
             "date-format": "%d %B",
             "time-format": "%H:%M",
@@ -47,7 +49,9 @@ class Config:
                 )
         elif os.path.isfile(old_cfg):
             os.rename(old_cfg, new_cfg)
-            log.info("Config file %s moved to new location %s", old_cfg, new_cfg)
+            log.info(
+                "Config file %s moved to new location %s", old_cfg, new_cfg
+            )
 
         self.config.read([new_cfg])
 
