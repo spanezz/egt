@@ -23,7 +23,7 @@ from egtlib.utils import (
     format_duration,
 )
 
-from . import cli
+from . import cli, reports
 from .body import BodyEntry
 from .config import Config
 
@@ -344,6 +344,24 @@ class Weekrpt(ProjectsCommand):
     Compute weekly reports
     """
 
+    def weekrpt(
+        self,
+        egt: egtlib.Egt,
+        tags: set[str] | None = None,
+        end: dt.date | None = None,
+        days: int = 7,
+        projs: list[egtlib.Project] | None = None,
+    ) -> dict[str, Any]:
+        rep = reports.WeeklyReport()
+        if projs:
+            for p in projs:
+                rep.add(p)
+        else:
+            for p in egt.projects:
+                if not tags or p.tags.issuperset(tags):
+                    rep.add(p)
+        return rep.report(end, days)
+
     def main(self) -> None:
         from texttable import Texttable
 
@@ -362,7 +380,7 @@ class Weekrpt(ProjectsCommand):
         table.set_cols_align(("l", "r", "r", "r", "r"))
         table.set_cols_dtype(("t", "i", "i", "i", "i"))
         table.add_row(("Tag", "Entries", "Hours", "h/day", "h/wday"))
-        rep = e.weekrpt(end=end)
+        rep = self.weekrpt(e, end=end)
         print()
         print(f" * Activity from {rep['begin']} to {rep['until']}")
         print()
@@ -384,7 +402,7 @@ class Weekrpt(ProjectsCommand):
         for p in e.projects:
             all_tags |= p.tags
         for t in sorted(all_tags):
-            rep = e.weekrpt(end=end, tags={t})
+            rep = self.weekrpt(e, end=end, tags={t})
             table.add_row(
                 (
                     t,
@@ -405,7 +423,7 @@ class Weekrpt(ProjectsCommand):
         table.set_cols_dtype(("t", "i", "i", "i", "i"))
         table.add_row(("Project", "Entries", "Hours", "h/day", "h/wday"))
         for p in e.projects:
-            rep = e.weekrpt(end=end, projs=[p])
+            rep = self.weekrpt(e, end=end, projs=[p])
             if not rep["count"]:
                 continue
             table.add_row(
