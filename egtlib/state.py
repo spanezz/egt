@@ -3,8 +3,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from xdg import BaseDirectory
-
 from .config import Config
 from .project import Project
 from .scan import scan
@@ -25,13 +23,15 @@ class State:
     Cached information about known projects.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, config: Config) -> None:
+        #: egt configuration
+        self.config = config
         # Map project names to loaded project information dicts
         self.projects: dict[str, Any] = {}
 
     def load(self, statedir: Path | None = None) -> None:
         if statedir is None:
-            statedir = self.get_state_dir()
+            statedir = self.config.state_dir
 
         statefile = statedir / "state.json"
         if statefile.exists():
@@ -68,7 +68,7 @@ class State:
         be saved.
         """
         if statedir is None:
-            statedir = cls.get_state_dir()
+            statedir = config.state_dir
 
         # Read and detect duplicates
         projects: dict[str, dict] = {}
@@ -118,7 +118,3 @@ class State:
         # projects that disappeared.
 
         log.debug("%s: new state written", statefile)
-
-    @classmethod
-    def get_state_dir(cls) -> Path:
-        return Path(BaseDirectory.save_data_path("egt"))

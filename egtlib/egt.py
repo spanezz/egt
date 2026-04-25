@@ -1,12 +1,9 @@
 import datetime as dt
 import logging
-import re
-import sys
-import tarfile
 import warnings
 from functools import cached_property
 from pathlib import Path
-from typing import Any, BinaryIO, TextIO
+from typing import Any
 
 with warnings.catch_warnings(action="ignore"):
     import taskw
@@ -175,27 +172,30 @@ class Egt:
         show_archived: bool = False,
         statedir: Path | None = None,
     ) -> None:
+        """
+        Initialize the Project database.
+
+        :param config: egt configuration
+        :param filter: list of filter arguments
+        :param show_archived: set to True if archived project should be used
+        :param statedir: Directory where cached project state is saved. If
+          None, the default location is used.
+        """
+        #: egt configuration
         self.config = config
-        self.state = State()
+        #: Cached information about known projects
+        self.state = State(self.config)
         self.state.load(statedir)
+        #: If True, archived projects are not ignored by default
         self.show_archived = show_archived
+        #: Current project filter
         self.filter = ProjectFilter(filter)
+        #: Projects indexed by project name
+        self.by_name: dict[str, Project] = {}
+        self._load()
 
-    def load_project(
-        self, path: Path, project_fd: TextIO | None = None
-    ) -> Project:
-        """
-        Return a Project object given its file name.
-
-        Returns None if the file does not exist or no suitable project could be
-        created from that file.
-        """
-        proj = Project.from_file(path, fd=project_fd, config=self.config)
-        proj.tags.update(self._default_tags(path))
-        return proj
-
-    def _load_projects(self) -> dict[str, Project]:
-        projs = {}
+    def _load(self) -> None:
+        """Fill self.by_name."""
         for name, info in self.state.projects.items():
             path = Path(info["fname"])
             if not Project.has_project(path):
@@ -203,39 +203,30 @@ class Egt:
                     "project %s has disappeared: please rerun scan", path
                 )
                 continue
-            proj = self.load_project(path)
+            proj = Project.from_file(path, config=self.config)
             if not self.show_archived and proj.archived:
                 continue
             if not self.filter.matches(proj):
                 continue
-            projs[proj.name] = proj
-        return projs
+            self.by_name[proj.name] = proj
 
-    def _default_tags(self, abspath: Path) -> set[str]:
-        """
-        Guess tags from the project file pathname
-        """
-        tags: set[str] = set()
-        str_path = abspath.as_posix()
-        for tag, regexp in self.config.autotag_rules:
-            if re.search(regexp, str_path):
-                tags.add(tag)
-        return tags
+    def get(self, name: str) -> Project | None:
+        """Return a project by name."""
+        return self.by_name.get(name)
 
     @cached_property
-    def loaded_projects(self) -> dict[str, Project]:
-        return self._load_projects()
-
-    @property
     def projects(self) -> list[Project]:
-        return sorted(self.loaded_projects.values(), key=lambda p: p.name)
+        """List of projects sorted by project name."""
+        return sorted(self.by_name.values(), key=lambda p: p.name)
 
-    @property
+    @cached_property
     def project_names(self) -> list[str]:
-        return sorted(self.loaded_projects.keys())
+        """Sorted list of project names."""
+        return sorted(self.by_name.keys())
 
     @property
     def all_tags(self) -> list[str]:
+        """Sorted list of all known project tags."""
         res: set[str] = set()
         for p in self.projects:
             res.update(p.tags)
@@ -257,8 +248,3 @@ class Egt:
                 if not tags or p.tags.issuperset(tags):
                     rep.add(p)
         return rep.report(end, days)
-
-    def backup(self, out: BinaryIO = sys.stdout.buffer) -> None:
-        with tarfile.open(mode="w|", fileobj=out) as tarout:
-            for p in self.projects:
-                p.backup(tarout)

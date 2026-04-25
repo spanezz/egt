@@ -1,9 +1,12 @@
+import re
 import logging
 from configparser import ConfigParser
 from functools import cached_property
 from pathlib import Path
 
 import xdg
+from xdg import BaseDirectory
+
 
 log = logging.getLogger(__name__)
 
@@ -92,11 +95,16 @@ class Config:
         return self.config.getboolean("config", "sync-tw-annotations")
 
     @cached_property
-    def autotag_rules(self) -> list[tuple[str, str]]:
+    def autotag_rules(self) -> list[tuple[str, re.Pattern[str]]]:
         """
         Return a list of (tag, regexp) autotagging rules
         """
         if "autotag" not in self.config:
             return []
         autotags = self.config["autotag"]
-        return [(tag, regexp) for tag, regexp in autotags.items()]
+        return [(tag, re.compile(regexp)) for tag, regexp in autotags.items()]
+
+    @cached_property
+    def state_dir(self) -> Path:
+        """Return the directory where egt cached state is stored."""
+        return Path(BaseDirectory.save_data_path("egt"))

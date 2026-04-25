@@ -48,22 +48,35 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.p2.mkdir()
         (self.p2 / ".egt").write_text(body_p2)
 
-    def build_command(
+        self.config = mock.create_autospec(Config)
+        self.config.summary_columns = ["name", "tags", "logs", "hours", "last"]
+        self.config.backup_output = self.workdir.as_posix()
+        self.config.date_format = "%d %B"
+        self.config.time_format = "%H:%M"
+        self.config.sync_tw_annotations = True
+        self.config.autotag_rules = []
+        self.config.state_dir = self.workdir
+
+    def build_command[C: commands.EgtCommand](
         self,
-        command_cls: type[commands.EgtCommand] | str,
+        command_cls_or_name: type[C] | str,
         *args: str,
         rescan: bool = True,
-    ) -> commands.EgtCommand:
+    ) -> C:
         """Instantiate the EgtCommand class for the given command."""
         if rescan:
-            State.rescan([self.workdir], statedir=self.workdir, config=Config())
-        if isinstance(command_cls, str):
+            State.rescan([self.workdir], config=self.config)
+
+        command_cls: type[C]
+        if isinstance(command_cls_or_name, str):
             for cls in commands.COMMANDS:
-                if cls.command_name() == command_cls:
-                    command_cls = cls
+                if cls.command_name() == command_cls_or_name:
+                    command_cls = cls  # type: ignore[assignment]
                     break
             else:
                 raise KeyError(f"command {command_cls} not found")
+        else:
+            command_cls = command_cls_or_name
 
         parser = argparse.ArgumentParser(description="egt test command")
         parser.add_argument(
@@ -80,7 +93,7 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         parsed_args = parser.parse_args(
             [command_cls.command_name()] + list(args)
         )
-        with mock.patch("egtlib.config.Config.load"):
+        with mock.patch("egtlib.commands.Config", return_value=self.config):
             try:
                 return command_cls(parsed_args)
             except SystemExit as e:
@@ -96,9 +109,6 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         cmd = self.build_command(command_cls, *args, rescan=rescan)
         stdout_buf, stderr_buf = io.StringIO(), io.StringIO()
         with (
-            mock.patch(
-                "egtlib.state.State.get_state_dir", return_value=self.workdir
-            ),
             contextlib.redirect_stdout(stdout_buf),
             contextlib.redirect_stderr(stderr_buf),
         ):
@@ -110,8 +120,8 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         return exit_code, stdout_buf.getvalue(), stderr_buf.getvalue()
 
     def test_scan(self) -> None:
-        State.rescan([self.workdir], statedir=self.workdir, config=Config())
-        state = State()
+        State.rescan([self.workdir], statedir=self.workdir, config=self.config)
+        state = State(self.config)
         state.load(self.workdir)
         self.assertIn("test", state.projects)
         self.assertIn("p1", state.projects)
@@ -119,8 +129,8 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
         self.assertEqual(len(state.projects), 3)
 
     def test_list(self) -> None:
-        State.rescan([self.workdir], statedir=self.workdir, config=Config())
-        egt = egtlib.Egt(config=Config(), statedir=self.workdir)
+        State.rescan([self.workdir], statedir=self.workdir, config=self.config)
+        egt = egtlib.Egt(config=self.config, statedir=self.workdir)
         names = {p.name for p in egt.projects}
         self.assertIn("test", names)
         self.assertIn("p1", names)
@@ -220,11 +230,12 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     # TODO: test_serve
 
     def test_backup(self) -> None:
-        State.rescan([self.workdir], statedir=self.workdir, config=Config())
-        egt = egtlib.Egt(config=Config(), statedir=self.workdir)
+        cmd = self.build_command(commands.Backup)
+
+        e = cmd.make_egt()
         tarfname = self.workdir / "backup.tar"
         with open(tarfname, "wb") as fd:
-            egt.backup(fd)
+            cmd.backup(e, fd)
 
         # Test backup contents
         names = []

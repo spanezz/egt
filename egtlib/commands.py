@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 import sys
+import tarfile
 from collections.abc import Iterator
 from collections import Counter
 from contextlib import contextmanager
@@ -530,17 +531,25 @@ class Annotate(EgtCommand):
     useful that can be computed.
     """
 
-    def main(self) -> None:
-        egt = egtlib.Egt(config=self.config, show_archived=True)
+    def get_project(self) -> egtlib.Project | None:
+        """Return the project to annotate."""
         path = Path(self.args.project)
         if self.args.stdin:
-            proj = egt.load_project(path, project_fd=sys.stdin)
-        elif path.exists():
-            proj = egt.load_project(path)
-        elif p := egt.loaded_projects.get(self.args.project):
-            proj = p
-        else:
-            log.info("No project found.")
+            return egtlib.Project.from_file(
+                path, fd=sys.stdin, config=self.config
+            )
+        if path.exists():
+            return egtlib.Project.from_file(path, config=self.config)
+
+        egt = egtlib.Egt(config=self.config, show_archived=True)
+        if p := egt.get(self.args.project):
+            return p
+
+        log.info("No project found.")
+        return None
+
+    def main(self) -> None:
+        if (proj := self.get_project()) is None:
             return
 
         proj.annotate()
@@ -627,15 +636,22 @@ class Backup(ProjectsCommand):
     Backup of egt project core information
     """
 
+    def backup(
+        self, egt: egtlib.Egt, out: IO[bytes] = sys.stdout.buffer
+    ) -> None:
+        with tarfile.open(mode="w|", fileobj=out) as tarout:
+            for p in egt.projects:
+                p.backup(tarout)
+
     def main(self) -> None:
         out = self.config.backup_output
         e = self.make_egt()
         if out:
             out = dt.datetime.now().strftime(out)
             with open(out, "wb") as fd:
-                e.backup(fd)
+                self.backup(e, fd)
         else:
-            e.backup(sys.stdout.buffer)
+            self.backup(e, sys.stdout.buffer)
 
 
 class Next(ProjectsCommand):

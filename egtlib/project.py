@@ -80,23 +80,29 @@ class Project:
         :param statedir: Directory where cached project state is saved. If
           None, the default location is used.
         """
-        # Prevent circular import
-        from .state import State
-
         #: Egt configuration
         self.config = config
         #: Directory where cached project state is saved
-        self.statedir = statedir or State.get_state_dir()
+        self.statedir = statedir or self.config.state_dir
         #: Path to the .egt file
         self.abspath = path
         #: Project tags
-        self.tags: set[str] = set()
+        self.tags: set[str] = self._default_tags()
         #: If True, the project is archived
         self.archived: bool = False
 
         self.meta = Meta()
         self.log = Log(self)
         self.body = Body(self)
+
+    def _default_tags(self) -> set[str]:
+        """Guess tags from the project pathname."""
+        tags: set[str] = set()
+        str_path = self.abspath.as_posix()
+        for tag, regexp in self.config.autotag_rules:
+            if regexp.search(str_path):
+                tags.add(tag)
+        return tags
 
     @contextlib.contextmanager
     def set_locale(self) -> Generator[None]:
