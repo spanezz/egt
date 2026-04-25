@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import os
 import re
 import shlex
@@ -100,7 +100,7 @@ class Task(BodyEntry):
     def is_empty(self) -> bool:
         return False
 
-    def get_date(self) -> datetime.date | None:
+    def get_date(self) -> dt.date | None:
         return None
 
     def get_content(self) -> str:

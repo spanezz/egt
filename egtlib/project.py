@@ -1,5 +1,5 @@
 import contextlib
-import datetime
+import datetime as dt
 import json
 import logging
 import os.path
@@ -200,7 +200,7 @@ class Project:
         if self.meta.archived:
             self.archived = True
 
-    def print(self, out: IO[str], today: datetime.date | None = None) -> None:
+    def print(self, out: IO[str], today: dt.date | None = None) -> None:
         """
         Serialize the whole project as a project file to the given file
         descriptor.
@@ -218,7 +218,7 @@ class Project:
 
         self.body.print(out)
 
-    def save(self, today: datetime.date | None = None) -> None:
+    def save(self, today: dt.date | None = None) -> None:
         """
         Save over the original source file
         """
@@ -226,7 +226,7 @@ class Project:
             self.print(cast(IO[str], fd), today)
 
     @property
-    def last_updated(self) -> datetime.datetime | None:
+    def last_updated(self) -> dt.datetime | None:
         """
         Datetime when this project was last updated
         """
@@ -235,7 +235,7 @@ class Project:
             return None
         if last.until:
             return last.until
-        return datetime.datetime.now()
+        return dt.datetime.now()
 
     @property
     def elapsed(self) -> int:
@@ -253,7 +253,7 @@ class Project:
         return ", ".join(sorted(self.tags))
 
     @property
-    def formal_period(self) -> tuple[datetime.date, datetime.date]:
+    def formal_period(self) -> tuple[dt.date, dt.date]:
         """
         Compute the begin and end dates for this project.
 
@@ -360,7 +360,7 @@ class Project:
             tarout.add(path)
 
     def _create_archive(
-        self, path: Path, start: datetime.date, end: datetime.date
+        self, path: Path, start: dt.date, end: dt.date
     ) -> "Project | None":
         path = path.expanduser()
         if path.exists():
@@ -383,8 +383,8 @@ class Project:
         return archived
 
     def archive_month(
-        self, archive_dir: str, month: datetime.date
-    ) -> tuple[datetime.date, "Project | None"]:
+        self, archive_dir: str, month: dt.date
+    ) -> tuple[dt.date, "Project | None"]:
         """
         Write log entries for the given month to an archive file
         """
@@ -393,12 +393,12 @@ class Project:
             archive_dir = month.strftime(archive_dir)
         pathname = Path(archive_dir) / f"{month:%Y%m}-{self.name}.egt"
 
-        next_month = (month + datetime.timedelta(days=40)).replace(day=1)
+        next_month = (month + dt.timedelta(days=40)).replace(day=1)
         return next_month, self._create_archive(pathname, month, next_month)
 
     def archive_range(
-        self, archive_dir: str, start: datetime.date, end: datetime.date
-    ) -> tuple[datetime.date, "Project | None"]:
+        self, archive_dir: str, start: dt.date, end: dt.date
+    ) -> tuple[dt.date, "Project | None"]:
         """
         Write log entries for the given range to an archive file
         """
@@ -407,7 +407,7 @@ class Project:
             raise RuntimeError(
                 "Placeholders in archive-dir not supported for single-file archives"
             )
-        last_day = end - datetime.timedelta(days=1)
+        last_day = end - dt.timedelta(days=1)
         pathname = (
             Path(archive_dir)
             / f"{self.name}_{start:%Y-%m-%d}_to_{last_day:%Y-%m-%d}.egt"
@@ -417,7 +417,7 @@ class Project:
 
     def archive(
         self,
-        cutoff: datetime.date,
+        cutoff: dt.date,
         report_fd: IO[str] | None,
         save=True,
         combined=True,
@@ -468,7 +468,7 @@ class Project:
         if self.body.tasks.has_taskwarrior():
             self.body.tasks.sync_tasks(modify_state=modify_state)
 
-    def annotate(self, today: datetime.date | None = None) -> None:
+    def annotate(self, today: dt.date | None = None) -> None:
         """
         Fill in fields, resolve commands, and perform all pending actions
         embedded in the project

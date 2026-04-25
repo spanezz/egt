@@ -1,5 +1,5 @@
 import contextlib
-import datetime
+import datetime as dt
 import fcntl
 import os
 import os.path
@@ -16,11 +16,11 @@ if TYPE_CHECKING:
     import egtlib
 
 
-def today() -> datetime.date:
+def today() -> dt.date:
     """
-    Mockable version of datetime.date.today()
+    Mockable version of dt.date.today()
     """
-    return datetime.date.today()
+    return dt.date.today()
 
 
 @contextlib.contextmanager
@@ -145,7 +145,7 @@ class HoursCol(SummaryCol):
 class LastEntryCol(SummaryCol):
     def __init__(self, *args: Any) -> None:
         super().__init__(*args)
-        self.now = datetime.datetime.now()
+        self.now = dt.datetime.now()
 
     def func(self, p: "egtlib.Project") -> str:
         if p.last_updated:
@@ -169,7 +169,7 @@ def format_duration(mins: int, tabular: bool = False) -> str:
             return f"{h}h"
 
 
-def format_td(td: datetime.timedelta, tabular: bool = False) -> str:
+def format_td(td: dt.timedelta, tabular: bool = False) -> str:
     """
     Format a timedelta object
     """

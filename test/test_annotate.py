@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-import datetime
+import datetime as dt
 import io
 import unittest
 
@@ -18,7 +16,7 @@ class TestAnnotate(ProjectTestMixin, unittest.TestCase):
     def annotate(
         self,
         text: str | list[str],
-        today: datetime.date = datetime.date(2019, 2, 1),
+        today: dt.date = dt.date(2019, 2, 1),
     ) -> str:
         with self.projectfile.open("w") as fd:
             if isinstance(text, str):

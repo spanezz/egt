@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import re
 from typing import IO, cast, TYPE_CHECKING
 
@@ -22,7 +22,7 @@ class BodyEntry:
             f"{self.__class__.__name__}.is_empty() has been called on raw BodyEntry object"
         )
 
-    def get_date(self) -> datetime.date | None:
+    def get_date(self) -> dt.date | None:
         raise NotImplementedError(
             f"{self.__class__.__name__}.get_date() has been called on raw BodyEntry object"
         )
@@ -49,7 +49,7 @@ class EmptyLine(BodyEntry):
     def is_empty(self) -> bool:
         return True
 
-    def get_date(self) -> datetime.date | None:
+    def get_date(self) -> dt.date | None:
         return None
 
     def get_content(self) -> str:
@@ -75,20 +75,20 @@ class Line(BodyEntry):
         super().__init__(indent=indent)
         self.bullet = bullet or ""
         self.text = text
-        self.date: datetime.date | None
+        self.date: dt.date | None
         self.date_suffix: str | None
 
         if date is None:
             self.date = None
             self.date_suffix = None
         else:
-            self.date = datetime.datetime.strptime(date[:10], "%Y-%m-%d")
+            self.date = dt.datetime.strptime(date[:10], "%Y-%m-%d")
             self.date_suffix = date[10:]
 
     def is_empty(self) -> bool:
         return False
 
-    def get_date(self) -> datetime.date | None:
+    def get_date(self) -> dt.date | None:
         return self.date
 
     def get_content(self) -> str:

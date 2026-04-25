@@ -1,6 +1,5 @@
 import abc
 import argparse
-import datetime
 import datetime as dt
 import inspect
 import logging
@@ -128,10 +127,10 @@ class List(ProjectsCommand):
 
         if self.args.age:
             projects.sort(key=lambda p: -p.mtime)
-            now = datetime.datetime.now()
+            now = dt.datetime.now()
             ages = []
             for project in projects:
-                age = now - datetime.datetime.fromtimestamp(project.mtime)
+                age = now - dt.datetime.fromtimestamp(project.mtime)
                 ages.append(format_td(age))
             age_len = max(len(a) for a in ages)
 
@@ -233,7 +232,7 @@ class Summary(ProjectsCommand):
         #        res["tags"] = self.tags
         #        res["entries"] = len(self.log)
         #        #"%s" % format_duration(mins),
-        #        #format_td(datetime.datetime.now() - self.last_updated)),
+        #        #format_td(dt.datetime.now() - self.last_updated)),
         #        print "%s\t%s" % (self.name, ", ".join(stats))
 
         for p in sorted_projects:
@@ -351,7 +350,7 @@ class Weekrpt(ProjectsCommand):
         e = self.make_egt()
         # TODO: add an option to choose the current time
         # if self.args.projects:
-        #     end = datetime.datetime.strptime(self.args.projects[0], "%Y-%m-%d").date()
+        #     end = dt.datetime.strptime(self.args.projects[0], "%Y-%m-%d").date()
         # else:
         #     end = None
         end = None
@@ -567,8 +566,8 @@ class Archive(ProjectsCommand):
     """
 
     def main(self) -> None:
-        cutoff = datetime.datetime.strptime(self.args.month, "%Y-%m").date()
-        cutoff = (cutoff + datetime.timedelta(days=40)).replace(day=1)
+        cutoff = dt.datetime.strptime(self.args.month, "%Y-%m").date()
+        cutoff = (cutoff + dt.timedelta(days=40)).replace(day=1)
 
         e = self.make_egt()
         with self.report_fd() as fd:
@@ -595,9 +594,7 @@ class Archive(ProjectsCommand):
         cls, subparsers: "argparse._SubParsersAction[Any]"
     ) -> argparse.ArgumentParser:
         parser = super().add_subparser(subparsers)
-        last_month = datetime.date.today().replace(day=1) - datetime.timedelta(
-            days=1
-        )
+        last_month = dt.date.today().replace(day=1) - dt.timedelta(days=1)
         parser.add_argument(
             "--month",
             "-m",
@@ -634,7 +631,7 @@ class Backup(ProjectsCommand):
         out = self.config.backup_output
         e = self.make_egt()
         if out:
-            out = datetime.datetime.now().strftime(out)
+            out = dt.datetime.now().strftime(out)
             with open(out, "wb") as fd:
                 e.backup(fd)
         else:
@@ -676,7 +673,7 @@ class Next(ProjectsCommand):
         table.add_row(("Name", "Age", "First entry"))
 
         egt = self.make_egt()
-        now = datetime.datetime.today()
+        now = dt.datetime.today()
         projects = []
         for project in egt.projects:
             # Find the first two non-empty entries
@@ -684,7 +681,7 @@ class Next(ProjectsCommand):
             if not entry:
                 continue
 
-            mtime = datetime.datetime.fromtimestamp(project.mtime)
+            mtime = dt.datetime.fromtimestamp(project.mtime)
 
             # Get the project time or due date timestamp
             if entry.get_content().startswith("# "):
@@ -693,7 +690,7 @@ class Next(ProjectsCommand):
                 sort_key = (1, now - mtime, "")
             elif date := entry.get_date():
                 # Sort by due date
-                ts = datetime.datetime.combine(date, datetime.time(0))
+                ts = dt.datetime.combine(date, dt.time(0))
                 if ts > now:
                     sort_key = (0, ts - now, "+")
                 else:

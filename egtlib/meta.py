@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import inspect
 import re
 import sys
@@ -61,22 +61,22 @@ class Meta:
         return self._raw.get("archived", "false").lower() in ("true", "yes")
 
     @property
-    def start_date(self) -> datetime.date | None:
+    def start_date(self) -> dt.date | None:
         """
         Return the explicit begin date of this project
         """
         if (since_str := self._raw.get("start-date", None)) is not None:
-            return datetime.datetime.strptime(since_str, "%Y-%m-%d").date()
+            return dt.datetime.strptime(since_str, "%Y-%m-%d").date()
         else:
             return None
 
     @property
-    def end_date(self) -> datetime.date | None:
+    def end_date(self) -> dt.date | None:
         """
         Return the explicit end date of this project
         """
         if (since_str := self._raw.get("end-date", None)) is not None:
-            return datetime.datetime.strptime(since_str, "%Y-%m-%d").date()
+            return dt.datetime.strptime(since_str, "%Y-%m-%d").date()
         else:
             return None
 

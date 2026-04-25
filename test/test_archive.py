@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-import datetime
+import datetime as dt
 import io
 import unittest
 
@@ -16,7 +14,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
         self.projectfile = self.workdir / ".egt"
         self.reportfile = self.workdir / "report.egt"
 
-    def archive(self, text: str | list[str], today=datetime.date(2019, 2, 1)):
+    def archive(self, text: str | list[str], today=dt.date(2019, 2, 1)):
         with self.projectfile.open("w") as fd:
             if isinstance(text, str):
                 fd.write(text)
@@ -33,9 +31,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
                 cutoff=today.replace(day=1), report_fd=fd, combined=False
             )
 
-    def to_text(
-        self, proj, today: datetime.date | None = datetime.date(2019, 2, 1)
-    ) -> str:
+    def to_text(self, proj, today: dt.date | None = dt.date(2019, 2, 1)) -> str:
         with io.StringIO() as fd:
             proj.print(fd, today=today)
             return fd.getvalue()
@@ -231,7 +227,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             f"Archive-Dir: {self.workdir}",
             "",
             "2019",
-            str(datetime.date.today().year),
+            str(dt.date.today().year),
             "",
         ]
         self.assertEqual(self.to_text(proj, today=None).splitlines(), remainder)
@@ -256,7 +252,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             "2019",
             "01 february: 10:00-13:00 3h",
             " - fixed",
-            str(datetime.date.today().year),
+            str(dt.date.today().year),
             "",
         ]
         self.assertEqual(self.to_text(proj, today=None).splitlines(), remainder)
@@ -277,7 +273,7 @@ class TestArchive(ProjectTestMixin, unittest.TestCase):
             f"Archive-Dir: {self.workdir}",
             "",
             "2019",
-            str(datetime.date.today().year),
+            str(dt.date.today().year),
             "",
         ]
         self.assertEqual(self.to_text(proj, today=None).splitlines(), remainder)

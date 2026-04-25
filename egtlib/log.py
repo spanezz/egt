@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import re
 import sys
 from collections import Counter
@@ -24,14 +24,14 @@ class LogParser:
         self.lang = lang
         self.parserinfo = get_parserinfo(lang)
         # Defaults for missing parsedate values
-        self.default = datetime.datetime(utils.today().year, 1, 1)
+        self.default = dt.datetime(utils.today().year, 1, 1)
         # Log of parse errors
         self.errors: list[str] = []
 
     def log_parse_error(self, lineno: int, msg: str) -> None:
         self.errors.append(f"line {lineno + 1}: {msg}")
 
-    def parse_date(self, s: str) -> datetime.datetime | None:
+    def parse_date(self, s: str) -> dt.datetime | None:
         try:
             d = dateutil.parser.parse(
                 s, default=self.default, parserinfo=self.parserinfo
@@ -81,12 +81,12 @@ class LogParser:
         return tags
 
 
-def parsetime(s: str) -> datetime.time:
+def parsetime(s: str) -> dt.time:
     """
     Parse a time in the form hh:mm, and return the corresponding datetime.time
     """
     h, m = s.split(":")
-    return datetime.time(int(h), int(m), 0)
+    return dt.time(int(h), int(m), 0)
 
 
 class EntryBase:
@@ -106,7 +106,7 @@ class EntryBase:
         super().__init_subclass__(**kwargs)
         LogParser.ENTRY_TYPES.append(cls)
 
-    def sync(self, project: "project.Project", today: datetime.date) -> Self:
+    def sync(self, project: "project.Project", today: dt.date) -> Self:
         """
         When syncing logs, return the transformed version of this entry.
 
@@ -114,7 +114,7 @@ class EntryBase:
         """
         return self
 
-    def reference_time(self) -> datetime.datetime | None:
+    def reference_time(self) -> dt.datetime | None:
         """
         Return the reference time for this log entry
         """
@@ -166,12 +166,12 @@ class Timebase(EntryBase):
 
     re_timebase = re.compile(r"^(?:(?P<year>\d{4})|-+\s*(?P<date>.+?))\s*$")
 
-    def __init__(self, line: str, dt: datetime.datetime) -> None:
+    def __init__(self, line: str, dt: dt.datetime) -> None:
         super().__init__()
         self.line = line
         self.dt = dt
 
-    def reference_time(self) -> datetime.datetime | None:
+    def reference_time(self) -> dt.datetime | None:
         return self.dt
 
     def print(self, file: IO[str] = sys.stdout) -> None:
@@ -218,8 +218,8 @@ class Entry(EntryBase):
 
     def __init__(
         self,
-        begin: datetime.datetime,
-        until: datetime.datetime | None,
+        begin: dt.datetime,
+        until: dt.datetime | None,
         head: str | None,
         body: list[str],
         fullday: bool,
@@ -240,7 +240,7 @@ class Entry(EntryBase):
     def __repr__(self) -> str:
         return f"Entry({self.begin!r}, {self.until!r}, {self.head!r}, {self.fullday!r}, {self.tags!r})"
 
-    def reference_time(self) -> datetime.datetime | None:
+    def reference_time(self) -> dt.datetime | None:
         return self.begin
 
     @property
@@ -266,7 +266,7 @@ class Entry(EntryBase):
 
         collect_achievements(project, self)
 
-    def sync(self, project: "project.Project", today: datetime.date):
+    def sync(self, project: "project.Project", today: dt.date):
         self._sync_body(project)
         return self
 
@@ -279,7 +279,7 @@ class Entry(EntryBase):
             return 24 * 60
 
         if not self.until:
-            until = datetime.datetime.now()
+            until = dt.datetime.now()
         else:
             until = self.until
 
@@ -341,21 +341,21 @@ class Entry(EntryBase):
         # Parse start-end times
         start = kw.get("start")
         end = kw.get("end")
-        begin: datetime.datetime
-        until: datetime.datetime | None
+        begin: dt.datetime
+        until: dt.datetime | None
         if start:
-            begin = datetime.datetime.combine(date, parsetime(start))
+            begin = dt.datetime.combine(date, parsetime(start))
             if end:
-                until = datetime.datetime.combine(date, parsetime(end))
+                until = dt.datetime.combine(date, parsetime(end))
                 if until < begin:
                     # Deal with intervals across midnight
-                    until += datetime.timedelta(days=1)
+                    until += dt.timedelta(days=1)
             else:
                 until = None
             fullday = False
         else:
-            begin = datetime.datetime.combine(date, datetime.time(0))
-            until = begin + datetime.timedelta(days=1)
+            begin = dt.datetime.combine(date, dt.time(0))
+            until = begin + dt.timedelta(days=1)
             fullday = True
 
         # Parse tags
@@ -407,8 +407,8 @@ class Command(EntryBase):
         self,
         head: str,
         body: list[str],
-        start: datetime.time | None = None,
-        end: datetime.time | None = None,
+        start: dt.time | None = None,
+        end: dt.time | None = None,
         tags: list[str] = [],
     ):
         super().__init__(body)
@@ -417,26 +417,24 @@ class Command(EntryBase):
         self.end = end
         self.tags = tags
 
-    def reference_time(self) -> datetime.datetime | None:
+    def reference_time(self) -> dt.datetime | None:
         return None
 
-    def sync(
-        self, project: "project.Project", today: datetime.date
-    ) -> EntryBase:
+    def sync(self, project: "project.Project", today: dt.date) -> EntryBase:
         date_format = project.config.date_format + ":"
         datetime_format = date_format + " " + project.config.time_format + "-"
         if self.start is None:
-            begin = datetime.datetime.combine(today, datetime.time(0))
-            until = begin + datetime.timedelta(days=1)
+            begin = dt.datetime.combine(today, dt.time(0))
+            until = begin + dt.timedelta(days=1)
             head = begin.strftime(date_format)
             res = Entry(begin, until, head, self.body, True)
             if self.head == "++":
                 self.body.append(" +")
         else:
-            begin = datetime.datetime.combine(today, self.start)
+            begin = dt.datetime.combine(today, self.start)
             head = begin.strftime(datetime_format)
             if self.end is not None:
-                until = datetime.datetime.combine(today, self.end)
+                until = dt.datetime.combine(today, self.end)
                 head += until.strftime(project.config.time_format)
             else:
                 until = None
@@ -492,15 +490,13 @@ class LogPrinter:
     def __init__(
         self,
         file: IO[str],
-        today: datetime.date | None = None,
+        today: dt.date | None = None,
         archived: bool = False,
     ):
-        self.today: datetime.date = (
-            today if today is not None else utils.today()
-        )
+        self.today: dt.date = today if today is not None else utils.today()
         self.file = file
         self.has_time_ref = False
-        self.last_reference_time: datetime.datetime | None = None
+        self.last_reference_time: dt.datetime | None = None
         self.archived = archived
 
     def print(self, entry: EntryBase) -> None:
@@ -567,9 +563,7 @@ class Log:
             return e
         return None
 
-    def detach_entries(
-        self, since: datetime.date, until: datetime.date
-    ) -> list[EntryBase]:
+    def detach_entries(self, since: dt.date, until: dt.date) -> list[EntryBase]:
         """
         Remove from the log the entries that go between the first Entry within
         the given interval and the last Entry within the given interval
@@ -614,7 +608,7 @@ class Log:
                 res[tag] += duration
         return res
 
-    def sync(self, today: datetime.date | None = None) -> None:
+    def sync(self, today: dt.date | None = None) -> None:
         """
         Sync log contents with git or any other activity data sources
         """
@@ -638,9 +632,7 @@ class Log:
         else:
             self.project.meta.unset("parse-errors")
 
-    def print(
-        self, file: IO[str] = sys.stdout, today: datetime.date | None = None
-    ):
+    def print(self, file: IO[str] = sys.stdout, today: dt.date | None = None):
         """
         Write the log as a project log section to the given output file.
 

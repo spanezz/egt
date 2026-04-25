@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import logging
 import re
 import sys
@@ -26,13 +26,13 @@ class WeeklyReport:
         self.projs.append(p)
 
     def report(
-        self, end: datetime.date | None = None, days: int = 7
+        self, end: dt.date | None = None, days: int = 7
     ) -> dict[str, Any]:
         if end is None:
-            d_until = datetime.date.today()
+            d_until = dt.date.today()
         else:
             d_until = end
-        d_begin = d_until - datetime.timedelta(days=days)
+        d_begin = d_until - dt.timedelta(days=days)
 
         res: dict[str, Any] = dict(
             begin=d_begin,
@@ -46,7 +46,7 @@ class WeeklyReport:
             for e in p.log.entries:
                 if intervals_intersect(
                     e.begin.date(),
-                    e.until.date() if e.until else datetime.date.today(),
+                    e.until.date() if e.until else dt.date.today(),
                     d_begin,
                     d_until,
                 ):
@@ -99,7 +99,7 @@ class ProjectFilter:
                         self.tw.filter_tasks(
                             {
                                 "status": "completed",
-                                "end": datetime.date.today(),
+                                "end": dt.date.today(),
                             }
                         ),
                         key=lambda t: t["end"],
@@ -246,7 +246,7 @@ class Egt:
     def weekrpt(
         self,
         tags: set[str] | None = None,
-        end: datetime.date | None = None,
+        end: dt.date | None = None,
         days: int = 7,
         projs: list[Project] | None = None,
     ) -> dict[str, Any]:

@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-import datetime
+import datetime as dt
 import io
 import json
 import unittest
@@ -90,7 +88,7 @@ class TestTasks(ProjectTestMixin, unittest.TestCase):
         """
         Test creation of new taskwarrior tasks with attributes from a project file
         """
-        datedata = datetime.datetime(2031, 1, 2, 0, 0, tzinfo=tzlocal())
+        datedata = dt.datetime(2031, 1, 2, 0, 0, tzinfo=tzlocal())
         test_attributes = [
             ("due", "2031-01-02", datedata),
             ("wait", "2031-01-02", datedata),
