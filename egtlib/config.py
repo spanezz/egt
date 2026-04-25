@@ -1,7 +1,7 @@
 import logging
-import os
 from configparser import ConfigParser
 from functools import cached_property
+from pathlib import Path
 
 import xdg
 
@@ -31,13 +31,13 @@ class Config:
         Load configuration from the user's home directory
         """
         # Look for a config file in the old and new locations
-        old_cfg = os.path.expanduser("~/.egt.conf")
-        new_cfg = os.path.join(xdg.XDG_CONFIG_HOME, "egt")
+        old_cfg = Path("~/.egt.conf").expanduser()
+        new_cfg = Path(xdg.XDG_CONFIG_HOME) / "egt"
 
         # If the configuration exists only in the old location, move it to the
         # new one
-        if os.path.isfile(new_cfg):
-            if os.path.isfile(old_cfg):
+        if new_cfg.is_file():
+            if old_cfg.is_file():
                 log.warn(
                     "Config file exists in old an new location.\n"
                     "%s used\n"
@@ -45,8 +45,8 @@ class Config:
                     new_cfg,
                     old_cfg,
                 )
-        elif os.path.isfile(old_cfg):
-            os.rename(old_cfg, new_cfg)
+        elif old_cfg.is_file():
+            old_cfg.rename(new_cfg)
             log.info(
                 "Config file %s moved to new location %s", old_cfg, new_cfg
             )
