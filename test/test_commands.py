@@ -232,10 +232,9 @@ class TestCommands(ProjectTestMixin, unittest.TestCase):
     def test_backup(self) -> None:
         cmd = self.build_command(commands.Backup)
 
-        e = cmd.make_egt()
         tarfname = self.workdir / "backup.tar"
         with open(tarfname, "wb") as fd:
-            cmd.backup(e, fd)
+            cmd.backup(fd)
 
         # Test backup contents
         names = []
