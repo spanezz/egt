@@ -1,6 +1,4 @@
-"""
-Facilities to run external commands.
-"""
+"""Facilities to run external commands."""
 
 import os
 import subprocess
@@ -11,7 +9,7 @@ if TYPE_CHECKING:
     from .project import Project
 
 
-def run_editor(proj: Project) -> None:
+def run_editor(proj: "Project") -> None:
     """
     Edit the .egt file for the give Project
     """
@@ -22,7 +20,7 @@ def run_editor(proj: Project) -> None:
     p.wait()
 
 
-def run_work_session(proj: Project, with_editor: bool = True) -> None:
+def run_work_session(proj: "Project", with_editor: bool = True) -> None:
     """
     Open a terminal on the working directory of the given project, optionally
     opening the project file in an editor inside the terminal
